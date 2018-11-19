@@ -1,4 +1,4 @@
-<p align="center"><a href="https://orbit.sh"><img src="docs/design/assets/name-logo.svg" width="150px" alt="Orbit Logo"></a></p>
+<p align="center"><a href="https://orbit.sh"><img src="docs/design/assets/name-logo.svg" width="130px" alt="Orbit Logo"></a></p>
 
 <p align="center"><i>A simple and scalable self-hosted Platform as a Service</i></p>
 
