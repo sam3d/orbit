@@ -1,4 +1,4 @@
-/ /index.html 200
+/ /index.html 200!
 
-/blank / 301
-/* /blank 301
+/redirect / 301!
+/* /redirect 301!
