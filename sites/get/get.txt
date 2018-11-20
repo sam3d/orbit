@@ -1,0 +1,24 @@
+#!/bin/bash
+
+###
+# This shell script is a fast way to install Orbit on any linux server with only
+# one command. It is designed to be executed with the command at the bottom of
+# this comment block. Now, some of you may hate using "curl | bash" and that's
+# totally fine. You can just download the script first and then execute it once
+# you've been able to verify the contents of this file.
+#
+# curl https://get.orbit.sh | bash
+###
+
+cat << EOF
+==> Orbit
+--> Welcome!
+
+Hello and welcome to the Orbit download script. If you are reading this, you
+were able to download and run the script from the server. Congrats!
+
+Please check back soon, and you'll be able to use Orbit before you know it.
+
+--> Thank you :)
+
+EOF
