@@ -1,6 +1,14 @@
-<p align="center"><a href="https://orbit.sh"><img src="docs/design/assets/name-logo.svg" width="130px" alt="Orbit Logo"></a></p>
+<p align="center"><a href="https://orbit.sh"><img src="docs/design/assets/logo/gradient-text-vertical.svg" width="100px" alt="Orbit Logo"></a></p>
 
 <p align="center"><i>A simple and scalable self-hosted Platform as a Service</i></p>
+
+<p align="center">
+	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg">
+	<img src="https://img.shields.io/badge/coverage-0%25-yellow.svg">
+	<img src="https://img.shields.io/badge/downloads-none-brightgreen.svg">
+	<img src="https://img.shields.io/badge/version-alpha-orange.svg">
+	<img src="https://img.shields.io/badge/license-MIT-blue.svg">
+</p>
 
 <p align="center"><code>curl https://get.orbit.sh | bash</code></p>
 

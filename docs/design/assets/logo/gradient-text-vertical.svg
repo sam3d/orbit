@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="262px" height="368px" viewBox="0 0 262 368" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.4 (67378) - http://www.bohemiancoding.com/sketch -->
+    <title>logo/gradient-text-vertical</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="24.8266637%" y1="23.2752766%" x2="74.0416128%" y2="79.1447638%" id="linearGradient-1">
+            <stop stop-color="#47C1E2" offset="0%"></stop>
+            <stop stop-color="#8959EA" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="logos" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Colour-on-White" transform="translate(-241.000000, -69.000000)">
+            <g id="logo/gradient-text-vertical" transform="translate(237.000000, 69.000000)">
+                <path d="M135,210 C77.0101013,210 30,162.989899 30,105 C30,47.0101013 77.0101013,0 135,0 C192.989899,0 240,47.0101013 240,105 C240,162.989899 192.989899,210 135,210 Z M135,184 C178.630495,184 214,148.630495 214,105 C214,61.3695048 178.630495,26 135,26 C91.3695048,26 56,61.3695048 56,105 C56,148.630495 91.3695048,184 135,184 Z" id="Combined-Shape" fill="url(#linearGradient-1)" fill-rule="nonzero"></path>
+                <text id="Orbit" font-family="Cabin-Bold, Cabin" font-size="120" font-weight="bold" fill="#02101C">
+                    <tspan x="0" y="366">Orbit</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>
