@@ -1,0 +1,4 @@
+https://github.com/otoolep/hraftd # Sample raft implementation
+https://gist.github.com/F21/b85ae8af1c6bdb78b4ca0f9d96a89aa0 # Raft/Serf implementation
+http://code.openark.org/blog/mysql/observations-on-the-hashicorpraft-library-and-notes-on-rdbms
+https://github.com/github/orchestrator/blob/222e5b55ee51c89c39b2876c774364baecc01878/go/raft/rel_store.go
