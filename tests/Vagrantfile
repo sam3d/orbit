@@ -1,0 +1,22 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+nodes = 3
+
+Vagrant.configure("2") do |global|
+  # Configure global settings for all nodes
+  global.vm.box = "bento/ubuntu-18.04"
+  global.vm.synced_folder ".", "/vagrant", disabled: true
+  global.vm.synced_folder "../", "/opt/orbit"
+
+  (1..nodes).each do |i|
+    name = "o#{i}"
+    ip = "192.168.56.#{i + 10}"
+
+    # Set up each node
+    global.vm.define name do |node|
+      node.vm.hostname = name
+      node.vm.network :private_network, ip: ip
+    end
+  end
+end
