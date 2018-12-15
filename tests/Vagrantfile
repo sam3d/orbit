@@ -7,7 +7,8 @@ Vagrant.configure("2") do |global|
   # Configure global settings for all nodes
   global.vm.box = "bento/ubuntu-18.04"
   global.vm.synced_folder ".", "/vagrant", disabled: true
-  global.vm.synced_folder "../", "/opt/orbit"
+  global.vm.synced_folder "..", "/opt/orbit"
+  global.vm.provision "shell", path: "setup.sh"
 
   (1..nodes).each do |i|
     name = "o#{i}"
