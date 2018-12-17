@@ -12,12 +12,13 @@ ensure-environment() {
 }
 
 install-deps() {
-    curl https://get.docker.com | bash
+    curl https://get.docker.com | bash # Install docker
+    apt-get install --yes glusterfs-server # Install glusterfs
 }
 
 cleanup() {
-    apt update --yes
-    apt upgrade --yes
+    apt-get update --yes
+    apt-get upgrade --yes
 }
 
 main "$@"
