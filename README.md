@@ -7,7 +7,8 @@
 	<img src="https://img.shields.io/badge/coverage-0%25-yellow.svg">
 	<img src="https://img.shields.io/badge/downloads-none-brightgreen.svg">
 	<img src="https://img.shields.io/badge/version-alpha-orange.svg">
-	<img src="https://img.shields.io/badge/license-MIT-blue.svg">
+	<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg"></a>
+	<a href="https://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 </p>
 
 <p align="center"><code>curl https://get.orbit.sh | bash</code></p>

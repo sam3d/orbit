@@ -1,10 +1,9 @@
-<template>
-</template>
+<template></template>
 
 <script>
 export default {
-	created() {
-		this.$router.push("/");
-	}
-}
+  created() {
+    this.$router.push("/");
+  }
+};
 </script>
