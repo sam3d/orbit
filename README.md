@@ -10,6 +10,8 @@
 	<a href="https://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 </p>
 
+<p align="center"><a href="https://recoded.xyz"><img src="docs/design/assets/maintained-by-recoded.svg" width="140px"></a></p>
+
 <p align="center"><code>curl https://get.orbit.sh | bash</code></p>
 
 <p align="center">Orbit is designed to take the pain away from self-hosted web applications. It leverages many existing open source container clustering and distributed data solutions to be able to provide a <i>5 minute setup</i> with minimal interaction with the command line. In fact, you only have to run that <i>one</i> command shown above!</p>
