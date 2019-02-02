@@ -12,7 +12,7 @@
 
 <p align="center"><code>curl https://get.orbit.sh | bash</code></p>
 
-<p align="center">Orbit is designed to take the pain away from self-hosted web applications. It leverages many existing open source clustering and distributed data solutions to create a <i>5 minute setup</i> with minimal interaction with the command line. In fact, you only have to run that <i>one</i> command shown above!</p>
+<p align="center">Orbit is designed to take the pain away from self-hosted web applications. It leverages many existing open source container clustering and distributed data solutions to be able to provide a <i>5 minute setup</i> with minimal interaction with the command line. In fact, you only have to run that <i>one</i> command shown above!</p>
 
 ## Key features
 
@@ -24,7 +24,7 @@
 
 4. **HTTP(S) edge-routing**: With built-in [LetsEncrypt](https://letsencrypt.org/) for obtaining SSL certificates, Orbit can use host-based routing to direct network traffic to your applications simply and quickly (along with automatic `www.` redirection too).
 
-5. **`git push` deployment**: Borrowing the [buildpacks](https://www.heroku.com/elements/buildpacks) from [Heroku](https://heroku.com/), you can deploy server-side code written in any programming language with an automatic detection and build process.
+5. **Automatic deployment**: Borrowing the [buildpacks](https://www.heroku.com/elements/buildpacks) from [Heroku](https://heroku.com/), you can deploy server-side code (using [`git push`](https://devcenter.heroku.com/articles/git#deploying-code), [GitHub](https://developer.github.com/webhooks/), or [GitLab](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html) webhooks) written in any programming language with an automatic detection and build process.
 
 6. **Data included**: Building on top of [GlusterFS](https://docs.gluster.org/en/latest/), out of the box orbit provides highly configurable, distributed, and fault tolerant block storage volumes and databases (such as [Postgres](https://www.postgresql.org/), [Redis](https://redis.io/) & [MySQL](https://www.mysql.com/)).
 
