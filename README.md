@@ -10,7 +10,7 @@
 	<a href="https://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 </p>
 
-<p align="center"><a href="https://recoded.xyz"><img src="docs/design/assets/maintained-by-recoded.svg" width="140px"></a></p>
+<p align="center"><a href="https://recoded.xyz"><img src="docs/design/assets/maintained-by-recoded.svg" width="140px" alt="Maintained by: Recoded"></a></p>
 
 <p align="center"><code>curl https://get.orbit.sh | bash</code></p>
 
