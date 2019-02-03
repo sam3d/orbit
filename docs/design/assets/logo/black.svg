@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="150px" height="150px" viewBox="0 0 150 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>logo/black</title>
+    <desc>Created with Sketch.</desc>
+    <g id="logos" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Black-on-White" transform="translate(-138.000000, -116.000000)" fill="#02101C" fill-rule="nonzero">
+            <g id="Group" transform="translate(138.000000, 116.000000)">
+                <path d="M75,150 C33.5786438,150 0,116.421356 0,75 C0,33.5786438 33.5786438,0 75,0 C116.421356,0 150,33.5786438 150,75 C150,116.421356 116.421356,150 75,150 Z M75.25,131.5 C106.316017,131.5 131.5,106.316017 131.5,75.25 C131.5,44.1839828 106.316017,19 75.25,19 C44.1839828,19 19,44.1839828 19,75.25 C19,106.316017 44.1839828,131.5 75.25,131.5 Z" id="logo/black"></path>
+            </g>
+        </g>
+    </g>
+</svg>

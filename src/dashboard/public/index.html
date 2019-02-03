@@ -1,15 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width,initial-scale=1.0">
-		<link rel="icon" href="<%= BASE_URL %>favicon.ico">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" href="<%= BASE_URL %>favicon.png" type="image/png" />
 
-		<title>Hello, world!</title>
-	</head>
+    <title>Orbit</title>
+  </head>
 
-	<body>
-		<app-root>Loading...</app-root>
-	</body>
+  <body>
+    <div id="dashboard"></div>
+
+    <div id="page-loader">
+      <style>
+        #page-loader {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 9999;
+
+          background-color: #f5f6fa;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      </style>
+    </div>
+  </body>
 </html>
