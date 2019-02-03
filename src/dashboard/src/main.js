@@ -12,8 +12,8 @@ const vue = new Vue({
   render: h => h(App)
 });
 
-setTimeout(() => {
-  // Emulate loading time
+(async () => {
+  await window.waitForLoaderTimeout();
   vue.$mount("#dashboard");
   window.removeLoader();
-}, 1000);
+})();

@@ -113,15 +113,39 @@
       </div>
 
       <script>
-        function removeLoader() {
-          var el = document.getElementById("page-loader");
-          el.classList.add("fadeOut");
+        (function() {
+          var timeoutDelay = 1000; // Number of seconds for timeout
+          var isRemoved = false; // Keep track of whether or not already removed
 
-          // Clean up the page loader elements
-          setTimeout(function() {
-            el.remove();
-          }, 500);
-        }
+          // Resolve the a promise after the delay has passed. This allows for
+          // making sure that the loader shows for at least the duration of the
+          // delay before showing the rest of the data.
+          var timeoutPromise = new Promise(function(resolve) {
+            setTimeout(function() {
+              resolve();
+            }, timeoutDelay);
+          });
+
+          window.waitForLoaderTimeout = function() {
+            return timeoutPromise;
+          };
+
+          // The function that's actually responsible for removing the loader
+          // and then cleaning up the loading element by removing it after the
+          // default animation delay of 0.5 seconds.
+          window.removeLoader = function() {
+            if (isRemoved) console.warn("The loader has already been removed");
+            else isRemoved = true;
+
+            var el = document.getElementById("page-loader");
+            el.classList.add("fadeOut");
+
+            // Clean up the page loader elements after timeout
+            setTimeout(function() {
+              el.remove();
+            }, 500);
+          };
+        })();
       </script>
     </div>
   </body>
