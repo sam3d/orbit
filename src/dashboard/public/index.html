@@ -31,13 +31,21 @@
 
         #page-loader #spinner-container {
           opacity: 0;
-          animation: fadeIn 0.75s forwards ease;
+          animation: fadeIn 0.5s forwards ease;
         }
 
         #page-loader #spinner {
           width: 100px;
           height: auto;
           animation: rotate 2s infinite linear;
+        }
+
+        #page-loader.fadeOut {
+          animation: fadeOut 0.5s forwards ease;
+        }
+
+        #page-loader.fadeOut #spinner-container {
+          animation: shrink 0.5s forwards ease;
         }
 
         @keyframes fadeIn {
@@ -49,6 +57,28 @@
           to {
             opacity: 1;
             transform: scale(1);
+          }
+        }
+
+        @keyframes fadeOut {
+          from {
+            opacity: 1;
+          }
+
+          to {
+            opacity: 0;
+          }
+        }
+
+        @keyframes shrink {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+
+          to {
+            opacity: 1;
+            transform: scale(0.9);
           }
         }
 
@@ -67,7 +97,7 @@
         <!-- prettier-ignore -->
         <svg id="spinner" width="150px" height="150px" viewBox="0 0 150 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
           <defs>
-              <linearGradient x1="25%" y1="25%" x2="75%%" y2="75%" id="main-linear-gradient">
+              <linearGradient x1="25%" y1="25%" x2="75%" y2="75%" id="main-linear-gradient">
                   <stop stop-color="#47C1E2" offset="0%"></stop>
                   <stop stop-color="#8959EA" offset="100%"></stop>
               </linearGradient>
@@ -81,6 +111,18 @@
           </g>
         </svg>
       </div>
+
+      <script>
+        function removeLoader() {
+          var el = document.getElementById("page-loader");
+          el.classList.add("fadeOut");
+
+          // Clean up the page loader elements
+          setTimeout(function() {
+            el.remove();
+          }, 500);
+        }
+      </script>
     </div>
   </body>
 </html>
