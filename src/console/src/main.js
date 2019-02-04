@@ -14,6 +14,6 @@ const vue = new Vue({
 
 (async () => {
   await window.waitForLoaderTimeout();
-  vue.$mount("#dashboard");
+  vue.$mount("#console");
   window.removeLoader();
 })();
