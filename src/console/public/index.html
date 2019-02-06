@@ -121,9 +121,7 @@
           // making sure that the loader shows for at least the duration of the
           // delay before showing the rest of the data.
           var timeoutPromise = new Promise(function(resolve) {
-            setTimeout(function() {
-              resolve();
-            }, timeoutDelay);
+            setTimeout(resolve, timeoutDelay);
           });
 
           window.waitForLoaderTimeout = function() {
