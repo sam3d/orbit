@@ -13,6 +13,7 @@ const vue = new Vue({
 });
 
 (async () => {
+  await store.dispatch("init");
   await window.waitForLoaderTimeout();
   vue.$mount("#console");
   window.removeLoader();
