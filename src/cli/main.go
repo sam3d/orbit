@@ -3,5 +3,5 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Welcome to the engine!")
+	fmt.Println("Welcome to the CLI")
 }
