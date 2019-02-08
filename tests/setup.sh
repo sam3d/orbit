@@ -1,6 +1,7 @@
 main() {
   ensure-environment
   install-deps
+  setup-orbit
   cleanup
 }
 
@@ -12,6 +13,23 @@ ensure-environment() {
 install-deps() {
   curl https://get.docker.com | bash # Install docker
   apt-get install --yes glusterfs-server # Install glusterfs
+}
+
+setup-orbit() {
+  # Build the console development image
+  docker build \
+    -f /opt/orbit/tests/dockerfiles/console.dockerfile \
+    -t orbit/console:dev \
+    /opt/orbit/src/console
+
+  # Run the console development image
+  docker run \
+    -v /var/run/orbit.sock:/var/run/orbit.sock \
+    -v /opt/orbit/src/console:/app \
+    -v /tmp/orbit/console/node_modules:/app/node_modules \
+    -p 6500:5000 \
+    --restart always --detach \
+    orbit/console:dev
 }
 
 cleanup() {
