@@ -6,9 +6,7 @@ main() {
 
 ensure-environment() {
   export DEBIAN_FRONTEND=noninteractive
-
   apt-get update --yes
-  apt-get upgrade --yes
 }
 
 install-deps() {
@@ -18,7 +16,6 @@ install-deps() {
 
 cleanup() {
   apt-get update --yes
-  apt-get upgrade --yes
 }
 
 main "$@"
