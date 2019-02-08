@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: process.env.VUE_APP_ORBIT_API_URL,
+  baseURL: "/api",
   validateStatus: status => true, // Always succeed
   redirect: true // Custom redirect handler option
 });
