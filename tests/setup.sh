@@ -13,6 +13,11 @@ ensure-environment() {
 install-deps() {
   curl https://get.docker.com | bash # Install docker
   apt-get install --yes glusterfs-server # Install glusterfs
+
+  # Install go and watcher tools
+  add-apt-repository --yes ppa:longsleep/golang-backports
+  apt-get update
+  apt-get install --yes iwatch golang-go
 }
 
 setup-orbit() {
