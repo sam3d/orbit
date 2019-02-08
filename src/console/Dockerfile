@@ -1,4 +1,4 @@
-FROM node:latest AS build
+FROM node:lts AS build
 WORKDIR /build
 COPY . .
 RUN npm install
