@@ -7,7 +7,7 @@ main() {
 
 ensure-environment() {
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update --yes
+  apt-get update
 }
 
 install-deps() {
@@ -33,7 +33,7 @@ setup-orbit() {
 }
 
 cleanup() {
-  apt-get update --yes
+  apt-get update
 }
 
 main "$@"
