@@ -1,6 +1,6 @@
 module.exports = {
   devServer: {
-    port: 3000,
+    port: 6500,
     proxy: {
       "/api": {
         target: { socketPath: "/var/run/orbit.sock" },
