@@ -37,7 +37,7 @@ setup-orbit() {
     -v /var/run/orbit.sock:/var/run/orbit.sock \
     -v /opt/orbit/src/console:/app \
     -v /tmp/orbit/console/node_modules:/app/node_modules \
-    -p 80:5000 \
+    -p 6500:6500 \
     --restart always --detach \
     orbit/console:dev
 }
