@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-nodes = 1
+nodes = 3
 
 Vagrant.configure("2") do |global|
   # Configure global settings for all nodes
