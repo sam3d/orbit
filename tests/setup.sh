@@ -1,3 +1,4 @@
+#!/bin/bash
 main() {
   ensure-environment
   install-deps
