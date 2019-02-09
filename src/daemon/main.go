@@ -1,6 +1,6 @@
 package main
 
-import "orbit.sh/agent/cmd"
+import "orbit.sh/daemon/cmd"
 
 func main() {
 	cmd.Execute()
