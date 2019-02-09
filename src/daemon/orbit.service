@@ -1,0 +1,12 @@
+[Unit]
+Description=Orbit
+Documentation=https://docs.orbit.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/orbitd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
