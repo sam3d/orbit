@@ -43,7 +43,6 @@ cleanup() {
   echo "==> The development environment is now setup!"
   echo "--> Please wait for a few minutes as docker spins up the development"
   echo "    containers. You will not see any output for a short while."
-  echo ""
 }
 
 main "$@"
