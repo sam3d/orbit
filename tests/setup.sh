@@ -13,16 +13,17 @@ ensure-environment() {
 
 install-deps() {
   curl https://get.docker.com | bash # Install docker
-  curl -L https://git.io/n-install | bash -s -- -y lts # Install Node.js
   apt-get install --yes glusterfs-server # Install glusterfs
+
+  # Install Node.js and process manager
+  curl -sL https://deb.nodesource.com/setup_10.x | bash -
+  apt-get install --yes nodejs
+  npm install -g pm2
 
   # Install golang
   add-apt-repository --yes ppa:longsleep/golang-backports
   apt-get update
   apt-get install --yes golang-go
-
-  # Install pm2
-  npm install -g pm2
 }
 
 setup-orbit() {
