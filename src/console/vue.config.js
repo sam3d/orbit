@@ -1,6 +1,6 @@
 module.exports = {
   devServer: {
-    port: 6500,
+    port: 3000,
     watchOptions: { poll: true },
     proxy: {
       "/api": {

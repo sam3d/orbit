@@ -1,7 +1,7 @@
 FROM node:lts
 WORKDIR /app
 
-ENV PORT 6500
-EXPOSE 6500
+ENV PORT 5000
+EXPOSE 5000
 
 CMD npm install; npm run dev
