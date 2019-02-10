@@ -18,7 +18,8 @@ install-deps() {
   # Install Node.js and process manager
   curl -sL https://deb.nodesource.com/setup_10.x | bash -
   apt-get install --yes nodejs
-  npm install -g pm2
+  npm install -g pm2 nodemon
+  pm2 startup
 
   # Install golang
   add-apt-repository --yes ppa:longsleep/golang-backports
@@ -41,6 +42,10 @@ setup-orbit() {
     -p 6500:6500 \
     --restart always --detach \
     orbit/console:dev
+
+  # Start building and listening for go files
+  pm2 start /opt/orbit/tests/restart.config.js
+  pm2 save
 }
 
 cleanup() {
