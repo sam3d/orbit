@@ -44,6 +44,8 @@ setup-orbit() {
     orbit/console:dev
 
   # Start building and listening for go files
+  cd /opt/orbit/src
+  go get # Install dependencies
   pm2 start /opt/orbit/tests/restart.config.js
   pm2 save
 }
