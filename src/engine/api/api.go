@@ -2,7 +2,8 @@ package api
 
 import (
 	"fmt"
-	"log"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,17 +18,43 @@ type Server struct {
 	Port       int
 	Host       string
 	SocketPath string
-	logger     *log.Logger
 }
 
 // New returns a new API server instance.
-func New() *Server {
+func New() (*Server, error) {
+	// Parse socket path.
+	socketPath, ok := os.LookupEnv("SOCKET_PATH")
+	if !ok {
+		socketPath = "/var/run/orbit.sock"
+	}
+
+	// Retrieve the port.
+	port := 6501
+	portEnv, ok := os.LookupEnv("PORT")
+	if ok {
+		// The port is being defined on the host, parse it.
+		parsedPort, err := strconv.Atoi(portEnv)
+		if err != nil {
+			return nil, fmt.Errorf("PORT is not a valid integer")
+		}
+		port = parsedPort
+
+		// Check for range errors.
+		if port < 0 || port > 65535 {
+			return nil, fmt.Errorf("PORT is out of range: must be between 0 and 65535")
+		}
+	}
+
+	// Retrieve the host. By default, this can work as an empty string (which is
+	// what the default value of os.Getenv will be).
+	host := os.Getenv("HOST")
+
 	return &Server{
 		router:     gin.Default(),
-		Port:       6501,
-		Host:       "",
-		SocketPath: "/var/run/orbit.sock",
-	}
+		Port:       port,
+		Host:       host,
+		SocketPath: socketPath,
+	}, nil
 }
 
 // Start will start the server. This is simply a proxy for the internal engine

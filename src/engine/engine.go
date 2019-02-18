@@ -7,8 +7,11 @@ import (
 // Start will start the engine
 func Start() {
 	// Start the API server
-	apiSrv := api.New()
-	apiSrv.SocketPath = "" // Disable socket listener
-	err := apiSrv.Start()
+	apiSrv, err := api.New()
+	apiSrv.SocketPath = ""
+	if err != nil {
+		panic(err)
+	}
+	err = apiSrv.Start()
 	panic(err)
 }
