@@ -4,14 +4,28 @@ import (
 	"orbit.sh/engine/api"
 )
 
-// Start will start the engine
+var (
+	// APIServer is the main instance of the API server running.
+	APIServer *api.Server
+)
+
+// Start will start the engine.
 func Start() {
-	// Start the API server
-	apiSrv, err := api.New()
-	apiSrv.SocketPath = ""
+	go startAPIServer()
+	select {} // Pause
+}
+
+// startAPIServer starts a new instance of the API server.
+func startAPIServer() {
+	// Create the API server.
+	srv, err := api.New()
 	if err != nil {
 		panic(err)
 	}
-	err = apiSrv.Start()
+	srv.SocketPath = ""
+	APIServer = srv
+
+	// Start the API server.
+	err = srv.Start()
 	panic(err)
 }
