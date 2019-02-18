@@ -24,7 +24,7 @@ type Server struct {
 func New() *Server {
 	return &Server{
 		router:     gin.Default(),
-		Port:       6500,
+		Port:       6501,
 		Host:       "",
 		SocketPath: "/var/run/orbit.sock",
 	}
