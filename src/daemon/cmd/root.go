@@ -5,15 +5,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"orbit.sh/engine"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "orbitd",
 	Short: "The primary runtime for the Orbit engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		engine.Start()
-		select {}
+
 	},
 }
 
