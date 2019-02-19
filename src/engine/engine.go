@@ -22,7 +22,6 @@ func startAPIServer() {
 	if err != nil {
 		panic(err)
 	}
-	srv.SocketPath = ""
 	APIServer = srv
 
 	// Start the API server.
