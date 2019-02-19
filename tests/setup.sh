@@ -23,10 +23,6 @@ install-deps() {
   add-apt-repository --yes ppa:longsleep/golang-backports
   apt-get update
   apt-get install --yes golang-go
-
-  # Install gin process manager for Go
-  go get -d github.com/codegangsta/gin
-  go build -o /usr/bin/gin /root/go/src/github.com/codegangsta/gin
 }
 
 cleanup() {
