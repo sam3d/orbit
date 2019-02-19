@@ -62,23 +62,21 @@ func New() (*Server, error) {
 // error occurs in either the UNIX socket listener or the standard TCP address
 // listener.
 func (s *Server) Start() error {
-	s.routes()                // Register the routes
-	errCh := make(chan error) // Handle errors from socket and TCP
+	s.routes()              // Register the routes
+	err := make(chan error) // Handle errors from socket and TCP
 
 	// Listen for UNIX socket requests.
 	go func() {
 		if s.SocketPath != "" {
-			err := s.router.RunUnix(s.SocketPath)
-			errCh <- err
+			err <- s.router.RunUnix(s.SocketPath)
 		}
 	}()
 
 	// Listen for standard TCP requests.
 	go func() {
 		bindAddr := fmt.Sprintf("%s:%d", s.Host, s.Port)
-		err := s.router.Run(bindAddr)
-		errCh <- err
+		err <- s.router.Run(bindAddr)
 	}()
 
-	return <-errCh
+	return <-err
 }
