@@ -55,7 +55,7 @@ var agentCmd = &cobra.Command{
 		go func() {
 			err := e.Start()
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		}()
 
