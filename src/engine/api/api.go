@@ -36,8 +36,8 @@ func New() *Server {
 // UNIX socket listener or the TCP listener (depending on which one errors
 // first).
 func (s *Server) Start() error {
-	s.routes()                // Register the routes
-	errCh := make(chan error) // Handle errors from socket and TCP
+	s.routes()              // Register the routes
+	err := make(chan error) // Handle errors from socket and TCP
 
 	// Keep track of processes so we know when to start.
 	var wg sync.WaitGroup
@@ -53,7 +53,7 @@ func (s *Server) Start() error {
 
 		log.Printf("[INFO] api: listening on socket %v", s.Socket)
 		wg.Done()
-		errCh <- s.router.RunUnix(s.Socket)
+		err <- s.router.RunUnix(s.Socket)
 	}()
 
 	// Listen for standard TCP requests.
@@ -65,7 +65,7 @@ func (s *Server) Start() error {
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
-			errCh <- fmt.Errorf("[ERR] api: port %d is out of range", s.Port)
+			err <- fmt.Errorf("[ERR] api: port %d is out of range", s.Port)
 			wg.Done()
 			return
 		}
@@ -73,7 +73,7 @@ func (s *Server) Start() error {
 		log.Printf("[WARN] api: listening on port %v", s.Port)
 		wg.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
-		errCh <- s.router.Run(bindAddr)
+		err <- s.router.Run(bindAddr)
 	}()
 
 	// Check for started status.
@@ -82,7 +82,7 @@ func (s *Server) Start() error {
 		close(s.started)
 	}()
 
-	return <-errCh
+	return <-err
 }
 
 // Started returns a channel as to whether or not the api has started.
