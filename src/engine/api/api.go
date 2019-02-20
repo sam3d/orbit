@@ -32,6 +32,11 @@ func New() *Server {
 	}
 }
 
+// Started returns a channel as to whether or not the api has started.
+func (s *Server) Started() <-chan struct{} {
+	return s.started
+}
+
 // Start will start the server. It will *always* return an error from either the
 // UNIX socket listener or the TCP listener (depending on which one errors
 // first).
@@ -83,9 +88,4 @@ func (s *Server) Start() error {
 	}()
 
 	return <-err
-}
-
-// Started returns a channel as to whether or not the api has started.
-func (s *Server) Started() <-chan struct{} {
-	return s.started
 }
