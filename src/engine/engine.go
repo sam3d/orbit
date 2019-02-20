@@ -10,48 +10,27 @@ import (
 	"orbit.sh/engine/store"
 )
 
-var (
-	// APIServer is the main instance of the API server running.
-	APIServer *api.Server
-	// Store is the main instance of the replicated store.
+// Engine is the primary all-encompassing struct for the primary Orbit
+// operations. This means that all of the top-level features such as the
+// replicated state store and REST API are located here.
+type Engine struct {
+	API   *api.Server
 	Store *store.Store
-	// Started is whether or not the engine is started.
-	Started = false
-	// Logger is the main logging instance for the engine.
+
 	Logger *log.Logger
-)
-
-// Start will start the engine.
-func Start() {
-	if Started {
-		Logger.Println("already started, ignoring request to start")
-		return
-	}
-
-	go startAPIServer()
-
-	Started = true
 }
 
-// startAPIServer starts a new instance of the API server.
-func startAPIServer() {
-	// Create the API server.
-	srv, err := api.New()
-	if err != nil {
-		panic(err)
+// New creates a new instance of the engine.
+func New() *Engine {
+	return &Engine{
+		API:   api.New(),
+		Store: store.New(),
 	}
-	APIServer = srv
-
-	// Start the API server.
-	err = srv.Start()
-	panic(err)
 }
 
-// Stop will halt the operation of the engine.
-func Stop() {
-	if !Started {
-		Logger.Println("already stopped, ignoring request to stop")
-		return
-	}
-	Started = false
+// Start starts the engine and all of its subcomponents. This is dependent on
+// state, so for example if the cluster still has yet to be set up, then it
+// won't start the store.
+func (e *Engine) Start() error {
+	return nil
 }

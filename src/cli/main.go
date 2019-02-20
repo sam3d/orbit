@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "orbit.sh/cli/cmd"
 
 func main() {
-	fmt.Println("Welcome to the CLI")
+	cmd.Execute()
 }
