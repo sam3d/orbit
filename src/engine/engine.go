@@ -1,35 +1,49 @@
+// Package engine provides the all-encompassing interface to the Orbit
+// background operations. This includes replicated state management, gossip
+// control, and ensuring that the state is maintained for the respective nodes.
 package engine
 
 import (
-	"fmt"
 	"log"
+
+	"orbit.sh/engine/api"
+	"orbit.sh/engine/store"
 )
 
-// Started is whether or not the engine process is running.
-var Started = false
-
-// Start will start the engine.
-func Start() error {
-	if Started {
-		return fmt.Errorf("Engine has already been started")
-	}
-
-	log.Println("[INFO] engine: Starting the engine...")
-	defer log.Println("[INFO] engine: Started")
-	Started = true
-
-	return nil
+// Engine is the primary all-encompassing struct for the primary Orbit
+// operations. This means that all of the top-level features such as the
+// replicated state store and REST API are located here.
+type Engine struct {
+	API   *api.Server
+	Store *store.Store
 }
 
-// Stop will stop the engine.
-func Stop() error {
-	if !Started {
-		return fmt.Errorf("Engine has already been stopped")
+// New creates a new instance of the engine.
+func New() *Engine {
+	return &Engine{
+		API:   api.New(),
+		Store: store.New(),
 	}
+}
 
-	log.Println("[INFO] engine: Stopping the engine...")
-	defer log.Println("[INFO] engine: Stopped")
-	Started = false
+// Start starts the engine and all of its subcomponents. This is dependent on
+// state, so for example if the cluster still has yet to be set up, then it
+// won't start the store.
+func (e *Engine) Start() error {
+	log.Println("[INFO] engine: Starting...")
 
-	return nil
+	err := make(chan error) // Main error channel closure
+
+	// Start the API Server.
+	go func() {
+		err <- e.API.Start()
+	}()
+
+	// Monitor started progress on each component.
+	go func() {
+		<-e.API.Started()
+		log.Println("[INFO] engine: Started")
+	}()
+
+	return <-err
 }
