@@ -54,9 +54,7 @@ var agentCmd = &cobra.Command{
 		// Start the engine.
 		go func() {
 			err := e.Start()
-			if err != nil {
-				log.Fatal(err)
-			}
+			log.Fatal(err)
 		}()
 
 		// Gracefully exit.
