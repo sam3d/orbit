@@ -5,6 +5,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,17 +16,15 @@ func init() {
 
 // Server is the root instance for the API server.
 type Server struct {
-	router    *gin.Engine
-	Port      int
-	EnableTCP bool
-	Socket    string
+	router *gin.Engine
+	Port   int
+	Socket string
 }
 
 // New returns a new API server instance.
 func New() *Server {
 	return &Server{
-		router:    gin.Default(),
-		EnableTCP: false,
+		router: gin.Default(),
 	}
 }
 
@@ -38,17 +37,29 @@ func (s *Server) Start() error {
 
 	// Listen for UNIX socket requests.
 	go func() {
-		if s.Socket != "" {
-			err <- s.router.RunUnix(s.Socket)
+		if s.Socket == "" {
+			log.Println("[WARN] api: not listening for socket requests")
+			return
 		}
+
+		err <- s.router.RunUnix(s.Socket)
 	}()
 
 	// Listen for standard TCP requests.
 	go func() {
-		if s.EnableTCP {
-			bindAddr := fmt.Sprintf(":%d", s.Port)
-			err <- s.router.Run(bindAddr)
+		if s.Port == -1 {
+			log.Println("[INFO] api: not listening for TCP requests")
+			return
 		}
+
+		if s.Port < 0 || s.Port > 65535 {
+			err <- fmt.Errorf("port %d is out of range", s.Port)
+			return
+		}
+
+		log.Printf("[WARN] api: listening on port %v", s.Port)
+		bindAddr := fmt.Sprintf(":%d", s.Port)
+		err <- s.router.Run(bindAddr)
 	}()
 
 	return <-err

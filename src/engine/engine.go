@@ -16,8 +16,6 @@ import (
 type Engine struct {
 	API   *api.Server
 	Store *store.Store
-
-	Logger *log.Logger
 }
 
 // New creates a new instance of the engine.
@@ -32,5 +30,15 @@ func New() *Engine {
 // state, so for example if the cluster still has yet to be set up, then it
 // won't start the store.
 func (e *Engine) Start() error {
-	return nil
+	log.Println("[INFO] engine: Starting...")
+	err := make(chan error)
+
+	// Start the API Server.
+	go func() {
+		err <- e.API.Start()
+	}()
+
+	log.Println("[INFO] engine: Started")
+
+	return <-err
 }
