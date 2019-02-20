@@ -1,7 +1,12 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/spf13/cobra"
+	"orbit.sh/engine"
 )
 
 var (
@@ -36,6 +41,33 @@ var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Start the primary long-running background process",
 	Run: func(cmd *cobra.Command, args []string) {
+		e := engine.New()
 
+		// Configure the API.
+		e.API.Port = Port
+		e.API.EnableTCP = EnableRemoteAPI
+		e.API.Socket = Socket
+
+		// Configure the store.
+		e.Store.RaftPort = RaftPort
+		e.Store.SerfPort = SerfPort
+		e.Store.WANSerfPort = WANSerfPort
+
+		// Start the engine
+		go func() {
+			err := e.Start()
+			if err != nil {
+				panic(err)
+			}
+		}()
+
+		fmt.Println("Started")
+
+		// Gracefully exit
+		exit := make(chan os.Signal)
+		signal.Notify(exit, os.Interrupt)
+		<-exit
+
+		fmt.Println("\nNow exiting...")
 	},
 }

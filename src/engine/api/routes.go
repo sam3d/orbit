@@ -6,7 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// routes registers all of the routes for the API server.
+// routes registers all of the default routes for the API server. This is a
+// separate method so that other routes can be added *after* the defaults but
+// *before* the server is started.
 func (s *Server) routes() {
 	s.router.Handle("GET", "/", s.handleIndex())
 	s.router.Handle("GET", "/state", s.handleState())
