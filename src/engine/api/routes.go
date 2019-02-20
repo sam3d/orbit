@@ -10,8 +10,10 @@ import (
 // separate method so that other routes can be added *after* the defaults but
 // *before* the server is started.
 func (s *Server) routes() {
-	s.router.Handle("GET", "/", s.handleIndex())
-	s.router.Handle("GET", "/state", s.handleState())
+	r := s.router
+
+	r.GET("/", s.handleIndex())
+	r.GET("/state", s.handleState())
 }
 
 func (s *Server) handleIndex() gin.HandlerFunc {
