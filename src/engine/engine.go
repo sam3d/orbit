@@ -31,14 +31,19 @@ func New() *Engine {
 // won't start the store.
 func (e *Engine) Start() error {
 	log.Println("[INFO] engine: Starting...")
-	err := make(chan error)
+
+	err := make(chan error) // Main error channel closure
 
 	// Start the API Server.
 	go func() {
 		err <- e.API.Start()
 	}()
 
-	log.Println("[INFO] engine: Started")
+	// Monitor started progress on each component.
+	go func() {
+		<-e.API.Started()
+		log.Println("[INFO] engine: Started")
+	}()
 
 	return <-err
 }

@@ -6,6 +6,7 @@ package api
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,12 +20,15 @@ type Server struct {
 	router *gin.Engine
 	Port   int
 	Socket string
+
+	started chan struct{}
 }
 
 // New returns a new API server instance.
 func New() *Server {
 	return &Server{
-		router: gin.Default(),
+		router:  gin.Default(),
+		started: make(chan struct{}),
 	}
 }
 
@@ -34,6 +38,11 @@ func New() *Server {
 func (s *Server) Start() error {
 	s.routes()              // Register the routes
 	err := make(chan error) // Handle errors from socket and TCP
+
+	go func() {
+		time.Sleep(time.Second * 1)
+		close(s.started)
+	}()
 
 	// Listen for UNIX socket requests.
 	go func() {
@@ -63,4 +72,9 @@ func (s *Server) Start() error {
 	}()
 
 	return <-err
+}
+
+// Started returns a channel as to whether or not the api has started.
+func (s *Server) Started() <-chan struct{} {
+	return s.started
 }
