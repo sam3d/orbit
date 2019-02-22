@@ -21,20 +21,34 @@ type Server struct {
 	Port   int
 	Socket string
 
-	started chan struct{}
+	startedWg sync.WaitGroup
 }
 
 // New returns a new API server instance.
 func New() *Server {
-	return &Server{
-		router:  gin.New(),
-		started: make(chan struct{}),
+	s := &Server{
+		router: gin.New(),
 	}
+
+	// We need to set the waitgroup at start so that if the user requests the
+	// started channel, it waits until it has started. We need to remember to
+	// release this extra waitgroup lock after the first addition, and add it
+	// again when the API is stopped.
+	s.startedWg.Add(1)
+
+	return s
 }
 
 // Started returns a channel as to whether or not the api has started.
 func (s *Server) Started() <-chan struct{} {
-	return s.started
+	ch := make(chan struct{})
+
+	go func() {
+		s.startedWg.Wait()
+		close(ch)
+	}()
+
+	return ch
 }
 
 // Start will start the server. It will *always* return an error from either the
@@ -44,20 +58,19 @@ func (s *Server) Start() error {
 	s.routes()              // Register the routes
 	err := make(chan error) // Handle errors from socket and TCP
 
-	// Keep track of processes so we know when to start.
-	var wg sync.WaitGroup
-	wg.Add(2)
+	s.startedWg.Add(2)
+	s.startedWg.Done() // Clear out the initial waitgroup
 
 	// Listen for UNIX socket requests.
 	go func() {
 		if s.Socket == "" {
 			log.Println("[WARN] api: not listening for socket requests")
-			wg.Done()
+			s.startedWg.Done()
 			return
 		}
 
 		log.Printf("[INFO] api: listening on socket %v", s.Socket)
-		wg.Done()
+		s.startedWg.Done()
 		err <- s.router.RunUnix(s.Socket)
 	}()
 
@@ -65,26 +78,20 @@ func (s *Server) Start() error {
 	go func() {
 		if s.Port == -1 {
 			log.Println("[INFO] api: not listening for TCP requests")
-			wg.Done()
+			s.startedWg.Done()
 			return
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
 			err <- fmt.Errorf("[ERR] api: port %d is out of range", s.Port)
-			wg.Done()
+			s.startedWg.Done()
 			return
 		}
 
 		log.Printf("[WARN] api: listening on port %v", s.Port)
-		wg.Done()
+		s.startedWg.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
 		err <- s.router.Run(bindAddr)
-	}()
-
-	// Check for started status.
-	go func() {
-		wg.Wait()
-		close(s.started)
 	}()
 
 	return <-err
