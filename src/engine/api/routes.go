@@ -18,7 +18,7 @@ func (s *Server) routes() {
 
 func (s *Server) handleIndex() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello, world!")
+		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
 	}
 }
 

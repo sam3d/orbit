@@ -47,3 +47,10 @@ func (e *Engine) Start() error {
 
 	return <-err
 }
+
+// Stop will stop the operation of the engine instance.
+func (e *Engine) Stop() error {
+	log.Println("[INFO] engine: Stopping...")
+	log.Println("[INFO] engine: Stopped")
+	return nil
+}

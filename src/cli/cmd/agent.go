@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -61,5 +62,11 @@ var agentCmd = &cobra.Command{
 		exit := make(chan os.Signal)
 		signal.Notify(exit, os.Interrupt)
 		<-exit
+		fmt.Println("\nReceived interrupt...")
+
+		err := e.Stop()
+		if err != nil {
+			panic(err)
+		}
 	},
 }
