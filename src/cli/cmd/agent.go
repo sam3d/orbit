@@ -34,8 +34,9 @@ func init() {
 }
 
 var agentCmd = &cobra.Command{
-	Use:   "agent",
-	Short: "Start the primary long-running background process",
+	Use:     "agent",
+	Short:   "Start the primary long-running background process",
+	Aliases: []string{"a"},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Configure the logger.
 		log.SetFlags(log.LstdFlags)
