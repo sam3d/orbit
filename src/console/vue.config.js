@@ -1,10 +1,10 @@
 module.exports = {
   devServer: {
-    port: 6500,
+    port: 3000,
     watchOptions: { poll: true },
     proxy: {
       "/api": {
-        target: { socketPath: "/var/run/orbit.sock" },
+        target: process.env.ORBIT_API_URL || "http://localhost:6501",
         changeOrigin: false,
         pathRewrite: { "/api": "" }
       }
