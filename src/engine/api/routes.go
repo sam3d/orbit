@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,19 @@ import (
 func (s *Server) routes() {
 	r := s.router
 
+	// Register middleware
+	r.Use(s.simpleLogger())
+
+	// Register custom routes
 	r.GET("/", s.handleIndex())
 	r.GET("/state", s.handleState())
+}
+
+func (s *Server) simpleLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
+		c.Next()
+	}
 }
 
 func (s *Server) handleIndex() gin.HandlerFunc {

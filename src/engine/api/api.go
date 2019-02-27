@@ -64,12 +64,12 @@ func (s *Server) Start() error {
 	// Listen for UNIX socket requests.
 	go func() {
 		if s.Socket == "" {
-			log.Println("[WARN] api: not listening for socket requests")
+			log.Println("[WARN] api: Not listening for socket requests")
 			s.startedWg.Done()
 			return
 		}
 
-		log.Printf("[INFO] api: listening on socket %v", s.Socket)
+		log.Printf("[INFO] api: Listening on socket %v", s.Socket)
 		s.startedWg.Done()
 		err <- s.router.RunUnix(s.Socket)
 	}()
@@ -77,18 +77,18 @@ func (s *Server) Start() error {
 	// Listen for standard TCP requests.
 	go func() {
 		if s.Port == -1 {
-			log.Println("[INFO] api: not listening for TCP requests")
+			log.Println("[INFO] api: Not listening for TCP requests")
 			s.startedWg.Done()
 			return
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
-			err <- fmt.Errorf("[ERR] api: port %d is out of range", s.Port)
+			err <- fmt.Errorf("[ERR] api: Port %d is out of range", s.Port)
 			s.startedWg.Done()
 			return
 		}
 
-		log.Printf("[WARN] api: listening on port %v", s.Port)
+		log.Printf("[WARN] api: Listening on port %v", s.Port)
 		s.startedWg.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
 		err <- s.router.Run(bindAddr)
