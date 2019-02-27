@@ -3,8 +3,9 @@ package cmd
 import "github.com/spf13/cobra"
 
 var rootCmd = &cobra.Command{
-	Use:   "orbit",
-	Short: "A simple and scalable self-hosted Platform as a Service",
+	Use:     "orbit",
+	Short:   "A simple and scalable self-hosted Platform as a Service",
+	Aliases: []string{"obt"},
 }
 
 // Execute will run the root cobra command.
