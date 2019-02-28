@@ -23,7 +23,7 @@ type Store struct {
 	RaftMaxPool         int
 
 	mu    sync.Mutex
-	state *State
+	state *StoreState
 	raft  *raft.Raft // Primary consensus mechanism
 }
 
@@ -40,6 +40,6 @@ func NewStore(e *Engine) *Store {
 		RaftTimeout:         10 * time.Second,
 		RaftMaxPool:         7,
 
-		state: &State{},
+		state: &StoreState{},
 	}
 }
