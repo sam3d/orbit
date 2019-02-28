@@ -160,6 +160,14 @@ func (e *Engine) readConfig() error {
 		return err
 	}
 
+	// The config status should never be 0 in the config file (init), as this is a
+	// status reserved for before the cluster has loaded the config. Now that is
+	// *has* loaded, set it to 1 (setup), or the first state for a cluster after
+	// it has been setup.
+	if config.Status == 0 {
+		config.Status = 1
+	}
+
 	// And now we actually set the config file contents
 	e.Store.AdvertiseAddr = net.ParseIP(config.AdvertiseAddr)
 	e.Status = config.Status

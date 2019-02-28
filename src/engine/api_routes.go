@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -36,6 +37,9 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"success": true})
+		c.JSON(http.StatusOK, gin.H{
+			"status":        s.engine.Status,
+			"status_string": fmt.Sprintf("%s", s.engine.Status),
+		})
 	}
 }
