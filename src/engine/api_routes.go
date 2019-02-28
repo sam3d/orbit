@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// routes registers all of the default routes for the API server. This is a
+// handlers registers all of the default routes for the API server. This is a
 // separate method so that other routes can be added *after* the defaults but
 // *before* the server is started.
-func (s *APIServer) routes() {
+func (s *APIServer) handlers() {
 	r := s.router
 
 	// Register middleware

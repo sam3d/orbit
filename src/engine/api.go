@@ -55,7 +55,7 @@ func (s *APIServer) Started() <-chan struct{} {
 // UNIX socket listener or the TCP listener (depending on which one errors
 // first).
 func (s *APIServer) Start() error {
-	s.routes()              // Register the routes
+	s.handlers()            // Register the routes
 	err := make(chan error) // Handle errors from socket and TCP
 
 	s.startedWg.Add(2)
