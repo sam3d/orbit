@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"net"
 	"sync"
 	"time"
 
@@ -12,16 +13,14 @@ import (
 type Store struct {
 	engine *Engine // The engine instance that the store is tied to
 
-	RaftPort    int
-	SerfPort    int
-	WANSerfPort int
+	AdvertiseAddr net.IP
+	RaftPort      int
+	SerfPort      int
+	WANSerfPort   int
 
 	RetainSnapshotCount int
 	RaftTimeout         time.Duration
 	RaftMaxPool         int
-
-	RaftDir string // The directory that Raft will use
-	LocalID string // The ID of this node
 
 	mu    sync.Mutex
 	state *State
