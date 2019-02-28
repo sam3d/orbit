@@ -3,26 +3,21 @@
 // control, and ensuring that the state is maintained for the respective nodes.
 package engine
 
-import (
-	"log"
-
-	"orbit.sh/engine/api"
-	"orbit.sh/engine/store"
-)
+import "log"
 
 // Engine is the primary all-encompassing struct for the primary Orbit
 // operations. This means that all of the top-level features such as the
 // replicated state store and REST API are located here.
 type Engine struct {
-	API   *api.Server
-	Store *store.Store
+	APIServer *APIServer
+	Store     *Store
 }
 
 // New creates a new instance of the engine.
 func New() *Engine {
 	return &Engine{
-		API:   api.New(),
-		Store: store.New(),
+		APIServer: NewAPIServer(),
+		Store:     NewStore(),
 	}
 }
 
@@ -36,12 +31,12 @@ func (e *Engine) Start() error {
 
 	// Start the API Server.
 	go func() {
-		err <- e.API.Start()
+		err <- e.APIServer.Start()
 	}()
 
 	// Monitor started progress on each component.
 	go func() {
-		<-e.API.Started()
+		<-e.APIServer.Started()
 		log.Println("[INFO] engine: Started")
 	}()
 

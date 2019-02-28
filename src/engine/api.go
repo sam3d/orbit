@@ -1,7 +1,4 @@
-// Package api provides an HTTP interface to the engine operations that exposes
-// both on a port and on a UNIX socket. The CLI will, by default, dial into the
-// UNIX socket that is exposed and consume the HTTP API.
-package api
+package engine
 
 import (
 	"fmt"
@@ -15,18 +12,18 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
-// Server is the root instance for the API server.
-type Server struct {
-	router *gin.Engine
+// APIServer is the root instance for the API server.
+type APIServer struct {
 	Port   int
 	Socket string
 
+	router    *gin.Engine
 	startedWg sync.WaitGroup
 }
 
-// New returns a new API server instance.
-func New() *Server {
-	s := &Server{
+// NewAPIServer returns a new API server instance.
+func NewAPIServer() *APIServer {
+	s := &APIServer{
 		router: gin.New(),
 	}
 
@@ -40,7 +37,7 @@ func New() *Server {
 }
 
 // Started returns a channel as to whether or not the api has started.
-func (s *Server) Started() <-chan struct{} {
+func (s *APIServer) Started() <-chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
@@ -54,7 +51,7 @@ func (s *Server) Started() <-chan struct{} {
 // Start will start the server. It will *always* return an error from either the
 // UNIX socket listener or the TCP listener (depending on which one errors
 // first).
-func (s *Server) Start() error {
+func (s *APIServer) Start() error {
 	s.routes()              // Register the routes
 	err := make(chan error) // Handle errors from socket and TCP
 

@@ -45,8 +45,8 @@ var agentCmd = &cobra.Command{
 		e := engine.New()
 
 		// Configure the API.
-		e.API.Port = Port
-		e.API.Socket = Socket
+		e.APIServer.Port = Port
+		e.APIServer.Socket = Socket
 
 		// Configure the store.
 		e.Store.RaftPort = RaftPort

@@ -1,4 +1,4 @@
-package api
+package engine
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 // routes registers all of the default routes for the API server. This is a
 // separate method so that other routes can be added *after* the defaults but
 // *before* the server is started.
-func (s *Server) routes() {
+func (s *APIServer) routes() {
 	r := s.router
 
 	// Register middleware
@@ -21,20 +21,20 @@ func (s *Server) routes() {
 	r.GET("/state", s.handleState())
 }
 
-func (s *Server) simpleLogger() gin.HandlerFunc {
+func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
 		c.Next()
 	}
 }
 
-func (s *Server) handleIndex() gin.HandlerFunc {
+func (s *APIServer) handleIndex() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
 	}
 }
 
-func (s *Server) handleState() gin.HandlerFunc {
+func (s *APIServer) handleState() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": true})
 	}
