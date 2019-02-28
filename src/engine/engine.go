@@ -100,9 +100,16 @@ type config struct {
 	Status        Status `json:"status"`
 }
 
+// configPath will return the path of the config file that the engine will use.
+// By default, this is a concatenation of the DataPath and ConfigFile struct
+// fields.
+func (e Engine) configPath() string {
+	return filepath.Join(e.DataPath, e.ConfigFile)
+}
+
 // createConfig will create the configuration file for the engine.
-func (e *Engine) createConfig() error {
-	path := filepath.Join(e.DataPath, e.ConfigFile)
+func (e Engine) createConfig() error {
+	path := e.configPath()
 
 	defaultConfig := &config{Status: Setup} // By default, we want to setup mode
 	b, err := json.MarshalIndent(defaultConfig, "", "  ")
@@ -111,7 +118,7 @@ func (e *Engine) createConfig() error {
 	}
 	b = append(b, '\n') // Add newline to the end of the file
 
-	if err := ioutil.WriteFile(path, b, 0644); err != nil {
+	if err := ioutil.WriteFile(path, b, 0666); err != nil {
 		return err
 	}
 
@@ -120,7 +127,7 @@ func (e *Engine) createConfig() error {
 
 // readConfig will read in the configuration file and parse it.
 func (e *Engine) readConfig() error {
-	path := filepath.Join(e.DataPath, e.ConfigFile)
+	path := e.configPath()
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -158,5 +165,40 @@ func (e *Engine) readConfig() error {
 	e.Status = config.Status
 
 	log.Printf("[INFO] engine: Imported config %s\n", path)
+
+	// Perform test write that doesn't change any of the data. This will format
+	// the data in the file if that hasn't been correctly formatted up until
+	// this point.
+	if err := e.writeConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// writeConfig will create a config file based on the current engine settings.
+func (e Engine) writeConfig() error {
+	path := e.configPath()
+
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("[ERR] engine: Could not open config for writing %s\n", path)
+		return err
+	}
+	defer file.Close()
+
+	config := config{
+		Status:        e.Status,
+		AdvertiseAddr: string(e.Store.AdvertiseAddr),
+	}
+
+	en := json.NewEncoder(file)
+	en.SetIndent("", "  ")
+	if err := en.Encode(&config); err != nil {
+		log.Printf("[ERR] engine: Could not write config: %s\n", path)
+		return err
+	}
+
+	log.Printf("[INFO] engine: Updated config %s", path)
 	return nil
 }
