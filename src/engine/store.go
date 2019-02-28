@@ -10,6 +10,8 @@ import (
 // Store is a replicated state machine, where all changes are made via Raft
 // distributed consensus.
 type Store struct {
+	engine *Engine // The engine instance that the store is tied to
+
 	RaftPort    int
 	SerfPort    int
 	WANSerfPort int
@@ -27,8 +29,10 @@ type Store struct {
 }
 
 // NewStore returns a new instance of the store.
-func NewStore() *Store {
+func NewStore(e *Engine) *Store {
 	return &Store{
+		engine: e,
+
 		RaftPort:    6502,
 		SerfPort:    6503,
 		WANSerfPort: 6504,

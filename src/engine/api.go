@@ -14,6 +14,8 @@ func init() {
 
 // APIServer is the root instance for the API server.
 type APIServer struct {
+	engine *Engine
+
 	Port   int
 	Socket string
 
@@ -22,8 +24,9 @@ type APIServer struct {
 }
 
 // NewAPIServer returns a new API server instance.
-func NewAPIServer() *APIServer {
+func NewAPIServer(e *Engine) *APIServer {
 	s := &APIServer{
+		engine: e,
 		router: gin.New(),
 	}
 

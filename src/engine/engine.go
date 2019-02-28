@@ -15,10 +15,10 @@ type Engine struct {
 
 // New creates a new instance of the engine.
 func New() *Engine {
-	return &Engine{
-		APIServer: NewAPIServer(),
-		Store:     NewStore(),
-	}
+	e := &Engine{}
+	e.Store = NewStore(e)
+	e.APIServer = NewAPIServer(e)
+	return e
 }
 
 // Start starts the engine and all of its subcomponents. This is dependent on
