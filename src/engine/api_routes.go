@@ -20,6 +20,7 @@ func (s *APIServer) handlers() {
 
 	// Register custom routes
 	r.GET("/", s.handleIndex())
+	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
 	r.POST("/bootstrap", s.handleBootstrap())
 }
@@ -37,6 +38,17 @@ func (s *APIServer) simpleLogger() gin.HandlerFunc {
 func (s *APIServer) handleIndex() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
+	}
+}
+
+func (s *APIServer) handleIP() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip, err := getPublicIP()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "%s", "Could not retrieve public IP")
+			return
+		}
+		c.String(http.StatusOK, ip)
 	}
 }
 
