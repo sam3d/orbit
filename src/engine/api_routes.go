@@ -87,8 +87,7 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 		}
 
 		if err := store.Bootstrap(); err != nil {
-			fmt.Println("store open error:", err)
-			c.String(http.StatusInternalServerError, "There was an error bootstrapping the cluster.")
+			c.String(http.StatusInternalServerError, "%s.", err)
 			return
 		}
 

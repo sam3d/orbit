@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -166,7 +167,9 @@ func (s *Store) Open() error {
 // work if the store is not open or joined to another node.
 func (s *Store) Bootstrap() error {
 	if s.engine.Status == Ready {
-		return fmt.Errorf("cannot bootstrap a store that is already bootstrapped")
+		err := fmt.Errorf("Cannot bootstrap a store that is already bootstrapped")
+		log.Printf("[ERR] store: %s", err)
+		return err
 	}
 
 	bootstrapConfig := raft.Configuration{
