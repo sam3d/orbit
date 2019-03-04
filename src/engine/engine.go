@@ -5,6 +5,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -47,6 +48,8 @@ const (
 	Init Status = iota
 	// Setup is when the engine has not yet been bootstrapped.
 	Setup
+	// Ready is when the engine can properly be used.
+	Ready
 )
 
 func (s Status) String() string {
@@ -55,6 +58,8 @@ func (s Status) String() string {
 		return "init"
 	case Setup:
 		return "setup"
+	case Ready:
+		return "ready"
 	default:
 		return ""
 	}
@@ -66,7 +71,7 @@ func (s Status) String() string {
 func (e *Engine) Start() error {
 	log.Println("[INFO] engine: Starting...")
 
-	err := make(chan error) // Main error channel closure
+	errCh := make(chan error) // Main error channel closure
 
 	// Read in the config
 	if err := e.readConfig(); err != nil {
@@ -75,16 +80,24 @@ func (e *Engine) Start() error {
 
 	// Start the API Server.
 	go func() {
-		err <- e.APIServer.Start()
+		errCh <- e.APIServer.Start()
+	}()
+
+	// Open the Store.
+	go func() {
+		if e.Status == Ready && e.Store.AdvertiseAddr != nil {
+			errCh <- e.Store.Open()
+		}
 	}()
 
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
+		<-e.Store.Started()
 		log.Println("[INFO] engine: Started")
 	}()
 
-	return <-err
+	return <-errCh
 }
 
 // Stop will stop the operation of the engine instance.
@@ -98,6 +111,7 @@ func (e *Engine) Stop() error {
 type config struct {
 	AdvertiseAddr string `json:"advertise_addr"`
 	Status        Status `json:"status"`
+	ID            string `json:"id"`
 }
 
 // configPath will return the path of the config file that the engine will use.
@@ -171,6 +185,7 @@ func (e *Engine) readConfig() error {
 	// And now we actually set the config file contents
 	e.Store.AdvertiseAddr = net.ParseIP(config.AdvertiseAddr)
 	e.Status = config.Status
+	e.Store.ID = config.ID
 
 	log.Printf("[INFO] engine: Imported config %s\n", path)
 
@@ -195,9 +210,19 @@ func (e Engine) writeConfig() error {
 	}
 	defer file.Close()
 
+	// Ensure that the address is not null. If it is, make sure to use a blank
+	// string.
+	var parsedAddr string
+	if e.Store.AdvertiseAddr == nil {
+		parsedAddr = ""
+	} else {
+		parsedAddr = fmt.Sprintf("%s", e.Store.AdvertiseAddr)
+	}
+
 	config := config{
 		Status:        e.Status,
-		AdvertiseAddr: string(e.Store.AdvertiseAddr),
+		AdvertiseAddr: parsedAddr,
+		ID:            e.Store.ID,
 	}
 
 	en := json.NewEncoder(file)
