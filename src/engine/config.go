@@ -76,9 +76,9 @@ func (e *Engine) readConfig() error {
 		// Check if the error is that the file does not exist so that we can create
 		// it.
 		if os.IsNotExist(err) {
-			log.Printf("[INFO] engine: Creating %s\n", path)
+			log.Printf("[INFO] engine: Creating %s", path)
 			if err := e.createConfig(); err != nil {
-				log.Printf("[ERR] engine: Could not create %s\n", path)
+				log.Printf("[ERR] engine: Could not create %s", path)
 				return err
 			}
 			// Now that we have re-created the config file, we can create it.
@@ -87,7 +87,7 @@ func (e *Engine) readConfig() error {
 
 		// Check if the file can't be read.
 		if err == os.ErrPermission {
-			log.Printf("[ERR] engine: Insufficient read permissions for %s\n", path)
+			log.Printf("[ERR] engine: Insufficient read permissions for %s", path)
 			return err
 		}
 
@@ -98,7 +98,7 @@ func (e *Engine) readConfig() error {
 	// Put the config file in the config struct
 	var config config
 	if err := json.Unmarshal(file, &config); err != nil {
-		log.Printf("[ERR] engine: Parsing config file %s\n", path)
+		log.Printf("[ERR] engine: Parsing config file %s", path)
 		return err
 	}
 
@@ -111,7 +111,7 @@ func (e *Engine) readConfig() error {
 	}
 
 	e.unmarshalConfig(config) // Actually set the config
-	log.Printf("[INFO] engine: Imported config %s\n", path)
+	log.Printf("[INFO] engine: Imported config %s", path)
 
 	// Perform test write that doesn't change any of the data. This will format
 	// the data in the file if that hasn't been correctly formatted up until
@@ -129,7 +129,7 @@ func (e Engine) writeConfig() error {
 
 	file, err := os.Create(path)
 	if err != nil {
-		log.Printf("[ERR] engine: Could not open config for writing %s\n", path)
+		log.Printf("[ERR] engine: Could not open config for writing %s", path)
 		return err
 	}
 	defer file.Close()
@@ -139,7 +139,7 @@ func (e Engine) writeConfig() error {
 	en := json.NewEncoder(file)
 	en.SetIndent("", "  ")
 	if err := en.Encode(&config); err != nil {
-		log.Printf("[ERR] engine: Could not write config: %s\n", path)
+		log.Printf("[ERR] engine: Could not write config: %s", path)
 		return err
 	}
 
