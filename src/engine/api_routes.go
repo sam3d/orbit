@@ -54,12 +54,12 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 	store := engine.Store
 
 	type body struct {
-		RawIP string `json:"ip"`
+		RawIP string `form:"ip" json:"ip"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
-		c.BindJSON(&body)
+		c.Bind(&body)
 
 		if body.RawIP == "" {
 			c.String(http.StatusBadRequest, "You must provide an IP address.")
