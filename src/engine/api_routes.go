@@ -26,8 +26,11 @@ func (s *APIServer) handlers() {
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		go func() {
+			log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
+		}()
+
 		c.Next()
-		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
 	}
 }
 
