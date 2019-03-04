@@ -42,6 +42,31 @@ func (e Engine) createConfig() error {
 	return nil
 }
 
+// marshalConfig will convert the engine settings into a config object.
+func (e Engine) marshalConfig() config {
+	// Ensure that the address is not null. If it is, make sure to use a blank
+	// string.
+	var parsedAddr string
+	if e.Store.AdvertiseAddr == nil {
+		parsedAddr = ""
+	} else {
+		parsedAddr = fmt.Sprintf("%s", e.Store.AdvertiseAddr)
+	}
+
+	return config{
+		Status:        e.Status,
+		AdvertiseAddr: parsedAddr,
+		ID:            e.Store.ID,
+	}
+}
+
+// unmarshalConfig will take in the config object and set the engine properties.
+func (e *Engine) unmarshalConfig(c config) {
+	e.Store.AdvertiseAddr = net.ParseIP(c.AdvertiseAddr)
+	e.Status = c.Status
+	e.Store.ID = c.ID
+}
+
 // readConfig will read in the configuration file and parse it.
 func (e *Engine) readConfig() error {
 	path := e.configPath()
@@ -85,11 +110,7 @@ func (e *Engine) readConfig() error {
 		config.Status = 1
 	}
 
-	// And now we actually set the config file contents
-	e.Store.AdvertiseAddr = net.ParseIP(config.AdvertiseAddr)
-	e.Status = config.Status
-	e.Store.ID = config.ID
-
+	e.unmarshalConfig(config) // Actually set the config
 	log.Printf("[INFO] engine: Imported config %s\n", path)
 
 	// Perform test write that doesn't change any of the data. This will format
@@ -113,20 +134,7 @@ func (e Engine) writeConfig() error {
 	}
 	defer file.Close()
 
-	// Ensure that the address is not null. If it is, make sure to use a blank
-	// string.
-	var parsedAddr string
-	if e.Store.AdvertiseAddr == nil {
-		parsedAddr = ""
-	} else {
-		parsedAddr = fmt.Sprintf("%s", e.Store.AdvertiseAddr)
-	}
-
-	config := config{
-		Status:        e.Status,
-		AdvertiseAddr: parsedAddr,
-		ID:            e.Store.ID,
-	}
+	config := e.marshalConfig() // Actually create the config
 
 	en := json.NewEncoder(file)
 	en.SetIndent("", "  ")
