@@ -70,7 +70,7 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 		}
 
 		store.AdvertiseAddr = ip
-		defer engine.writeConfig() // No matter what happens, ensure to write the config
+		engine.writeConfig() // Save the IP address
 
 		// Open the store.
 		openErrCh := make(chan error)
@@ -94,6 +94,7 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 
 		// Update the engine status
 		engine.Status = Ready
-		c.String(http.StatusOK, "The server has successfully bootstrapped.")
+		engine.writeConfig() // Save the engine status
+		c.String(http.StatusOK, "The server has been successfully bootstrapped.")
 	}
 }
