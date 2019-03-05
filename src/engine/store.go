@@ -132,8 +132,6 @@ func (s *Store) Open() error {
 
 	// Instantiate the store instances.
 	{
-		os.MkdirAll(filepath.Join(s.engine.DataPath, "raft"), 0644)
-
 		// The log store.
 		logDB, err := raftboltdb.NewBoltStore(filepath.Join(s.engine.DataPath, "raft", "log.db"))
 		if err != nil {

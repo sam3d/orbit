@@ -5,6 +5,8 @@ package engine
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 )
 
 // Engine is the primary all-encompassing struct for the primary Orbit
@@ -66,6 +68,13 @@ func (e *Engine) Start() error {
 	log.Println("[INFO] engine: Starting...")
 
 	errCh := make(chan error) // Main error channel closure
+
+	// Ensure that required directories exist. This also involves creating a blank
+	// directory for the root directory just for the sake of completion.
+	dirs := []string{"", "raft"}
+	for _, dir := range dirs {
+		os.MkdirAll(filepath.Join(e.DataPath, dir), 0644)
+	}
 
 	// Read in the config
 	if err := e.readConfig(); err != nil {
