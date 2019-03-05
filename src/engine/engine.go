@@ -73,7 +73,13 @@ func (e *Engine) Start() error {
 	// directory for the root directory just for the sake of completion.
 	dirs := []string{"", "raft"}
 	for _, dir := range dirs {
-		os.MkdirAll(filepath.Join(e.DataPath, dir), 0644)
+		path := filepath.Join(e.DataPath, dir)
+		_, err := os.Stat(path)
+		if !os.IsNotExist(err) {
+			continue
+		}
+		log.Printf("[INFO] engine: Creating new directory %s", path)
+		os.MkdirAll(path, 0644)
 	}
 
 	// Read in the config
