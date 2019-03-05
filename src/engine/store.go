@@ -166,7 +166,7 @@ func (s *Store) Open() error {
 	s.raft = ra
 
 	s.startedWg.Done()
-	log.Printf("[INFO] store: Opened at %v with ID %s", addr, s.ID)
+	log.Printf("[INFO] store: Opened at %s with ID %s", addr.String(), s.ID)
 	select {}
 }
 

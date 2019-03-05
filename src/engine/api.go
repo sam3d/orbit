@@ -69,7 +69,7 @@ func (s *APIServer) Start() error {
 			return
 		}
 
-		log.Printf("[INFO] api: Listening on socket %v", s.Socket)
+		log.Printf("[INFO] api: Listening on socket %s", s.Socket)
 		s.startedWg.Done()
 		errCh <- s.router.RunUnix(s.Socket)
 	}()
@@ -88,7 +88,7 @@ func (s *APIServer) Start() error {
 			return
 		}
 
-		log.Printf("[WARN] api: Listening on port %v", s.Port)
+		log.Printf("[WARN] api: Listening on port %d", s.Port)
 		s.startedWg.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
 		errCh <- s.router.Run(bindAddr)
