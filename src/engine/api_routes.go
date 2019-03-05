@@ -22,6 +22,7 @@ func (s *APIServer) handlers() {
 	r.GET("/", s.handleIndex())
 	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
+	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 }
 
@@ -61,7 +62,7 @@ func (s *APIServer) handleState() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleBootstrap() gin.HandlerFunc {
+func (s *APIServer) handleSetup() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
 
@@ -101,6 +102,15 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		c.String(http.StatusOK, "The store has been opened successfully.")
+	}
+}
+
+func (s *APIServer) handleBootstrap() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	return func(c *gin.Context) {
 		if err := store.Bootstrap(); err != nil {
 			c.String(http.StatusInternalServerError, "%s.", err)
 			return
