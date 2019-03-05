@@ -107,7 +107,7 @@ func (s *APIServer) handleSetup() gin.HandlerFunc {
 		case <-store.Started():
 			break
 		case err := <-openErrCh:
-			c.String(http.StatusInternalServerError, "Could not open the store.")
+			c.String(http.StatusInternalServerError, "Could not open the store. Are you sure that the IP address you have provided exists on the node?")
 			fmt.Println(err)
 			return
 		}
