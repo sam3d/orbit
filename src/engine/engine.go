@@ -46,6 +46,8 @@ const (
 	Setup
 	// Ready is when the engine can properly be used.
 	Ready
+	// Running is when the store has been successfully bootstrapped.
+	Running
 )
 
 func (s Status) String() string {
@@ -56,6 +58,8 @@ func (s Status) String() string {
 		return "setup"
 	case Ready:
 		return "ready"
+	case Running:
+		return "running"
 	default:
 		return ""
 	}
@@ -94,7 +98,7 @@ func (e *Engine) Start() error {
 
 	// Open the Store.
 	go func() {
-		if e.Status == Ready {
+		if e.Status >= Ready {
 			errCh <- e.Store.Open()
 		}
 	}()
@@ -102,7 +106,7 @@ func (e *Engine) Start() error {
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
-		if e.Status == Ready {
+		if e.Status >= Ready {
 			<-e.Store.Started()
 		}
 		log.Println("[INFO] engine: Started")

@@ -74,6 +74,11 @@ func (s *APIServer) handleSetup() gin.HandlerFunc {
 		var body body
 		c.Bind(&body)
 
+		if engine.Status >= Ready {
+			c.String(http.StatusBadRequest, "The engine has already been setup")
+			return
+		}
+
 		if body.RawIP == "" {
 			c.String(http.StatusBadRequest, "You must provide an IP address.")
 			return
@@ -102,6 +107,8 @@ func (s *APIServer) handleSetup() gin.HandlerFunc {
 			return
 		}
 
+		engine.Status = Ready
+		engine.writeConfig()
 		c.String(http.StatusOK, "The store has been opened successfully.")
 	}
 }
@@ -111,13 +118,26 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 	store := engine.Store
 
 	return func(c *gin.Context) {
+		// Ensure that the engine is ready for the bootstrap operation.
+		if engine.Status != Ready {
+			var msg string
+			if engine.Status == Running {
+				msg = "The store has already been bootstrapped."
+			} else {
+				msg = "The store is not ready to be bootstrapped."
+			}
+			c.String(http.StatusBadRequest, msg)
+			return
+		}
+
+		// Perform the bootstrap operation.
 		if err := store.Bootstrap(); err != nil {
 			c.String(http.StatusInternalServerError, "%s.", err)
 			return
 		}
 
 		// Update the engine status
-		engine.Status = Ready
+		engine.Status = Running
 		engine.writeConfig() // Save the engine status
 		c.String(http.StatusOK, "The server has been successfully bootstrapped.")
 	}
