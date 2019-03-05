@@ -15,15 +15,20 @@ import (
 func (s *APIServer) handlers() {
 	r := s.router
 
-	// Register middleware
+	// Register middleware.
 	r.Use(s.simpleLogger())
 
-	// Register custom routes
+	//
+	// Register all other routes.
+	//
+
 	r.GET("/", s.handleIndex())
 	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
+
 	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
+	r.POST("/join", s.handleJoin())
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
@@ -145,5 +150,36 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 		engine.Status = Running
 		engine.writeConfig() // Save the engine status
 		c.String(http.StatusOK, "The server has been successfully bootstrapped.")
+	}
+}
+
+func (s *APIServer) handleJoin() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	type body struct {
+		RawAddr string `form:"address" json:"address"` // The raw TCP address of the node.
+		NodeID  string `form:"node_id" json:"node_id"` // The ID of the node to join.
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		addr, err := net.ResolveTCPAddr("tcp", body.RawAddr)
+		if err != nil {
+			c.String(http.StatusBadRequest, "The address you have provided is not valid.")
+			return
+		}
+
+		if err := store.Join(body.NodeID, *addr); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Could not join the node at '%s' with ID '%s' to this store.",
+				body.RawAddr, body.NodeID,
+			)
+			return
+		}
+
+		c.String(http.StatusOK, "Successfully joined that node to the store.")
 	}
 }
