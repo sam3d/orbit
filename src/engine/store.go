@@ -1,9 +1,18 @@
 package engine
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"log"
 	"net"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
+
+	raftboltdb "github.com/hashicorp/raft-boltdb"
+	"github.com/pkg/errors"
 
 	"github.com/hashicorp/raft"
 )
@@ -17,6 +26,7 @@ type Store struct {
 	RaftPort      int
 	SerfPort      int
 	WANSerfPort   int
+	ID            string
 
 	RetainSnapshotCount int
 	RaftTimeout         time.Duration
@@ -25,11 +35,13 @@ type Store struct {
 	mu    sync.Mutex
 	state *StoreState
 	raft  *raft.Raft // Primary consensus mechanism
+
+	startedWg sync.WaitGroup
 }
 
 // NewStore returns a new instance of the store.
 func NewStore(e *Engine) *Store {
-	return &Store{
+	s := &Store{
 		engine: e,
 
 		RaftPort:    6502,
@@ -42,4 +54,139 @@ func NewStore(e *Engine) *Store {
 
 		state: &StoreState{},
 	}
+
+	s.startedWg.Add(1)
+
+	return s
+}
+
+// Started is when the store has been started.
+func (s *Store) Started() <-chan struct{} {
+	ch := make(chan struct{})
+
+	go func() {
+		s.startedWg.Wait()
+		close(ch)
+	}()
+
+	return ch
+}
+
+// GenerateNodeID will create an ID for that node. It will search the store for
+// any member conflits and ensure that the Node ID is unique. This could take
+// unlimited time.
+func (s *Store) GenerateNodeID() error {
+	for {
+		// Generate the random node ID.
+		b := make([]byte, 16)
+		if _, err := rand.Read(b); err != nil {
+			return err
+		}
+		h := hex.EncodeToString(b)
+
+		// TODO: Search for duplicates.
+		s.ID = h
+		return nil
+	}
+}
+
+// Open will open an instance of the store.
+//
+// This will always return an error, and will otherwise not return until an
+// error occurs. For the purposes of the engine, this should be used in a
+// non-blocking context.
+func (s *Store) Open() error {
+	// Ensure that we have an advertise address and that it's valid.
+	if s.AdvertiseAddr == nil {
+		return fmt.Errorf("invalid advertise address")
+	}
+
+	// Generate node ID if one does not exist.
+	if s.ID == "" {
+		if err := s.GenerateNodeID(); err != nil {
+			return errors.Wrap(err, "could not generate node ID")
+		}
+		s.engine.writeConfig() // Ensure we keep the ID
+	}
+
+	// Set up raft configuration.
+	raftConfig := raft.DefaultConfig()
+	raftConfig.LocalID = raft.ServerID(s.ID)
+
+	// Set up raft communication.
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", s.AdvertiseAddr, s.RaftPort))
+	if err != nil {
+		return errors.Wrap(err, "could not resolve tcp address")
+	}
+	transport, err := raft.NewTCPTransport(fmt.Sprintf("%s", addr), addr, s.RaftMaxPool, s.RaftTimeout, os.Stderr)
+	if err != nil {
+		return errors.Wrap(err, "could not create tcp transport")
+	}
+
+	// Create the store instances.
+	var (
+		snapshotStore raft.SnapshotStore
+		logStore      raft.LogStore
+		stableStore   raft.StableStore
+	)
+
+	// Instantiate the store instances.
+	{
+		// The log store.
+		logDB, err := raftboltdb.NewBoltStore(filepath.Join(s.engine.DataPath, "raft", "log.db"))
+		if err != nil {
+			return errors.Wrap(err, "could not create log store")
+		}
+		logStore = logDB
+
+		// The stable store.
+		stableDB, err := raftboltdb.NewBoltStore(filepath.Join(s.engine.DataPath, "raft", "stable.db"))
+		if err != nil {
+			return errors.Wrap(err, "could not create stable store")
+		}
+		stableStore = stableDB
+
+		// The snapshot store.
+		snapshotDB, err := raft.NewFileSnapshotStore(
+			filepath.Join(s.engine.DataPath, "raft", "snapshots"),
+			s.RetainSnapshotCount,
+			os.Stderr,
+		)
+		if err != nil {
+			return errors.Wrap(err, "could not create snapshot store")
+		}
+		snapshotStore = snapshotDB
+	}
+
+	// Instantiate raft systems.
+	ra, err := raft.NewRaft(raftConfig, (*fsm)(s), logStore, stableStore, snapshotStore, transport)
+	if err != nil {
+		return errors.Wrap(err, "could not instantiate raft")
+	}
+	s.raft = ra
+
+	s.startedWg.Done()
+	select {}
+}
+
+// Bootstrap will actually start the store if it's the only node. This will only
+// work if the store is not open or joined to another node.
+func (s *Store) Bootstrap() error {
+	if s.engine.Status == Running {
+		err := fmt.Errorf("Cannot bootstrap a store that is already bootstrapped")
+		log.Printf("[ERR] store: %s", err)
+		return err
+	}
+
+	bootstrapConfig := raft.Configuration{
+		Servers: []raft.Server{
+			{
+				ID:      raft.ServerID(s.ID),
+				Address: raft.ServerAddress(fmt.Sprintf("%s:%d", s.AdvertiseAddr, s.RaftPort)),
+			},
+		},
+	}
+	s.raft.BootstrapCluster(bootstrapConfig)
+
+	return nil
 }

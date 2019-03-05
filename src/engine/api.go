@@ -55,8 +55,8 @@ func (s *APIServer) Started() <-chan struct{} {
 // UNIX socket listener or the TCP listener (depending on which one errors
 // first).
 func (s *APIServer) Start() error {
-	s.handlers()            // Register the routes
-	err := make(chan error) // Handle errors from socket and TCP
+	s.handlers()              // Register the routes
+	errCh := make(chan error) // Handle errors from socket and TCP
 
 	s.startedWg.Add(2)
 	s.startedWg.Done() // Clear out the initial waitgroup
@@ -71,7 +71,7 @@ func (s *APIServer) Start() error {
 
 		log.Printf("[INFO] api: Listening on socket %v", s.Socket)
 		s.startedWg.Done()
-		err <- s.router.RunUnix(s.Socket)
+		errCh <- s.router.RunUnix(s.Socket)
 	}()
 
 	// Listen for standard TCP requests.
@@ -83,7 +83,7 @@ func (s *APIServer) Start() error {
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
-			err <- fmt.Errorf("[ERR] api: Port %d is out of range", s.Port)
+			errCh <- fmt.Errorf("[ERR] api: Port %d is out of range", s.Port)
 			s.startedWg.Done()
 			return
 		}
@@ -91,8 +91,8 @@ func (s *APIServer) Start() error {
 		log.Printf("[WARN] api: Listening on port %v", s.Port)
 		s.startedWg.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
-		err <- s.router.Run(bindAddr)
+		errCh <- s.router.Run(bindAddr)
 	}()
 
-	return <-err
+	return <-errCh
 }

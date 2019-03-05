@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,13 +20,19 @@ func (s *APIServer) handlers() {
 
 	// Register custom routes
 	r.GET("/", s.handleIndex())
+	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
+	r.POST("/setup", s.handleSetup())
+	r.POST("/bootstrap", s.handleBootstrap())
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		go func() {
+			log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
+		}()
+
 		c.Next()
-		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
 	}
 }
 
@@ -35,11 +42,103 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleIP() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip, err := getPublicIP()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "%s", "Could not retrieve public IP.")
+			return
+		}
+		c.String(http.StatusOK, ip)
+	}
+}
+
 func (s *APIServer) handleState() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":        s.engine.Status,
 			"status_string": fmt.Sprintf("%s", s.engine.Status),
 		})
+	}
+}
+
+func (s *APIServer) handleSetup() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	type body struct {
+		RawIP string `form:"ip" json:"ip"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		if engine.Status >= Ready {
+			c.String(http.StatusBadRequest, "The engine has already been setup.")
+			return
+		}
+
+		if body.RawIP == "" {
+			c.String(http.StatusBadRequest, "You must provide an IP address.")
+			return
+		}
+
+		ip := net.ParseIP(body.RawIP)
+		if ip == nil {
+			c.String(http.StatusBadRequest, "The provided IP address is not valid.")
+			return
+		}
+
+		store.AdvertiseAddr = ip
+		engine.writeConfig() // Save the IP address
+
+		// Open the store.
+		openErrCh := make(chan error)
+		go func() { openErrCh <- store.Open() }()
+
+		// Wait for the store to start or error out.
+		select {
+		case <-store.Started():
+			break
+		case err := <-openErrCh:
+			c.String(http.StatusInternalServerError, "Could not open the store.")
+			fmt.Println(err)
+			return
+		}
+
+		engine.Status = Ready
+		engine.writeConfig()
+		c.String(http.StatusOK, "The store has been opened successfully.")
+	}
+}
+
+func (s *APIServer) handleBootstrap() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	return func(c *gin.Context) {
+		// Ensure that the engine is ready for the bootstrap operation.
+		if engine.Status != Ready {
+			var msg string
+			if engine.Status == Running {
+				msg = "The store has already been bootstrapped."
+			} else {
+				msg = "The store is not ready to be bootstrapped."
+			}
+			c.String(http.StatusBadRequest, msg)
+			return
+		}
+
+		// Perform the bootstrap operation.
+		if err := store.Bootstrap(); err != nil {
+			c.String(http.StatusInternalServerError, "%s.", err)
+			return
+		}
+
+		// Update the engine status
+		engine.Status = Running
+		engine.writeConfig() // Save the engine status
+		c.String(http.StatusOK, "The server has been successfully bootstrapped.")
 	}
 }

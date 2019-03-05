@@ -4,10 +4,7 @@
 package engine
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 )
@@ -47,6 +44,10 @@ const (
 	Init Status = iota
 	// Setup is when the engine has not yet been bootstrapped.
 	Setup
+	// Ready is when the engine can properly be used.
+	Ready
+	// Running is when the store has been successfully bootstrapped.
+	Running
 )
 
 func (s Status) String() string {
@@ -55,6 +56,10 @@ func (s Status) String() string {
 		return "init"
 	case Setup:
 		return "setup"
+	case Ready:
+		return "ready"
+	case Running:
+		return "running"
 	default:
 		return ""
 	}
@@ -66,7 +71,20 @@ func (s Status) String() string {
 func (e *Engine) Start() error {
 	log.Println("[INFO] engine: Starting...")
 
-	err := make(chan error) // Main error channel closure
+	errCh := make(chan error) // Main error channel closure
+
+	// Ensure that required directories exist. This also involves creating a blank
+	// directory for the root directory just for the sake of completion.
+	dirs := []string{"", "raft"}
+	for _, dir := range dirs {
+		path := filepath.Join(e.DataPath, dir)
+		_, err := os.Stat(path)
+		if !os.IsNotExist(err) {
+			continue
+		}
+		log.Printf("[INFO] engine: Creating new directory %s", path)
+		os.MkdirAll(path, 0644)
+	}
 
 	// Read in the config
 	if err := e.readConfig(); err != nil {
@@ -75,138 +93,31 @@ func (e *Engine) Start() error {
 
 	// Start the API Server.
 	go func() {
-		err <- e.APIServer.Start()
+		errCh <- e.APIServer.Start()
+	}()
+
+	// Open the Store.
+	go func() {
+		if e.Status >= Ready {
+			errCh <- e.Store.Open()
+		}
 	}()
 
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
+		if e.Status >= Ready {
+			<-e.Store.Started()
+		}
 		log.Println("[INFO] engine: Started")
 	}()
 
-	return <-err
+	return <-errCh
 }
 
 // Stop will stop the operation of the engine instance.
 func (e *Engine) Stop() error {
 	log.Println("[INFO] engine: Stopping...")
 	log.Println("[INFO] engine: Stopped")
-	return nil
-}
-
-// config is the configuration struct that the engine saves and interacts with.
-type config struct {
-	AdvertiseAddr string `json:"advertise_addr"`
-	Status        Status `json:"status"`
-}
-
-// configPath will return the path of the config file that the engine will use.
-// By default, this is a concatenation of the DataPath and ConfigFile struct
-// fields.
-func (e Engine) configPath() string {
-	return filepath.Join(e.DataPath, e.ConfigFile)
-}
-
-// createConfig will create the configuration file for the engine.
-func (e Engine) createConfig() error {
-	path := e.configPath()
-
-	defaultConfig := &config{Status: Setup} // By default, we want to setup mode
-	b, err := json.MarshalIndent(defaultConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-	b = append(b, '\n') // Add newline to the end of the file
-
-	if err := ioutil.WriteFile(path, b, 0666); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// readConfig will read in the configuration file and parse it.
-func (e *Engine) readConfig() error {
-	path := e.configPath()
-
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		// Check if the error is that the file does not exist so that we can create
-		// it.
-		if os.IsNotExist(err) {
-			log.Printf("[INFO] engine: Creating %s\n", path)
-			if err := e.createConfig(); err != nil {
-				log.Printf("[ERR] engine: Could not create %s\n", path)
-				return err
-			}
-			// Now that we have re-created the config file, we can create it.
-			return e.readConfig()
-		}
-
-		// Check if the file can't be read.
-		if err == os.ErrPermission {
-			log.Printf("[ERR] engine: Insufficient read permissions for %s\n", path)
-			return err
-		}
-
-		// It's none of the above cases, so just return the error.
-		return err
-	}
-
-	// Put the config file in the config struct
-	var config config
-	if err := json.Unmarshal(file, &config); err != nil {
-		log.Printf("[ERR] engine: Parsing config file %s\n", path)
-		return err
-	}
-
-	// The config status should never be 0 in the config file (init), as this is a
-	// status reserved for before the cluster has loaded the config. Now that is
-	// *has* loaded, set it to 1 (setup), or the first state for a cluster after
-	// it has been setup.
-	if config.Status == 0 {
-		config.Status = 1
-	}
-
-	// And now we actually set the config file contents
-	e.Store.AdvertiseAddr = net.ParseIP(config.AdvertiseAddr)
-	e.Status = config.Status
-
-	log.Printf("[INFO] engine: Imported config %s\n", path)
-
-	// Perform test write that doesn't change any of the data. This will format
-	// the data in the file if that hasn't been correctly formatted up until
-	// this point.
-	if err := e.writeConfig(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// writeConfig will create a config file based on the current engine settings.
-func (e Engine) writeConfig() error {
-	path := e.configPath()
-
-	file, err := os.Create(path)
-	if err != nil {
-		log.Printf("[ERR] engine: Could not open config for writing %s\n", path)
-		return err
-	}
-	defer file.Close()
-
-	config := config{
-		Status:        e.Status,
-		AdvertiseAddr: string(e.Store.AdvertiseAddr),
-	}
-
-	en := json.NewEncoder(file)
-	en.SetIndent("", "  ")
-	if err := en.Encode(&config); err != nil {
-		log.Printf("[ERR] engine: Could not write config: %s\n", path)
-		return err
-	}
-
-	log.Printf("[INFO] engine: Updated config %s", path)
 	return nil
 }
