@@ -54,10 +54,15 @@ func (s *APIServer) handleIP() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleState() gin.HandlerFunc {
+	type res struct {
+		Status       Status `json:"status"`
+		StatusString string `json:"status_string"`
+	}
+
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":        s.engine.Status,
-			"status_string": fmt.Sprintf("%s", s.engine.Status),
+		c.JSON(http.StatusOK, &res{
+			Status:       s.engine.Status,
+			StatusString: fmt.Sprintf("%s", s.engine.Status),
 		})
 	}
 }
