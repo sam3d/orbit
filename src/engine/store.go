@@ -12,6 +12,7 @@ import (
 	"time"
 
 	raftboltdb "github.com/hashicorp/raft-boltdb"
+	"github.com/pkg/errors"
 
 	"github.com/hashicorp/raft"
 )
@@ -95,10 +96,15 @@ func (s *Store) GenerateNodeID() error {
 // error occurs. For the purposes of the engine, this should be used in a
 // non-blocking context.
 func (s *Store) Open() error {
+	// Ensure that we have an advertise address and that it's valid.
+	if s.AdvertiseAddr == nil {
+		return fmt.Errorf("invalid advertise address")
+	}
+
 	// Generate node ID if one does not exist.
 	if s.ID == "" {
 		if err := s.GenerateNodeID(); err != nil {
-			return err
+			return errors.Wrap(err, "could not generate node ID")
 		}
 		s.engine.writeConfig() // Ensure we keep the ID
 	}
@@ -110,11 +116,11 @@ func (s *Store) Open() error {
 	// Set up raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", s.AdvertiseAddr, s.RaftPort))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not resolve tcp address")
 	}
 	transport, err := raft.NewTCPTransport(fmt.Sprintf("%s", addr), addr, s.RaftMaxPool, s.RaftTimeout, os.Stderr)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not create tcp transport")
 	}
 
 	// Create the store instances.
@@ -129,14 +135,14 @@ func (s *Store) Open() error {
 		// The log store.
 		logDB, err := raftboltdb.NewBoltStore(filepath.Join(s.engine.DataPath, "raft", "log.db"))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "could not create log store")
 		}
 		logStore = logDB
 
 		// The stable store.
 		stableDB, err := raftboltdb.NewBoltStore(filepath.Join(s.engine.DataPath, "raft", "stable.db"))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "could not create stable store")
 		}
 		stableStore = stableDB
 
@@ -147,7 +153,7 @@ func (s *Store) Open() error {
 			os.Stderr,
 		)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "could not create snapshot store")
 		}
 		snapshotStore = snapshotDB
 	}
@@ -155,7 +161,7 @@ func (s *Store) Open() error {
 	// Instantiate raft systems.
 	ra, err := raft.NewRaft(raftConfig, (*fsm)(s), logStore, stableStore, snapshotStore, transport)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not instantiate raft")
 	}
 	s.raft = ra
 

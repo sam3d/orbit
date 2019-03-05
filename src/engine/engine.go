@@ -79,7 +79,7 @@ func (e *Engine) Start() error {
 
 	// Open the Store.
 	go func() {
-		if e.Status == Ready && e.Store.AdvertiseAddr != nil {
+		if e.Status == Ready {
 			errCh <- e.Store.Open()
 		}
 	}()
@@ -87,7 +87,9 @@ func (e *Engine) Start() error {
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
-		<-e.Store.Started()
+		if e.Status == Ready {
+			<-e.Store.Started()
+		}
 		log.Println("[INFO] engine: Started")
 	}()
 
