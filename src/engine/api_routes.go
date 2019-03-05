@@ -46,7 +46,7 @@ func (s *APIServer) handleIP() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip, err := getPublicIP()
 		if err != nil {
-			c.String(http.StatusInternalServerError, "%s", "Could not retrieve public IP")
+			c.String(http.StatusInternalServerError, "%s", "Could not retrieve public IP.")
 			return
 		}
 		c.String(http.StatusOK, ip)
@@ -75,7 +75,7 @@ func (s *APIServer) handleSetup() gin.HandlerFunc {
 		c.Bind(&body)
 
 		if engine.Status >= Ready {
-			c.String(http.StatusBadRequest, "The engine has already been setup")
+			c.String(http.StatusBadRequest, "The engine has already been setup.")
 			return
 		}
 
