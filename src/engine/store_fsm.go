@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"io"
-	"log"
 
 	"github.com/hashicorp/raft"
 )
@@ -46,20 +45,14 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 func (f *fsm) applyNewUser(u User) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-
 	f.state.Users = append(f.state.Users, u)
-	log.Printf("[INFO] store: User created %s", u.ID)
-
 	return nil
 }
 
 func (f *fsm) applyRemoveUser(id string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-
 	f.state.Users.Remove(id)
-	log.Printf("[INFO] store: User removed %s", id)
-
 	return nil
 }
 
