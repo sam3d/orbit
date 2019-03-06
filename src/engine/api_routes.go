@@ -238,6 +238,8 @@ func (s *APIServer) handleSignup() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleListUsers() gin.HandlerFunc {
+	store := s.engine.Store
+
 	type user struct {
 		ID       string `json:"id"`
 		Name     string `json:"name"`
@@ -246,9 +248,12 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+
 		var users []user
 
-		for _, u := range s.engine.Store.state.Users {
+		for _, u := range store.state.Users {
 			users = append(users, user{
 				ID:       u.ID,
 				Name:     u.Name,
