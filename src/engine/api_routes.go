@@ -27,11 +27,13 @@ func (s *APIServer) handlers() {
 	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
 	r.GET("/users", s.handleListUsers())
-
 	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 	r.POST("/join", s.handleJoin())
+
+	// Routes that require the node to be raft leader.
 	r.POST("/signup", s.handleSignup())
+	r.DELETE("/user/:id", s.handleRemoveUser())
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
@@ -263,5 +265,35 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, &users)
+	}
+}
+
+func (s *APIServer) handleRemoveUser() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id") // The ID of the user to remove
+
+		if store.raft.State() != raft.Leader {
+			c.String(http.StatusInternalServerError, "This node is not the leader of the cluster, and leader forwarding is not yet implemented.")
+			return
+		}
+
+		if i, _ := store.state.Users.FindByID(id); i == -1 {
+			c.String(http.StatusNotFound, "A user with that ID does not exist.")
+			return
+		}
+
+		cmd := command{
+			Op:   "User.Remove",
+			User: User{ID: id},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not remove that user.")
+			return
+		}
+
+		c.String(http.StatusOK, "The user has been removed.")
 	}
 }
