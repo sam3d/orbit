@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hashicorp/raft"
 )
 
 // handlers registers all of the default routes for the API server. This is a
@@ -25,18 +26,17 @@ func (s *APIServer) handlers() {
 	r.GET("/", s.handleIndex())
 	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
+	r.GET("/users", s.handleListUsers())
 
 	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 	r.POST("/join", s.handleJoin())
+	r.POST("/signup", s.handleSignup())
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		go func() {
-			log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
-		}()
-
+		go func() { log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL) }()
 		c.Next()
 	}
 }
@@ -181,5 +181,87 @@ func (s *APIServer) handleJoin() gin.HandlerFunc {
 		}
 
 		c.String(http.StatusOK, "Successfully joined that node to the store.")
+	}
+}
+
+func (s *APIServer) handleSignup() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name     string `form:"name" json:"name"`
+		Password string `form:"password" json:"password"`
+		Username string `form:"username" json:"username"`
+		Email    string `form:"email" json:"email"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		if store.raft.State() != raft.Leader {
+			c.String(http.StatusInternalServerError, "This node is not the leader of the cluster, and leader forwarding is not yet implemented.")
+			return
+		}
+
+		newUser, err := store.state.Users.Generate(UserConfig{
+			Name:     body.Name,
+			Password: body.Password,
+			Username: body.Username,
+			Email:    body.Email,
+		})
+		if err != nil {
+			switch err {
+			case ErrEmailTaken:
+				c.String(http.StatusConflict, "Sorry, that email address is already taken.")
+			case ErrUsernameTaken:
+				c.String(http.StatusConflict, "Sorry, that username is already taken.")
+			case ErrMissingFields:
+				c.String(http.StatusBadRequest, "You didn't supply all of the required fields.")
+			default:
+				c.AbortWithStatus(http.StatusBadRequest)
+			}
+			return
+		}
+
+		cmd := command{
+			Op:   "User.New",
+			User: *newUser,
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not create the new user. Ensure that all of the manager nodes are connected correctly.")
+			return
+		}
+
+		c.String(http.StatusCreated, "New user created.")
+	}
+}
+
+func (s *APIServer) handleListUsers() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type user struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+		Email    string `json:"email"`
+	}
+
+	return func(c *gin.Context) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+
+		var users []user
+
+		for _, u := range store.state.Users {
+			users = append(users, user{
+				ID:       u.ID,
+				Name:     u.Name,
+				Username: u.Username,
+				Email:    u.Email,
+			})
+		}
+
+		c.JSON(http.StatusOK, &users)
 	}
 }

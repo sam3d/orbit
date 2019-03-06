@@ -11,10 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/pkg/errors"
-
-	"github.com/hashicorp/raft"
 )
 
 // Store is a replicated state machine, where all changes are made via Raft
@@ -32,7 +31,7 @@ type Store struct {
 	RaftTimeout         time.Duration
 	RaftMaxPool         int
 
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	state *StoreState
 	raft  *raft.Raft // Primary consensus mechanism
 
