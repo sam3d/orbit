@@ -24,6 +24,9 @@ type Users []User
 func (u Users) New(name, username, password, email string) (*User, error) {
 	// Check for duplicates.
 	for _, user := range u {
+		if user.Username == username && user.Email == email {
+			return nil, errors.New("username and email already exist on the store")
+		}
 		if user.Username == username {
 			return nil, errors.New("username already exists on the store")
 		}
