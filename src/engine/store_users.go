@@ -20,11 +20,10 @@ type User struct {
 // Users is a list of users.
 type Users []User
 
-// New will add a new user to the list of users and return the resulting user
-// and an error.
-func (u *Users) New(name, username, password, email string) (*User, error) {
+// New will return the resulting user and not add it to the store.
+func (u Users) New(name, username, password, email string) (*User, error) {
 	// Check for duplicates.
-	for _, user := range *u {
+	for _, user := range u {
 		if user.Username == username {
 			return nil, errors.New("username already exists on the store")
 		}
@@ -49,7 +48,7 @@ func (u *Users) New(name, username, password, email string) (*User, error) {
 		Password: hashed,
 		Email:    email,
 	}
-	*u = append(*u, newUser)
+
 	return &newUser, nil
 }
 

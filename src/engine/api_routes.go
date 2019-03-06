@@ -1,12 +1,14 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hashicorp/raft"
 )
 
 // handlers registers all of the default routes for the API server. This is a
@@ -29,6 +31,38 @@ func (s *APIServer) handlers() {
 	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 	r.POST("/join", s.handleJoin())
+
+	r.POST("/user", func(c *gin.Context) {
+		store := s.engine.Store
+
+		if store.raft.State() != raft.Leader {
+			c.String(http.StatusBadRequest, "Not leader.")
+			return
+		}
+
+		user, err := store.state.Users.New("Sam Holmes", "samholmes", "test", "samholmes1337@gmail.com")
+		if err != nil {
+			c.String(http.StatusBadRequest, "%v", err)
+			return
+		}
+
+		cmd := &command{
+			Namespace: "User.New",
+			User:      *user,
+		}
+		b, err := json.Marshal(cmd)
+		if err != nil {
+			return
+		}
+		f := store.raft.Apply(b, store.RaftTimeout)
+		if f.Error() != nil {
+			return
+		}
+	})
+
+	r.GET("/users", func(c *gin.Context) {
+		c.JSON(http.StatusOK, s.engine.Store.state.Users)
+	})
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
