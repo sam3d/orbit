@@ -20,23 +20,28 @@ type User struct {
 // Users is a list of users.
 type Users []User
 
-// New will return the resulting user and not add it to the store.
-func (u Users) New(name, username, password, email string) (*User, error) {
+// UserConfig configures the user generation process.
+type UserConfig struct {
+	Name     string
+	Username string
+	Password string
+	Email    string
+}
+
+// Generate creates a unique user that can be added to the store.
+func (u *Users) Generate(config UserConfig) (*User, error) {
 	// Check for duplicates.
-	for _, user := range u {
-		if user.Username == username && user.Email == email {
-			return nil, errors.New("username and email already exist on the store")
+	for _, user := range *u {
+		if user.Username == config.Username {
+			return nil, ErrUsernameTaken
 		}
-		if user.Username == username {
-			return nil, errors.New("username already exists on the store")
-		}
-		if user.Email == email {
-			return nil, errors.New("email already exists on the store")
+		if user.Email == config.Email {
+			return nil, ErrEmailTaken
 		}
 	}
 
 	// Hash the password.
-	rawHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	rawHashed, err := bcrypt.GenerateFromPassword([]byte(config.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.New("could not hash password")
 	}
@@ -46,10 +51,10 @@ func (u Users) New(name, username, password, email string) (*User, error) {
 	// Create the user, append and return it.
 	newUser := User{
 		ID:       u.GenerateID(),
-		Name:     name,
-		Username: username,
+		Name:     config.Name,
+		Username: config.Username,
 		Password: hashed,
-		Email:    email,
+		Email:    config.Email,
 	}
 
 	return &newUser, nil

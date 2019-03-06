@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -36,41 +35,64 @@ func (s *APIServer) handlers() {
 		store := s.engine.Store
 
 		if store.raft.State() != raft.Leader {
-			c.String(http.StatusBadRequest, "Not leader.")
+			c.String(http.StatusInternalServerError, "This node is not the leader of the cluster, and leader forwarding is not yet implemented.")
 			return
 		}
 
-		user, err := store.state.Users.New("Sam Holmes", "samholmes", "test", "samholmes1337@gmail.com")
+		newUser, err := store.state.Users.Generate(UserConfig{
+			Name:     "Sam Holmes",
+			Password: "test",
+			Username: "sam",
+			Email:    "samholmes1337@gmail.com",
+		})
 		if err != nil {
-			c.String(http.StatusBadRequest, "%v", err)
+			switch err {
+			case ErrEmailTaken:
+				c.String(http.StatusConflict, "Sorry, that email address is already taken.")
+			case ErrUsernameTaken:
+				c.String(http.StatusConflict, "Sorry, that username is already taken.")
+			}
 			return
 		}
 
-		cmd := &command{
-			Namespace: "User.New",
-			User:      *user,
+		cmd := command{
+			Op:   "User.New",
+			User: *newUser,
 		}
-		b, err := json.Marshal(cmd)
-		if err != nil {
+
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not create the new user.")
 			return
 		}
-		f := store.raft.Apply(b, store.RaftTimeout)
-		if f.Error() != nil {
-			return
-		}
+
+		c.String(http.StatusCreated, "New user created.")
 	})
 
 	r.GET("/users", func(c *gin.Context) {
-		c.JSON(http.StatusOK, s.engine.Store.state.Users)
+		type user struct {
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Username string `json:"username"`
+			Email    string `json:"email"`
+		}
+		var users []user
+
+		for _, u := range s.engine.Store.state.Users {
+			users = append(users, user{
+				ID:       u.ID,
+				Name:     u.Name,
+				Username: u.Username,
+				Email:    u.Email,
+			})
+		}
+
+		c.JSON(http.StatusOK, &users)
 	})
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		go func() {
-			log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
-		}()
-
+		go func() { log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL) }()
 		c.Next()
 	}
 }

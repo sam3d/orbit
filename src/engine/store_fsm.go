@@ -10,8 +10,19 @@ import (
 type fsm Store
 
 type command struct {
-	Namespace string `json:"namespace"`
-	User      User   `json:"user,omitempty"`
+	Op   string `json:"op"`
+	User User   `json:"user,omitempty"`
+}
+
+// Apply is a helper proxy method that will apply the command to a raft instance
+// in the store using it's "Apply" method.
+func (c *command) Apply(s *Store) error {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	f := s.raft.Apply(b, s.RaftTimeout)
+	return f.Error()
 }
 
 // Apply will apply an entry to the store.
@@ -21,7 +32,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		panic("failed to unmarshal command")
 	}
 
-	switch c.Namespace {
+	switch c.Op {
 	case "User.New":
 		return f.applyNewUser(c.User)
 	}
