@@ -69,24 +69,22 @@ func (u *Users) Generate(config UserConfig) (*User, error) {
 }
 
 // GenerateID returns an available ID from the user. It will keep autogenerating
-// until one is found, so this can take unlimited time (but in practice, never
-// will).
+// until one is found, so this can take unlimited time (but in practice, pretty
+// much never will).
 func (u *Users) GenerateID() string {
+search:
 	for {
 		b := make([]byte, 16)
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 
-		collision := false
 		for _, user := range *u {
 			if user.ID == id {
-				collision = true
-				break
+				continue search
 			}
 		}
-		if !collision {
-			return id
-		}
+
+		return id
 	}
 }
 
