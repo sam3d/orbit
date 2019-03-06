@@ -38,8 +38,10 @@ func (s *APIServer) handlers() {
 		r.Use(func(c *gin.Context) {
 			if s.engine.Store.raft.State() != raft.Leader {
 				c.String(http.StatusInternalServerError, "This node is not the leader of the cluster, and leader forwarding is not yet implemented.")
+				c.Abort()
 				return
 			}
+
 			c.Next()
 		})
 
