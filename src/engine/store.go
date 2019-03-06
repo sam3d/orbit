@@ -191,3 +191,26 @@ func (s *Store) Bootstrap() error {
 
 	return nil
 }
+
+// Join will join a node to this store instance. The node must be ready to
+// respond to raft communications at that address (that means that the node must
+// have a store instance running).
+func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
+	log.Printf("[INFO] store: Received join request for node %s at %s", nodeID, addr.String())
+
+	configFuture := s.raft.GetConfiguration()
+	if err := configFuture.Error(); err != nil {
+		log.Printf("[ERR] store: Failed to get raft configuration")
+		return err
+	}
+
+	parsedAddr := raft.ServerAddress(fmt.Sprintf("%s", addr.String()))
+	addVoterFuture := s.raft.AddVoter(raft.ServerID(nodeID), parsedAddr, 0, 0)
+	if err := addVoterFuture.Error(); err != nil {
+		log.Printf("[ERR] store: Could not add a voter to the cluster")
+		return err
+	}
+
+	log.Printf("[INFO] store: Node %s at %s has joined successfully", nodeID, addr.String())
+	return nil
+}
