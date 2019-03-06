@@ -29,36 +29,6 @@ func (s *APIServer) handlers() {
 	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 	r.POST("/join", s.handleJoin())
-
-	r.GET("/nodes", func(c *gin.Context) {
-		store := s.engine.Store
-
-		configFuture := store.raft.GetConfiguration()
-		if err := configFuture.Error(); err != nil {
-			c.String(http.StatusInternalServerError, "%v", err)
-			return
-		}
-
-		type Node struct {
-			Suffrage string `json:"suffrage"`
-			ID       string `json:"id"`
-			Address  string `json:"address"`
-			Leader   bool   `json:"is_leader"`
-		}
-
-		leaderAddr := store.raft.Leader()
-
-		nodes := []Node{}
-		for _, srv := range configFuture.Configuration().Servers {
-			nodes = append(nodes, Node{
-				Suffrage: srv.Suffrage.String(),
-				ID:       string(srv.ID),
-				Address:  string(srv.Address),
-				Leader:   leaderAddr == srv.Address,
-			})
-		}
-		c.JSON(http.StatusOK, &nodes)
-	})
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
