@@ -30,6 +30,14 @@ type UserConfig struct {
 
 // Generate creates a unique user that can be added to the store.
 func (u *Users) Generate(config UserConfig) (*User, error) {
+	// Ensure that the fields are present.
+	if config.Name == "" ||
+		config.Username == "" ||
+		config.Password == "" ||
+		config.Email == "" {
+		return nil, ErrMissingFields
+	}
+
 	// Check for duplicates.
 	for _, user := range *u {
 		if user.Username == config.Username {
