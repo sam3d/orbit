@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hashicorp/raft"
 )
 
 func init() {
@@ -110,31 +109,26 @@ func (s *APIServer) handlers() {
 	r.Use(s.simpleLogger())
 
 	//
-	// Register all other routes.
+	// Handle all of the routes.
 	//
 
-	r.GET("/", s.handleIndex())
+	r.GET("", func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
+	})
+
 	r.GET("/state", s.handleState())
 	r.GET("/users", s.handleListUsers())
-	r.POST("/bootstrap", s.handleBootstrap())
-	r.POST("/join", s.handleJoin())
 
 	{
-		// Routes that require to be the raft leader.
-		r := r.Group("")
+		r := r.Group("/cluster")
+		r.POST("/bootstrap", s.handleClusterBootstrap())
+		r.POST("/join", s.handleClusterJoin())
+	}
 
-		r.Use(func(c *gin.Context) {
-			if s.engine.Store.raft.State() != raft.Leader {
-				c.String(http.StatusInternalServerError, "This node is not the leader of the cluster, and leader forwarding is not yet implemented.")
-				c.Abort()
-				return
-			}
-
-			c.Next()
-		})
-
-		r.POST("/signup", s.handleSignup())
-		r.DELETE("/user/:id", s.handleRemoveUser())
+	{
+		r := r.Group("/user")
+		r.POST("", s.handleUserSignup())
+		r.DELETE("/:id", s.handleUserRemove())
 	}
 }
 
@@ -142,12 +136,6 @@ func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
 		c.Next()
-	}
-}
-
-func (s *APIServer) handleIndex() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
 	}
 }
 
@@ -165,7 +153,7 @@ func (s *APIServer) handleState() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleBootstrap() gin.HandlerFunc {
+func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
 	var mu sync.Mutex
@@ -226,11 +214,12 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 		store.WANSerfPort = body.WANSerfPort
 
 		// Attempt to open the store.
-		openStoreErrCh := make(chan error)
-		go func() { openStoreErrCh <- store.Open() }()
+		errCh := make(chan error)
+		go func() { errCh <- store.Open() }()
 		select {
 		case <-store.Started():
-		case <-openStoreErrCh:
+		case err := <-errCh:
+			log.Printf("[ERR] store: %s", err)
 			c.String(http.StatusInternalServerError, "Could not open the store instance to bootstrap.")
 			return
 		}
@@ -249,13 +238,13 @@ func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleJoin() gin.HandlerFunc {
+func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Status(http.StatusNotImplemented)
 	}
 }
 
-func (s *APIServer) handleSignup() gin.HandlerFunc {
+func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
@@ -299,7 +288,7 @@ func (s *APIServer) handleSignup() gin.HandlerFunc {
 			return
 		}
 
-		c.String(http.StatusCreated, "New user created.")
+		c.String(http.StatusCreated, newUser.ID)
 	}
 }
 
@@ -332,7 +321,7 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleRemoveUser() gin.HandlerFunc {
+func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 	store := s.engine.Store
 
 	return func(c *gin.Context) {
