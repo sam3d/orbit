@@ -33,7 +33,7 @@ type Store struct {
 	state *StoreState
 	raft  *raft.Raft // Primary consensus mechanism
 
-	startedWg sync.WaitGroup
+	started sync.WaitGroup
 }
 
 // NewStore returns a new instance of the store.
@@ -52,7 +52,7 @@ func NewStore(e *Engine) *Store {
 		state: &StoreState{},
 	}
 
-	s.startedWg.Add(1)
+	s.started.Add(1)
 
 	return s
 }
@@ -62,7 +62,7 @@ func (s *Store) Started() <-chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
-		s.startedWg.Wait()
+		s.started.Wait()
 		close(ch)
 	}()
 
@@ -142,7 +142,7 @@ func (s *Store) Open() error {
 	}
 	s.raft = ra
 
-	s.startedWg.Done()
+	s.started.Done()
 	log.Printf("[INFO] store: Opened at %s with ID %s", addr.String(), s.ID)
 	select {}
 }

@@ -19,8 +19,8 @@ type APIServer struct {
 	Port   int
 	Socket string
 
-	router    *gin.Engine
-	startedWg sync.WaitGroup
+	router  *gin.Engine
+	started sync.WaitGroup
 }
 
 // NewAPIServer returns a new API server instance.
@@ -34,7 +34,7 @@ func NewAPIServer(e *Engine) *APIServer {
 	// started channel, it waits until it has started. We need to remember to
 	// release this extra waitgroup lock after the first addition, and add it
 	// again when the API is stopped.
-	s.startedWg.Add(1)
+	s.started.Add(1)
 
 	return s
 }
@@ -44,7 +44,7 @@ func (s *APIServer) Started() <-chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
-		s.startedWg.Wait()
+		s.started.Wait()
 		close(ch)
 	}()
 
@@ -58,19 +58,19 @@ func (s *APIServer) Start() error {
 	s.handlers()              // Register the routes
 	errCh := make(chan error) // Handle errors from socket and TCP
 
-	s.startedWg.Add(2)
-	s.startedWg.Done() // Clear out the initial waitgroup
+	s.started.Add(2)
+	s.started.Done() // Clear out the initial waitgroup
 
 	// Listen for UNIX socket requests.
 	go func() {
 		if s.Socket == "" {
 			log.Println("[WARN] api: Not listening for socket requests")
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		log.Printf("[INFO] api: Listening on socket %s", s.Socket)
-		s.startedWg.Done()
+		s.started.Done()
 		errCh <- s.router.RunUnix(s.Socket)
 	}()
 
@@ -78,18 +78,18 @@ func (s *APIServer) Start() error {
 	go func() {
 		if s.Port == -1 {
 			log.Println("[INFO] api: Not listening for TCP requests")
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
 			errCh <- fmt.Errorf("[ERR] api: Port %d is out of range", s.Port)
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		log.Printf("[WARN] api: Listening on port %d", s.Port)
-		s.startedWg.Done()
+		s.started.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
 		errCh <- s.router.Run(bindAddr)
 	}()
