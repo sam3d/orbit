@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -71,24 +69,6 @@ func (s *Store) Started() <-chan struct{} {
 	return ch
 }
 
-// GenerateNodeID will create an ID for that node. It will search the store for
-// any member conflits and ensure that the Node ID is unique. This could take
-// unlimited time.
-func (s *Store) GenerateNodeID() error {
-	for {
-		// Generate the random node ID.
-		b := make([]byte, 16)
-		if _, err := rand.Read(b); err != nil {
-			return err
-		}
-		h := hex.EncodeToString(b)
-
-		// TODO: Search for duplicates.
-		s.ID = h
-		return nil
-	}
-}
-
 // Open will open an instance of the store.
 //
 // This will always return an error, and will otherwise not return until an
@@ -102,9 +82,7 @@ func (s *Store) Open() error {
 
 	// Generate node ID if one does not exist.
 	if s.ID == "" {
-		if err := s.GenerateNodeID(); err != nil {
-			return errors.Wrap(err, "could not generate node ID")
-		}
+		s.ID = s.state.Nodes.GenerateNodeID()
 		s.engine.writeConfig() // Ensure we keep the ID
 	}
 

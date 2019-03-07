@@ -8,4 +8,5 @@ package engine
 // and is simply for keeping track of the current data.
 type StoreState struct {
 	Users Users `json:"users"`
+	Nodes Nodes `json:"nodes"`
 }
