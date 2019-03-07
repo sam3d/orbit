@@ -114,10 +114,8 @@ func (s *APIServer) handlers() {
 	//
 
 	r.GET("/", s.handleIndex())
-	r.GET("/ip", s.handleIP())
 	r.GET("/state", s.handleState())
 	r.GET("/users", s.handleListUsers())
-	r.POST("/setup", s.handleSetup())
 	r.POST("/bootstrap", s.handleBootstrap())
 	r.POST("/join", s.handleJoin())
 
@@ -153,17 +151,6 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleIP() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ip, err := getPublicIP()
-		if err != nil {
-			c.String(http.StatusInternalServerError, "%s", "Could not retrieve public IP.")
-			return
-		}
-		c.String(http.StatusOK, ip)
-	}
-}
-
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
 		Status       Status `json:"status"`
@@ -178,115 +165,93 @@ func (s *APIServer) handleState() gin.HandlerFunc {
 	}
 }
 
-func (s *APIServer) handleSetup() gin.HandlerFunc {
-	engine := s.engine
-	store := engine.Store
-
-	type body struct {
-		RawIP string `form:"ip" json:"ip"`
-	}
-
-	return func(c *gin.Context) {
-		var body body
-		c.Bind(&body)
-
-		if engine.Status >= Ready {
-			c.String(http.StatusBadRequest, "The engine has already been setup.")
-			return
-		}
-
-		if body.RawIP == "" {
-			c.String(http.StatusBadRequest, "You must provide an IP address.")
-			return
-		}
-
-		ip := net.ParseIP(body.RawIP)
-		if ip == nil {
-			c.String(http.StatusBadRequest, "The provided IP address is not valid.")
-			return
-		}
-
-		store.AdvertiseAddr = ip
-		engine.writeConfig() // Save the IP address
-
-		// Open the store.
-		openErrCh := make(chan error)
-		go func() { openErrCh <- store.Open() }()
-
-		// Wait for the store to start or error out.
-		select {
-		case <-store.Started():
-			break
-		case err := <-openErrCh:
-			c.String(http.StatusInternalServerError, "Could not open the store. Are you sure that the IP address you have provided exists on the node?")
-			fmt.Println(err)
-			return
-		}
-
-		engine.Status = Ready
-		engine.writeConfig()
-		c.String(http.StatusOK, "The store has been opened successfully.")
-	}
-}
-
 func (s *APIServer) handleBootstrap() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
+	var mu sync.Mutex
+
+	type body struct {
+		RawAdvertiseAddr string `form:"advertise_addr" json:"advertise_addr"`
+		RPCPort          int    `form:"rpc_port" json:"rpc_port"`
+		RaftPort         int    `form:"raft_port" json:"raft_port"`
+		SerfPort         int    `form:"serf_port" json:"serf_port"`
+		WANSerfPort      int    `form:"wan_serf_port" json:"wan_serf_port"`
+	}
 
 	return func(c *gin.Context) {
-		// Ensure that the engine is ready for the bootstrap operation.
-		if engine.Status != Ready {
-			var msg string
-			if engine.Status == Running {
-				msg = "The store has already been bootstrapped."
-			} else {
-				msg = "The store is not ready to be bootstrapped."
+		// Don't allow anybody else to attempt to bootstrap during process.
+		mu.Lock()
+		defer mu.Unlock()
+
+		// Ensure that the store can be bootstrapped.
+		if engine.Status >= StatusReady {
+			c.String(http.StatusConflict, "The engine is already running and cannot be bootstrapped.")
+			return
+		}
+
+		// Bind the default settings from the body.
+		body := body{
+			RPCPort:     6501,
+			RaftPort:    6502,
+			SerfPort:    6503,
+			WANSerfPort: 6504,
+		}
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "Invalid request body fields.")
+			return
+		}
+
+		// Validate and parse the provided IP address.
+		var advertiseAddr net.IP
+		if body.RawAdvertiseAddr != "" {
+			ip := net.ParseIP(body.RawAdvertiseAddr)
+			if ip == nil {
+				c.String(http.StatusBadRequest, "Your provided advertise address is not valid.")
+				return
 			}
-			c.String(http.StatusBadRequest, msg)
+			advertiseAddr = ip
+		} else {
+			ip, err := getPublicIP()
+			if err != nil {
+				c.String(http.StatusBadRequest, "Could not automatically obtain public advertise address.")
+			}
+			advertiseAddr = ip
+		}
+
+		// Set all of the engine component properties.
+		engine.RPCServer.Port = body.RPCPort
+		store.AdvertiseAddr = advertiseAddr
+		store.RaftPort = body.RaftPort
+		store.SerfPort = body.SerfPort
+		store.WANSerfPort = body.WANSerfPort
+
+		// Attempt to open the store.
+		openStoreErrCh := make(chan error)
+		go func() { openStoreErrCh <- store.Open() }()
+		select {
+		case <-store.Started():
+		case <-openStoreErrCh:
+			c.String(http.StatusInternalServerError, "Could not open the store instance to bootstrap.")
 			return
 		}
 
-		// Perform the bootstrap operation.
+		// Attempt to bootstrap the store.
 		if err := store.Bootstrap(); err != nil {
-			c.String(http.StatusInternalServerError, "%s.", err)
+			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
 			return
 		}
 
-		// Update the engine status
-		engine.Status = Running
-		engine.writeConfig() // Save the engine status
-		c.String(http.StatusOK, "The server has been successfully bootstrapped.")
+		// Save the state and set the engine status.
+		engine.Status = StatusRunning
+		engine.writeConfig()
+
+		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
 }
 
 func (s *APIServer) handleJoin() gin.HandlerFunc {
-	engine := s.engine
-	store := engine.Store
-
-	type body struct {
-		RawAddr string `form:"address" json:"address"` // The raw TCP address of the node.
-		NodeID  string `form:"node_id" json:"node_id"` // The ID of the node to join.
-	}
-
 	return func(c *gin.Context) {
-		var body body
-		c.Bind(&body)
-
-		addr, err := net.ResolveTCPAddr("tcp", body.RawAddr)
-		if err != nil {
-			c.String(http.StatusBadRequest, "The address you have provided is not valid.")
-			return
-		}
-
-		if err := store.Join(body.NodeID, *addr); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Could not join the node at '%s' with ID '%s' to this store.",
-				body.RawAddr, body.NodeID,
-			)
-			return
-		}
-
-		c.String(http.StatusOK, "Successfully joined that node to the store.")
+		c.Status(http.StatusNotImplemented)
 	}
 }
 

@@ -58,6 +58,10 @@ func (s *RPCServer) handlers() {
 	// Log out all requests.
 	r.Use(s.simpleLogger())
 
+	//
+	// Register all other routes.
+	//
+
 	r.GET("/", s.handleIndex())
 }
 
