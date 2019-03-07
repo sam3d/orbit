@@ -14,6 +14,7 @@ import (
 // replicated state store and REST API are located here.
 type Engine struct {
 	APIServer *APIServer
+	RPCServer *RPCServer
 	Store     *Store
 
 	Status     Status
@@ -31,6 +32,7 @@ func New() *Engine {
 
 	e.Store = NewStore(e)
 	e.APIServer = NewAPIServer(e)
+	e.RPCServer = NewRPCServer(e)
 
 	return e
 }
@@ -91,24 +93,24 @@ func (e *Engine) Start() error {
 		return err
 	}
 
-	// Start the API Server.
-	go func() {
-		errCh <- e.APIServer.Start()
-	}()
+	// Start the API server.
+	go func() { errCh <- e.APIServer.Start() }()
 
-	// Open the Store.
-	go func() {
-		if e.Status >= Ready {
-			errCh <- e.Store.Open()
-		}
-	}()
+	// If the engine is ready, start the RPC server and the store.
+	if e.Status >= Ready {
+		go func() { errCh <- e.RPCServer.Start() }()
+		go func() { errCh <- e.Store.Open() }()
+	}
 
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
+
 		if e.Status >= Ready {
 			<-e.Store.Started()
+			<-e.RPCServer.Started()
 		}
+
 		log.Println("[INFO] engine: Started")
 	}()
 
