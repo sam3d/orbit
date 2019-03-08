@@ -243,8 +243,6 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
-	engine := s.engine
-	store := engine.Store
 	type body struct {
 		// Local node options.
 		RPCPort     int `form:"rpc_port" json:"rpc_port"`
@@ -276,31 +274,8 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Invalid TCP target address.")
 			return
 		}
-		client := RPCClient{Addr: *targetAddr}
 
-		// Make the join request.
-		var data RPCJoinResponse
-		resp, err := client.Post("/cluster/join", &RPCJoinRequest{JoinToken: body.JoinToken}, &data)
-		if err != nil {
-			if resp != nil && resp.StatusCode == http.StatusUnauthorized {
-				c.String(http.StatusUnauthorized, "Invalid join token.")
-			} else {
-				log.Printf("[ERR] api: %v", err)
-				c.String(http.StatusInternalServerError, "Could not join target node.")
-			}
-			return
-		}
-
-		// Set up local properties.
-		store.RaftPort = body.RaftPort
-		store.SerfPort = body.SerfPort
-		store.WANSerfPort = body.WANSerfPort
-
-		// Set up the remote join properties.
-		store.AdvertiseAddr = net.ParseIP(data.AdvertiseAddr)
-		localRaftAddr := fmt.Sprintf("%s:%s", store.AdvertiseAddr, store.RaftPort)
-
-		c.JSON(http.StatusOK, &data)
+		c.Status(http.StatusNotImplemented)
 	}
 }
 
