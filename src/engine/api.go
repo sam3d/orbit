@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -161,7 +162,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 	var mu sync.Mutex
 
 	type body struct {
-		RawAdvertiseAddr string `form:"advertise_addr" json:"advertise_addr"`
+		RawAdvertiseAddr string `form:"advertise_address" json:"advertise_address"`
 		RPCPort          int    `form:"rpc_port" json:"rpc_port"`
 		RaftPort         int    `form:"raft_port" json:"raft_port"`
 		SerfPort         int    `form:"serf_port" json:"serf_port"`
@@ -236,13 +237,63 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
+		// TODO: Add the node to the store_nodes list.
+
 		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
 }
 
 func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
+	type body struct {
+		// Local node options.
+		RPCPort     int `form:"rpc_port" json:"rpc_port"`
+		RaftPort    int `form:"raft_port" json:"raft_port"`
+		SerfPort    int `form:"serf_port" json:"serf_port"`
+		WANSerfPort int `form:"wan_serf_port" json:"wan_serf_port"`
+
+		// Options for node to join.
+		RawTargetAddr string `form:"target_address" json:"target_address"` // RPC address of target node
+		JoinToken     string `form:"join_token" json:"join_token"`
+	}
+
 	return func(c *gin.Context) {
-		c.Status(http.StatusNotImplemented)
+		// Bind the default settings from the body.
+		body := body{
+			RPCPort:     6501,
+			RaftPort:    6502,
+			SerfPort:    6503,
+			WANSerfPort: 6504,
+		}
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "Invalid form fields.")
+			return
+		}
+
+		// Validate the target address.
+		targetAddr, err := net.ResolveTCPAddr("tcp", body.RawTargetAddr)
+		if err != nil || len(targetAddr.IP) == 0 || targetAddr.Port == 0 {
+			c.String(http.StatusBadRequest, "Invalid TCP target address.")
+			return
+		}
+
+		// Make the join request.
+		client := RPCClient{Addr: *targetAddr}
+		resp, err := client.Post("/join", gin.H{"test": true})
+		if err != nil {
+			fmt.Println(err)
+		}
+		b := make(map[string]interface{})
+		json.Unmarshal(resp.Body, &b)
+		if b["success"].(bool) {
+			fmt.Println("Successful")
+		} else {
+			fmt.Println("Not successful")
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"target_address": targetAddr.String(),
+			"join_token":     body.JoinToken,
+		})
 	}
 }
 

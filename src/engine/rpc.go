@@ -17,9 +17,6 @@ type RPCServer struct {
 	started sync.WaitGroup
 }
 
-// RPCClient is responsible for making RPC requests to other agents.
-type RPCClient struct{}
-
 // Started will close the channel once the process has started. This will start
 // as a blocking process.
 func (s *RPCServer) Started() <-chan struct{} {
@@ -63,6 +60,7 @@ func (s *RPCServer) handlers() {
 	//
 
 	r.GET("/", s.handleIndex())
+	r.POST("/join", s.handleClusterJoin())
 }
 
 func (s *RPCServer) simpleLogger() gin.HandlerFunc {
@@ -75,5 +73,11 @@ func (s *RPCServer) simpleLogger() gin.HandlerFunc {
 func (s *RPCServer) handleIndex() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.String(http.StatusOK, "RPC is operational and responding to requests.")
+	}
+}
+
+func (s *RPCServer) handleClusterJoin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"success": false})
 	}
 }
