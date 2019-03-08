@@ -58,4 +58,9 @@ type RPCJoinResponse struct {
 	// The following properties are for the joining node to use.
 	AdvertiseAddr string `json:"advertise_address"`
 	ID            string `json:"id"`
+
+	// The following is the information from the remote node.
+	RaftPort    int `json:"raft_port"`
+	SerfPort    int `json:"serf_port"`
+	WANSerfPort int `json:"wan_serf_port"`
 }

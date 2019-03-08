@@ -101,6 +101,10 @@ func (s *RPCServer) handleClusterJoin() gin.HandlerFunc {
 		c.JSON(http.StatusOK, &RPCJoinResponse{
 			AdvertiseAddr: addr,
 			ID:            id,
+
+			RaftPort:    store.RaftPort,
+			SerfPort:    store.SerfPort,
+			WANSerfPort: store.WANSerfPort,
 		})
 	}
 }

@@ -243,6 +243,8 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
 	type body struct {
 		// Local node options.
 		RPCPort     int `form:"rpc_port" json:"rpc_port"`
@@ -288,6 +290,15 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			}
 			return
 		}
+
+		// Set up local properties.
+		store.RaftPort = body.RaftPort
+		store.SerfPort = body.SerfPort
+		store.WANSerfPort = body.WANSerfPort
+
+		// Set up the remote join properties.
+		store.AdvertiseAddr = net.ParseIP(data.AdvertiseAddr)
+		localRaftAddr := fmt.Sprintf("%s:%s", store.AdvertiseAddr, store.RaftPort)
 
 		c.JSON(http.StatusOK, &data)
 	}
