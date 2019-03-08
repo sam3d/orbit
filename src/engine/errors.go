@@ -3,6 +3,10 @@ package engine
 import "errors"
 
 var (
+	//
+	// User authentication errors.
+	//
+
 	// ErrUsernameTaken is whether the desired username is taken on the store.
 	ErrUsernameTaken = errors.New("username is already in use")
 	// ErrEmailTaken is whether the desired username is taken on the store.

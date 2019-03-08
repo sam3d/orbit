@@ -278,9 +278,14 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 
 		// Make the join request.
 		var data RPCJoinResponse
-		resp, err := client.Post("/cluster/join", &RPCJoinRequest{JoinToken: ""}, &data)
-		if err != nil || resp.StatusCode != 200 {
-			c.String(http.StatusInternalServerError, "Could not make join request to the target server.")
+		resp, err := client.Post("/cluster/join", &RPCJoinRequest{JoinToken: body.JoinToken}, &data)
+		if err != nil {
+			if resp != nil && resp.StatusCode == http.StatusUnauthorized {
+				c.String(http.StatusUnauthorized, "Invalid join token.")
+			} else {
+				log.Printf("[ERR] api: %v", err)
+				c.String(http.StatusInternalServerError, "Could not join target node.")
+			}
 			return
 		}
 
