@@ -1,5 +1,5 @@
 syntax = "proto3";
-package rpc;
+package proto;
 
 message ClusterJoinRequest {
   string join_token = 1;

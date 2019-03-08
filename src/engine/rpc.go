@@ -7,11 +7,10 @@ import (
 	"net"
 	"sync"
 
-	"google.golang.org/grpc/peer"
-
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"orbit.sh/engine/rpc"
+	"google.golang.org/grpc/peer"
+	"orbit.sh/engine/proto"
 )
 
 // RPCServer is a remote server that hosts intra-node communications.
@@ -47,9 +46,8 @@ func (s *RPCServer) Started() <-chan struct{} {
 // Start will start the RPC server. It will only return if there is an error,
 // otherwise it will hang forever.
 func (s *RPCServer) Start() error {
-	// Register the RPC server. This uses a GRPC package that is auto compiled in
-	// the /rpc directory.
-	rpc.RegisterClusterServer(s.server, s)
+	// Register the RPC server. This uses a GRPC package that is auto generated.
+	proto.RegisterClusterServer(s.server, s)
 
 	// Create the TCP listener.
 	listenAddr := fmt.Sprintf(":%d", s.Port)
@@ -68,21 +66,21 @@ func (s *RPCServer) Start() error {
 }
 
 // ClusterJoin handle receiving an RPC to join the server.
-func (s *RPCServer) ClusterJoin(ctx context.Context, in *rpc.ClusterJoinRequest) (*rpc.ClusterJoinResponse, error) {
+func (s *RPCServer) ClusterJoin(ctx context.Context, in *proto.ClusterJoinRequest) (*proto.ClusterJoinResponse, error) {
 	engine := s.engine
 	store := engine.Store
 
 	// Begin constructing the response.
-	res := &rpc.ClusterJoinResponse{
+	res := &proto.ClusterJoinResponse{
 		RaftPort:    uint32(store.RaftPort),
 		SerfPort:    uint32(store.SerfPort),
 		WanSerfPort: uint32(store.WANSerfPort),
-		JoinStatus:  rpc.ClusterJoinStatus_ACCEPTED,
+		JoinStatus:  proto.ClusterJoinStatus_ACCEPTED,
 	}
 
 	// Ensure that the join token is valid.
 	if in.JoinToken != "" {
-		res.JoinStatus = rpc.ClusterJoinStatus_UNAUTHORIZED
+		res.JoinStatus = proto.ClusterJoinStatus_UNAUTHORIZED
 		return res, nil
 	}
 

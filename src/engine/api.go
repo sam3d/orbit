@@ -8,10 +8,9 @@ import (
 	"net/http"
 	"sync"
 
-	"orbit.sh/engine/rpc"
-
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
+	"orbit.sh/engine/proto"
 )
 
 func init() {
@@ -286,10 +285,10 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 		defer conn.Close()
-		client := rpc.NewClusterClient(conn)
+		client := proto.NewClusterClient(conn)
 
 		// Actually make the join request.
-		res, err := client.ClusterJoin(context.Background(), &rpc.ClusterJoinRequest{
+		res, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
 			JoinToken: "",
 		})
 		if err != nil {
