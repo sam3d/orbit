@@ -60,7 +60,7 @@ func (s *RPCServer) handlers() {
 	//
 
 	r.GET("/", s.handleIndex())
-	r.POST("/join", s.handleClusterJoin())
+	r.POST("/cluster/join", s.handleClusterJoin())
 }
 
 func (s *RPCServer) simpleLogger() gin.HandlerFunc {
@@ -77,7 +77,30 @@ func (s *RPCServer) handleIndex() gin.HandlerFunc {
 }
 
 func (s *RPCServer) handleClusterJoin() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"success": false})
+		// Parse join request.
+		var body RPCJoinRequest
+		if err := c.Bind(&body); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		// Check join token.
+		if body.JoinToken != "" {
+			c.String(http.StatusUnauthorized, "Invalid join token.")
+			return
+		}
+
+		// Generate node ID and retrieve advertise address.
+		addr := c.ClientIP()
+		id := store.state.Nodes.GenerateNodeID()
+
+		c.JSON(http.StatusOK, &RPCJoinResponse{
+			AdvertiseAddr: addr,
+			ID:            id,
+		})
 	}
 }

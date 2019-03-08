@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -275,25 +274,17 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Invalid TCP target address.")
 			return
 		}
+		client := RPCClient{Addr: *targetAddr}
 
 		// Make the join request.
-		client := RPCClient{Addr: *targetAddr}
-		resp, err := client.Post("/join", gin.H{"test": true})
-		if err != nil {
-			fmt.Println(err)
-		}
-		b := make(map[string]interface{})
-		json.Unmarshal(resp.Body, &b)
-		if b["success"].(bool) {
-			fmt.Println("Successful")
-		} else {
-			fmt.Println("Not successful")
+		var data RPCJoinResponse
+		resp, err := client.Post("/cluster/join", &RPCJoinRequest{JoinToken: ""}, &data)
+		if err != nil || resp.StatusCode != 200 {
+			c.String(http.StatusInternalServerError, "Could not make join request to the target server.")
+			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"target_address": targetAddr.String(),
-			"join_token":     body.JoinToken,
-		})
+		c.JSON(http.StatusOK, &data)
 	}
 }
 
