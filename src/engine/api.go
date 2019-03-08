@@ -1,13 +1,17 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"sync"
 
+	"orbit.sh/engine/rpc"
+
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 func init() {
@@ -275,7 +279,26 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
-		c.Status(http.StatusNotImplemented)
+		// Create the client for connecting to the target node.
+		conn, err := grpc.Dial(targetAddr.String(), grpc.WithInsecure())
+		if err != nil {
+			c.String(http.StatusBadRequest, "Could not establish a connection to %s.", targetAddr)
+			return
+		}
+		defer conn.Close()
+		client := rpc.NewClusterClient(conn)
+
+		// Actually make the join request.
+		res, err := client.ClusterJoin(context.Background(), &rpc.ClusterJoinRequest{
+			JoinToken: "",
+		})
+		if err != nil {
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
+			return
+		}
+
+		c.JSON(http.StatusNotImplemented, res)
 	}
 }
 

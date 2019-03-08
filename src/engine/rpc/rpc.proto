@@ -1,0 +1,29 @@
+syntax = "proto3";
+package rpc;
+
+message ClusterJoinRequest {
+  string join_token = 1;
+}
+
+enum ClusterJoinStatus {
+  ACCEPTED = 0;
+  UNAUTHORIZED = 1;
+}
+
+message ClusterJoinResponse {
+  // Information that the joining node should adopt.
+  string advertise_ip = 1;
+  string id = 2;
+
+  // Metadata about the node to join.
+  uint32 raft_port = 3;
+  uint32 serf_port = 4;
+  uint32 wan_serf_port = 5;
+
+  // Simple status response.
+  ClusterJoinStatus join_status = 6;
+}
+
+service Cluster {
+  rpc ClusterJoin(ClusterJoinRequest) returns (ClusterJoinResponse) {}
+}
