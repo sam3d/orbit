@@ -176,9 +176,19 @@ func (s *RPCServer) Leader() string {
 	}
 	ip := raftAddr.IP.String()
 
-	// TODO: Look up the required port from the IP address in the store state node
-	// list.
+	// Look up the required port from the IP address in the store state node list.
+	var rpcPort int
+	for _, node := range s.engine.Store.state.Nodes {
+		if node.Address.String() == ip {
+			rpcPort = node.RPCPort
+			break
+		}
+	}
+	if rpcPort == 0 {
+		return ""
+	}
 
-	addr := fmt.Sprintf("%s:%d", ip, 6501)
+	// Great, we found it out. Now let's return it.
+	addr := fmt.Sprintf("%s:%d", ip, rpcPort)
 	return addr
 }
