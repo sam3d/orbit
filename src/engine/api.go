@@ -239,22 +239,18 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
-		// Wait for the store to open properly.
-		timeout := time.After(time.Second * 10)
-		for {
-			var leader bool
-
-			select {
-			case leader = <-store.raft.LeaderCh():
-			case <-timeout:
-				log.Printf("[ERR] store: could not make this node a leader")
-				c.String(http.StatusInternalServerError, "Could not make this node a leader.")
+		// Wait for us to become the leader of the store.
+		select {
+		case leader := <-store.raft.LeaderCh():
+			if !leader {
+				log.Printf("[ERR] store: we did not become the leader of the store")
+				c.String(http.StatusInternalServerError, "There was an error establishing a leader for the cluster.")
 				return
 			}
-
-			if leader {
-				break
-			}
+		case <-time.After(time.Second * 10):
+			log.Printf("[ERR] store: we never received leader information")
+			c.String(http.StatusInternalServerError, "There was an error establishing a leader for the cluster.")
+			return
 		}
 
 		// Prepare command to add this node's details to the store.
