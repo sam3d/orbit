@@ -413,6 +413,8 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
+		// TODO: Update the store list of nodes to include this store in it.
+
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}
 }

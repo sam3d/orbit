@@ -175,6 +175,11 @@ func (s *Store) Bootstrap() error {
 func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
 	log.Printf("[INFO] store: Received join request for node %s at %s", nodeID, addr.String())
 
+	if s.raft.State() != raft.Leader {
+		return fmt.Errorf("not leader")
+		// TODO: Make this use forwardJoin
+	}
+
 	configFuture := s.raft.GetConfiguration()
 	if err := configFuture.Error(); err != nil {
 		log.Printf("[ERR] store: Failed to get raft configuration")
@@ -189,5 +194,11 @@ func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
 	}
 
 	log.Printf("[INFO] store: Node %s at %s has joined successfully", nodeID, addr.String())
+	return nil
+}
+
+// forwardJoin will forward a join cluster request to the leader of the cluster.
+func forwardJoin(nodeID string, addr net.TCPAddr) error {
+	// TODO: Implement the forward join method.
 	return nil
 }

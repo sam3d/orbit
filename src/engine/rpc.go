@@ -161,7 +161,10 @@ func (s *RPCServer) Leader() string {
 		return ""
 	}
 	ip := raftAddr.IP.String()
-	// TODO: Get the port from the store state node list that includes this info.
+
+	// TODO: Look up the required port from the IP address in the store state node
+	// list.
+
 	addr := fmt.Sprintf("%s:%d", ip, 6501)
 	return addr
 }
