@@ -12,8 +12,12 @@ enum Status {
 //
 
 service RPC {
+  // Cluster join and confirm join operations.
   rpc Join(JoinRequest) returns (JoinResponse) {}
   rpc ConfirmJoin(ConfirmJoinRequest) returns (ConfirmJoinResponse) {}
+
+  // Apply is used for leader forwarding.
+  rpc Apply(ApplyRequest) returns (ApplyResponse) {}
 }
 
 message JoinRequest {
@@ -50,3 +54,11 @@ message ConfirmJoinResponse {
 //
 // Leader forwarding.
 //
+
+message ApplyRequest {
+  bytes body = 1;
+}
+
+message ApplyResponse {
+  Status status = 1;
+}

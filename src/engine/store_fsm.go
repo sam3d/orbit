@@ -1,10 +1,16 @@
 package engine
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 
 	"github.com/hashicorp/raft"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"orbit.sh/engine/proto"
 )
 
 type fsm Store
@@ -15,14 +21,53 @@ type command struct {
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
-// in the store using it's "Apply" method.
+// in the store using it's "Apply" method. This is also the part of the process
+// that is responsible for leader forwarding.
 func (c *command) Apply(s *Store) error {
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
+
+	// Ensure that we're the leader, and if not, forward the request to the
+	// leader. This is a bit of a hacky implementation, but hopefully for now it
+	// works.
+	if s.raft.State() != raft.Leader {
+		return forwardApply(s, b)
+	}
+
 	f := s.raft.Apply(b, s.RaftTimeout)
 	return f.Error()
+}
+
+// forwardApply will apply a command by forwarding it to the current leader. This
+// ensures that requests propagate correctly.
+func forwardApply(s *Store, b []byte) error {
+	leaderAddr := s.engine.RPCServer.Leader()
+	if leaderAddr == "" {
+		return fmt.Errorf("could not retrieve leader address")
+	}
+
+	log.Printf("[INFO] store: Forwarding to %s", leaderAddr)
+
+	// Prepare the GRPC connection.
+	conn, err := grpc.Dial(leaderAddr, grpc.WithInsecure())
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("could not dial %s", leaderAddr))
+	}
+	defer conn.Close()
+	client := proto.NewRPCClient(conn)
+
+	// Make the request.
+	res, err := client.Apply(context.Background(), &proto.ApplyRequest{Body: b})
+	if err != nil {
+		return errors.Wrap(err, "could not perform the remote apply request")
+	}
+	if res.Status == proto.Status_ERROR {
+		return fmt.Errorf("error from the leader node that we forwarded the request to")
+	}
+
+	return nil
 }
 
 // Apply will apply an entry to the store.

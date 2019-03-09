@@ -136,3 +136,32 @@ func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinReques
 
 	return res, nil
 }
+
+// Apply is called when a node that isn't a leader forwards an fsm apply blob to
+// us. That means that we're the leader of the cluster, so go us!
+func (s *RPCServer) Apply(ctx context.Context, in *proto.ApplyRequest) (*proto.ApplyResponse, error) {
+	res := &proto.ApplyResponse{
+		Status: proto.Status_OK,
+	}
+
+	f := s.engine.Store.raft.Apply(in.Body, s.engine.Store.RaftTimeout)
+	if err := f.Error(); err != nil {
+		log.Printf("[ERR] store: %s", err)
+		res.Status = proto.Status_ERROR
+	}
+
+	return res, nil
+}
+
+// Leader gets the RPC address of the leader of the cluster.
+func (s *RPCServer) Leader() string {
+	rawRaftAddr := string(s.engine.Store.raft.Leader())
+	raftAddr, err := net.ResolveTCPAddr("tcp", rawRaftAddr)
+	if err != nil {
+		return ""
+	}
+	ip := raftAddr.IP.String()
+	// TODO: Get the port from the store state node list that includes this info.
+	addr := fmt.Sprintf("%s:%d", ip, 6501)
+	return addr
+}
