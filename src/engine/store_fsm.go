@@ -15,9 +15,22 @@ import (
 
 type fsm Store
 
+type op uint16
+
+const (
+	opEmpty op = iota
+
+	opNewUser
+	opRemoveUser
+
+	opNewNode
+)
+
 type command struct {
-	Op   string `json:"op"`
-	User User   `json:"user,omitempty"`
+	Op op `json:"op"`
+
+	User User `json:"user,omitempty"`
+	Node Node `json:"node,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -78,10 +91,15 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	}
 
 	switch c.Op {
-	case "User.New":
+	// User operations
+	case opNewUser:
 		return f.applyNewUser(c.User)
-	case "User.Remove":
+	case opRemoveUser:
 		return f.applyRemoveUser(c.User.ID)
+
+		// Node operations
+	case opNewNode:
+		return f.applyNewNode(c.Node)
 	}
 
 	return nil
@@ -98,6 +116,13 @@ func (f *fsm) applyRemoveUser(id string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Users.Remove(id)
+	return nil
+}
+
+func (f *fsm) applyNewNode(n Node) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Nodes = append(f.state.Nodes, n)
 	return nil
 }
 

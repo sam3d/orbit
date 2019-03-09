@@ -8,8 +8,13 @@ import (
 
 // Node is a server attached to the system in some capacity.
 type Node struct {
-	ID      string     `json:"id"`      // The unique ID of the node
-	Address net.IPAddr `json:"address"` // The address of the node
+	ID      string `json:"id"`      // The unique ID of the node
+	Address net.IP `json:"address"` // The address of the node
+
+	RPCPort     int `json:"rpc_port"`
+	RaftPort    int `json:"raft_port"`
+	SerfPort    int `json:"serf_port"`
+	WANSerfPort int `json:"wan_serf_port"`
 }
 
 // Nodes is a list of nodes.

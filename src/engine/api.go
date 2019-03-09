@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -238,7 +239,42 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
-		// TODO: Add the node to the store_nodes list.
+		// Wait for the store to open properly.
+		timeout := time.After(time.Second * 10)
+		for {
+			var leader bool
+
+			select {
+			case leader = <-store.raft.LeaderCh():
+			case <-timeout:
+				log.Printf("[ERR] store: could not make this node a leader")
+				c.String(http.StatusInternalServerError, "Could not make this node a leader.")
+				return
+			}
+
+			if leader {
+				break
+			}
+		}
+
+		// Prepare command to add this node's details to the store.
+		cmd := command{
+			Op: opNewNode,
+			Node: Node{
+				ID:          store.ID,
+				Address:     store.AdvertiseAddr,
+				RPCPort:     engine.RPCServer.Port,
+				RaftPort:    store.RaftPort,
+				SerfPort:    store.SerfPort,
+				WANSerfPort: store.WANSerfPort,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not add this node to the list of nodes in the store, despite being joined to it successfully.")
+			return
+		}
 
 		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
@@ -345,7 +381,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.writeConfig()
 
 		// Let the primary server know that we're ready to be joined to it.
-		joinConfRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
+		cRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
 			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
 			Id:       store.ID,
 		})
@@ -354,7 +390,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
-		switch joinConfRes.Status {
+		switch cRes.Status {
 		case proto.Status_UNAUTHORIZED:
 			c.String(http.StatusUnauthorized, "That join token is no longer authorized.")
 			return
@@ -416,7 +452,7 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		}
 
 		cmd := command{
-			Op:   "User.New",
+			Op:   opNewUser,
 			User: *newUser,
 		}
 
@@ -458,6 +494,12 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleListNodes() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, s.engine.Store.state.Nodes)
+	}
+}
+
 func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 	store := s.engine.Store
 
@@ -470,11 +512,12 @@ func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 		}
 
 		cmd := command{
-			Op:   "User.Remove",
+			Op:   opRemoveUser,
 			User: User{ID: id},
 		}
 
 		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
 			c.String(http.StatusInternalServerError, "Could not remove that user.")
 			return
 		}
