@@ -412,19 +412,6 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
-		// Wait for our understanding of raft to have a leader.
-		for start := time.Now(); ; {
-			if store.raft.Leader() != "" {
-				break
-			}
-			if time.Since(start) > time.Second*10 {
-				log.Printf("[ERR] store: could not get leader status")
-				c.String(http.StatusInternalServerError, "Could not get leader status to add new node to store state list.")
-				return
-			}
-			time.Sleep(time.Millisecond * 200)
-		}
-
 		// Add this node to the list of nodes.
 		cmd := command{
 			Op:   opNewNode,

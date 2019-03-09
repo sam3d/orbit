@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -155,6 +156,19 @@ func (s *RPCServer) Apply(ctx context.Context, in *proto.ApplyRequest) (*proto.A
 
 // Leader gets the RPC address of the leader of the cluster.
 func (s *RPCServer) Leader() string {
+	// Add a timeout handler to ensure that there is a raft leader.
+	for start := time.Now(); ; {
+		if s.engine.Store.raft.Leader() != "" {
+			break
+		}
+		if time.Since(start) > time.Second*10 {
+			log.Printf("[ERR] rpc: could not get leader status")
+			return ""
+		}
+		time.Sleep(time.Millisecond * 200)
+	}
+
+	// Get the raft address of the leader.
 	rawRaftAddr := string(s.engine.Store.raft.Leader())
 	raftAddr, err := net.ResolveTCPAddr("tcp", rawRaftAddr)
 	if err != nil {
