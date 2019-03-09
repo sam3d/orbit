@@ -229,6 +229,16 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Attempt to start the RPC server.
+		go func() { errCh <- engine.RPCServer.Start() }()
+		select {
+		case <-engine.RPCServer.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not start the RPC server.")
+			return
+		}
+
 		// Attempt to bootstrap the store.
 		if err := store.Bootstrap(); err != nil {
 			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
