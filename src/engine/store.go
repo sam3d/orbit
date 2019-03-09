@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -35,7 +33,7 @@ type Store struct {
 	state *StoreState
 	raft  *raft.Raft // Primary consensus mechanism
 
-	startedWg sync.WaitGroup
+	started sync.WaitGroup
 }
 
 // NewStore returns a new instance of the store.
@@ -54,7 +52,7 @@ func NewStore(e *Engine) *Store {
 		state: &StoreState{},
 	}
 
-	s.startedWg.Add(1)
+	s.started.Add(1)
 
 	return s
 }
@@ -64,29 +62,11 @@ func (s *Store) Started() <-chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
-		s.startedWg.Wait()
+		s.started.Wait()
 		close(ch)
 	}()
 
 	return ch
-}
-
-// GenerateNodeID will create an ID for that node. It will search the store for
-// any member conflits and ensure that the Node ID is unique. This could take
-// unlimited time.
-func (s *Store) GenerateNodeID() error {
-	for {
-		// Generate the random node ID.
-		b := make([]byte, 16)
-		if _, err := rand.Read(b); err != nil {
-			return err
-		}
-		h := hex.EncodeToString(b)
-
-		// TODO: Search for duplicates.
-		s.ID = h
-		return nil
-	}
 }
 
 // Open will open an instance of the store.
@@ -102,9 +82,7 @@ func (s *Store) Open() error {
 
 	// Generate node ID if one does not exist.
 	if s.ID == "" {
-		if err := s.GenerateNodeID(); err != nil {
-			return errors.Wrap(err, "could not generate node ID")
-		}
+		s.ID = s.state.Nodes.GenerateNodeID()
 		s.engine.writeConfig() // Ensure we keep the ID
 	}
 
@@ -164,7 +142,7 @@ func (s *Store) Open() error {
 	}
 	s.raft = ra
 
-	s.startedWg.Done()
+	s.started.Done()
 	log.Printf("[INFO] store: Opened at %s with ID %s", addr.String(), s.ID)
 	select {}
 }
@@ -172,7 +150,7 @@ func (s *Store) Open() error {
 // Bootstrap will actually start the store if it's the only node. This will only
 // work if the store is not open or joined to another node.
 func (s *Store) Bootstrap() error {
-	if s.engine.Status == Running {
+	if s.engine.Status == StatusRunning {
 		err := fmt.Errorf("Cannot bootstrap a store that is already bootstrapped")
 		log.Printf("[ERR] store: %s", err)
 		return err

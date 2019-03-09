@@ -14,6 +14,7 @@ import (
 // replicated state store and REST API are located here.
 type Engine struct {
 	APIServer *APIServer
+	RPCServer *RPCServer
 	Store     *Store
 
 	Status     Status
@@ -24,13 +25,14 @@ type Engine struct {
 // New creates a new instance of the engine.
 func New() *Engine {
 	e := &Engine{
-		Status:     Init,
+		Status:     StatusInit,
 		DataPath:   "/var/orbit",
 		ConfigFile: "config.json",
 	}
 
 	e.Store = NewStore(e)
 	e.APIServer = NewAPIServer(e)
+	e.RPCServer = NewRPCServer(e)
 
 	return e
 }
@@ -39,26 +41,26 @@ func New() *Engine {
 type Status uint8
 
 const (
-	// Init is the first opening state of the engine and means that the config has
+	// StatusInit is the first opening state of the engine and means that the config has
 	// not yet been loaded.
-	Init Status = iota
-	// Setup is when the engine has not yet been bootstrapped.
-	Setup
-	// Ready is when the engine can properly be used.
-	Ready
-	// Running is when the store has been successfully bootstrapped.
-	Running
+	StatusInit Status = iota
+	// StatusSetup is when the engine has not yet been bootstrapped.
+	StatusSetup
+	// StatusReady is when the engine can properly be used.
+	StatusReady
+	// StatusRunning is when the store has been successfully bootstrapped.
+	StatusRunning
 )
 
 func (s Status) String() string {
 	switch s {
-	case Init:
+	case StatusInit:
 		return "init"
-	case Setup:
+	case StatusSetup:
 		return "setup"
-	case Ready:
+	case StatusReady:
 		return "ready"
-	case Running:
+	case StatusRunning:
 		return "running"
 	default:
 		return ""
@@ -91,24 +93,24 @@ func (e *Engine) Start() error {
 		return err
 	}
 
-	// Start the API Server.
-	go func() {
-		errCh <- e.APIServer.Start()
-	}()
+	// Start the API server.
+	go func() { errCh <- e.APIServer.Start() }()
 
-	// Open the Store.
-	go func() {
-		if e.Status >= Ready {
-			errCh <- e.Store.Open()
-		}
-	}()
+	// If the engine is ready, start the RPC server and the store.
+	if e.Status >= StatusReady {
+		go func() { errCh <- e.RPCServer.Start() }()
+		go func() { errCh <- e.Store.Open() }()
+	}
 
 	// Monitor started progress on each component.
 	go func() {
 		<-e.APIServer.Started()
-		if e.Status >= Ready {
+
+		if e.Status >= StatusReady {
 			<-e.Store.Started()
+			<-e.RPCServer.Started()
 		}
+
 		log.Println("[INFO] engine: Started")
 	}()
 

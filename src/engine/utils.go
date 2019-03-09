@@ -2,22 +2,28 @@ package engine
 
 import (
 	"io/ioutil"
+	"net"
 	"net/http"
 
 	"github.com/pkg/errors"
 )
 
 // getPublicIP will retrieve the public IP for this node.
-func getPublicIP() (string, error) {
+func getPublicIP() (net.IP, error) {
 	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
-		return "", errors.Wrap(err, "could not connect to ipify API")
+		return nil, errors.Wrap(err, "could not connect to ipify API")
 	}
 
-	ip, err := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "could not read ipify response body")
+		return nil, errors.Wrap(err, "could not read ipify response body")
 	}
 
-	return string(ip), nil
+	ip := net.ParseIP(string(body))
+	if ip == nil {
+		return nil, errors.New("could not parse IP address")
+	}
+
+	return ip, nil
 }

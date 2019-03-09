@@ -1,11 +1,16 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"orbit.sh/engine/proto"
 )
 
 func init() {
@@ -19,8 +24,8 @@ type APIServer struct {
 	Port   int
 	Socket string
 
-	router    *gin.Engine
-	startedWg sync.WaitGroup
+	router  *gin.Engine
+	started sync.WaitGroup
 }
 
 // NewAPIServer returns a new API server instance.
@@ -34,7 +39,7 @@ func NewAPIServer(e *Engine) *APIServer {
 	// started channel, it waits until it has started. We need to remember to
 	// release this extra waitgroup lock after the first addition, and add it
 	// again when the API is stopped.
-	s.startedWg.Add(1)
+	s.started.Add(1)
 
 	return s
 }
@@ -44,7 +49,7 @@ func (s *APIServer) Started() <-chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
-		s.startedWg.Wait()
+		s.started.Wait()
 		close(ch)
 	}()
 
@@ -58,19 +63,19 @@ func (s *APIServer) Start() error {
 	s.handlers()              // Register the routes
 	errCh := make(chan error) // Handle errors from socket and TCP
 
-	s.startedWg.Add(2)
-	s.startedWg.Done() // Clear out the initial waitgroup
+	s.started.Add(2)
+	s.started.Done() // Clear out the initial waitgroup
 
 	// Listen for UNIX socket requests.
 	go func() {
 		if s.Socket == "" {
 			log.Println("[WARN] api: Not listening for socket requests")
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		log.Printf("[INFO] api: Listening on socket %s", s.Socket)
-		s.startedWg.Done()
+		s.started.Done()
 		errCh <- s.router.RunUnix(s.Socket)
 	}()
 
@@ -78,21 +83,392 @@ func (s *APIServer) Start() error {
 	go func() {
 		if s.Port == -1 {
 			log.Println("[INFO] api: Not listening for TCP requests")
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		if s.Port < 0 || s.Port > 65535 {
 			errCh <- fmt.Errorf("[ERR] api: Port %d is out of range", s.Port)
-			s.startedWg.Done()
+			s.started.Done()
 			return
 		}
 
 		log.Printf("[WARN] api: Listening on port %d", s.Port)
-		s.startedWg.Done()
+		s.started.Done()
 		bindAddr := fmt.Sprintf(":%d", s.Port)
 		errCh <- s.router.Run(bindAddr)
 	}()
 
 	return <-errCh
+}
+
+// handlers registers all of the default routes for the API server. This is a
+// separate method so that other routes can be added *after* the defaults but
+// *before* the server is started.
+func (s *APIServer) handlers() {
+	r := s.router
+
+	// Register middleware.
+	r.Use(s.simpleLogger())
+
+	//
+	// Handle all of the routes.
+	//
+
+	r.GET("", func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
+	})
+
+	r.GET("/state", s.handleState())
+	r.GET("/users", s.handleListUsers())
+
+	{
+		r := r.Group("/cluster")
+		r.POST("/bootstrap", s.handleClusterBootstrap())
+		r.POST("/join", s.handleClusterJoin())
+	}
+
+	{
+		r := r.Group("/user")
+		r.POST("", s.handleUserSignup())
+		r.DELETE("/:id", s.handleUserRemove())
+	}
+}
+
+func (s *APIServer) simpleLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
+		c.Next()
+	}
+}
+
+func (s *APIServer) handleState() gin.HandlerFunc {
+	type res struct {
+		Status       Status      `json:"status"`
+		StatusString string      `json:"status_string"`
+		State        *StoreState `json:"state"`
+	}
+
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, &res{
+			Status:       s.engine.Status,
+			StatusString: fmt.Sprintf("%s", s.engine.Status),
+			State:        s.engine.Store.state,
+		})
+	}
+}
+
+func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+	var mu sync.Mutex
+
+	type body struct {
+		RawAdvertiseAddr string `form:"advertise_address" json:"advertise_address"`
+		RPCPort          int    `form:"rpc_port" json:"rpc_port"`
+		RaftPort         int    `form:"raft_port" json:"raft_port"`
+		SerfPort         int    `form:"serf_port" json:"serf_port"`
+		WANSerfPort      int    `form:"wan_serf_port" json:"wan_serf_port"`
+	}
+
+	return func(c *gin.Context) {
+		// Don't allow anybody else to attempt to bootstrap during process.
+		mu.Lock()
+		defer mu.Unlock()
+
+		// Ensure that the store can be bootstrapped.
+		if engine.Status >= StatusReady {
+			c.String(http.StatusConflict, "The engine is already running and cannot be bootstrapped.")
+			return
+		}
+
+		// Bind the default settings from the body.
+		body := body{
+			RPCPort:     6501,
+			RaftPort:    6502,
+			SerfPort:    6503,
+			WANSerfPort: 6504,
+		}
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "Invalid request body fields.")
+			return
+		}
+
+		// Validate and parse the provided IP address.
+		var advertiseAddr net.IP
+		if body.RawAdvertiseAddr != "" {
+			ip := net.ParseIP(body.RawAdvertiseAddr)
+			if ip == nil {
+				c.String(http.StatusBadRequest, "Your provided advertise address is not valid.")
+				return
+			}
+			advertiseAddr = ip
+		} else {
+			ip, err := getPublicIP()
+			if err != nil {
+				c.String(http.StatusBadRequest, "Could not automatically obtain public advertise address.")
+			}
+			advertiseAddr = ip
+		}
+
+		// Set all of the engine component properties.
+		engine.RPCServer.Port = body.RPCPort
+		store.AdvertiseAddr = advertiseAddr
+		store.RaftPort = body.RaftPort
+		store.SerfPort = body.SerfPort
+		store.WANSerfPort = body.WANSerfPort
+
+		// Attempt to open the store.
+		errCh := make(chan error)
+		go func() { errCh <- store.Open() }()
+		select {
+		case <-store.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not open the store instance to bootstrap.")
+			return
+		}
+
+		// Attempt to bootstrap the store.
+		if err := store.Bootstrap(); err != nil {
+			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
+			return
+		}
+
+		// Save the state and set the engine status.
+		engine.Status = StatusRunning
+		engine.writeConfig()
+
+		// TODO: Add the node to the store_nodes list.
+
+		c.JSON(http.StatusOK, engine.marshalConfig())
+	}
+}
+
+func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	var mu sync.Mutex
+
+	type body struct {
+		// Local node options.
+		RPCPort     int `form:"rpc_port" json:"rpc_port"`
+		RaftPort    int `form:"raft_port" json:"raft_port"`
+		SerfPort    int `form:"serf_port" json:"serf_port"`
+		WANSerfPort int `form:"wan_serf_port" json:"wan_serf_port"`
+
+		// Options for node to join.
+		RawTargetAddr string `form:"target_address" json:"target_address"` // RPC address of target node
+		JoinToken     string `form:"join_token" json:"join_token"`
+	}
+
+	return func(c *gin.Context) {
+		// Prevent using this route twice.
+		mu.Lock()
+		defer mu.Unlock()
+
+		if engine.Status >= StatusReady {
+			c.String(http.StatusConflict, "The node is already part of a cluster.")
+			return
+		}
+
+		// Bind the default settings from the body.
+		body := body{
+			RPCPort:     6501,
+			RaftPort:    6502,
+			SerfPort:    6503,
+			WANSerfPort: 6504,
+		}
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "Invalid form fields.")
+			return
+		}
+
+		// Validate the target address.
+		targetAddr, err := net.ResolveTCPAddr("tcp", body.RawTargetAddr)
+		if err != nil || len(targetAddr.IP) == 0 || targetAddr.Port == 0 {
+			c.String(http.StatusBadRequest, "Invalid TCP target address.")
+			return
+		}
+
+		// Create the client for connecting to the target node.
+		conn, err := grpc.Dial(targetAddr.String(), grpc.WithInsecure())
+		if err != nil {
+			c.String(http.StatusBadRequest, "Could not establish a connection to %s.", targetAddr)
+			return
+		}
+		defer conn.Close()
+		client := proto.NewClusterClient(conn)
+
+		// Actually make the join request.
+		joinRes, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
+			JoinToken: body.JoinToken,
+		})
+		if err != nil {
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
+			return
+		}
+		if joinRes.JoinStatus == proto.ClusterStatus_UNAUTHORIZED {
+			c.String(http.StatusUnauthorized, "That join token is not authorized.")
+			return
+		}
+
+		// Set up the local properties for ourselves.
+		store.RaftPort = body.RaftPort
+		store.SerfPort = body.SerfPort
+		store.WANSerfPort = body.WANSerfPort
+
+		// Use the address that we got from the server as our local advertise
+		// address, and use the generated ID from the remote server as well.
+		store.AdvertiseAddr = net.ParseIP(joinRes.AdvertiseAddr)
+		store.ID = joinRes.Id
+
+		// Attempt to open the store.
+		errCh := make(chan error)
+		go func() { errCh <- store.Open() }()
+		select {
+		case <-store.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusInternalServerError, "Could not open the store.")
+			return
+		}
+
+		// The engine is now ready to accept requests, let's save everything we have
+		// up until this point and ensure that this config gets maintained. This is
+		// because after the store open operation, Raft has started writing it's
+		// data to the raft directory, so it's important that we react to this
+		// properly.
+		engine.Status = StatusReady
+		engine.writeConfig()
+
+		// Let the primary server know that we're ready to be joined to it.
+		joinConfRes, err := client.ClusterJoinConfirm(context.Background(), &proto.ClusterJoinConfirmRequest{
+			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
+			Id:       store.ID,
+		})
+		if err != nil {
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
+			return
+		}
+		switch joinConfRes.ConfirmStatus {
+		case proto.ClusterStatus_UNAUTHORIZED:
+			c.String(http.StatusUnauthorized, "That join token is no longer authorized.")
+			return
+		case proto.ClusterStatus_ERROR:
+			c.String(http.StatusInternalServerError, "There was an error in joining your node to the store.")
+			return
+		}
+
+		// The join occurred successfully! Update the engine status and config.
+		engine.Status = StatusRunning
+		engine.writeConfig()
+
+		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
+	}
+}
+
+func (s *APIServer) handleUserSignup() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name     string `form:"name" json:"name"`
+		Password string `form:"password" json:"password"`
+		Username string `form:"username" json:"username"`
+		Email    string `form:"email" json:"email"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		newUser, err := store.state.Users.Generate(UserConfig{
+			Name:     body.Name,
+			Password: body.Password,
+			Username: body.Username,
+			Email:    body.Email,
+		})
+		if err != nil {
+			switch err {
+			case ErrEmailTaken:
+				c.String(http.StatusConflict, "Sorry, that email address is already taken.")
+			case ErrUsernameTaken:
+				c.String(http.StatusConflict, "Sorry, that username is already taken.")
+			case ErrMissingFields:
+				c.String(http.StatusBadRequest, "You didn't supply all of the required fields.")
+			default:
+				c.AbortWithStatus(http.StatusBadRequest)
+			}
+			return
+		}
+
+		cmd := command{
+			Op:   "User.New",
+			User: *newUser,
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not create the new user. Ensure that all of the manager nodes are connected correctly.")
+			return
+		}
+
+		c.String(http.StatusCreated, newUser.ID)
+	}
+}
+
+func (s *APIServer) handleListUsers() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type user struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+		Email    string `json:"email"`
+	}
+
+	return func(c *gin.Context) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+
+		var users []user
+
+		for _, u := range store.state.Users {
+			users = append(users, user{
+				ID:       u.ID,
+				Name:     u.Name,
+				Username: u.Username,
+				Email:    u.Email,
+			})
+		}
+
+		c.JSON(http.StatusOK, &users)
+	}
+}
+
+func (s *APIServer) handleUserRemove() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id") // The ID of the user to remove
+
+		if i, _ := store.state.Users.FindByID(id); i == -1 {
+			c.String(http.StatusNotFound, "A user with that ID does not exist.")
+			return
+		}
+
+		cmd := command{
+			Op:   "User.Remove",
+			User: User{ID: id},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not remove that user.")
+			return
+		}
+
+		c.String(http.StatusOK, "The user has been removed.")
+	}
 }

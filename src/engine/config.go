@@ -12,9 +12,15 @@ import (
 
 // config is the configuration struct that the engine saves and interacts with.
 type config struct {
-	AdvertiseAddr string `json:"advertise_addr"`
-	Status        Status `json:"status"`
+	Status Status `json:"status"`
+
+	// Set these fields during the join or bootstrap process.
 	ID            string `json:"id"`
+	AdvertiseAddr string `json:"advertise_addr"`
+	RPCPort       int    `json:"rpc_port"`
+	RaftPort      int    `json:"raft_port"`
+	SerfPort      int    `json:"serf_port"`
+	WANSerfPort   int    `json:"wan_serf_port"`
 }
 
 // configPath will return the path of the config file that the engine will use.
@@ -28,7 +34,7 @@ func (e Engine) configPath() string {
 func (e Engine) createConfig() error {
 	path := e.configPath()
 
-	defaultConfig := &config{Status: Setup} // By default, we want to setup mode
+	defaultConfig := &config{Status: StatusSetup} // By default, we want to setup mode
 	b, err := json.MarshalIndent(defaultConfig, "", "  ")
 	if err != nil {
 		return err
@@ -57,6 +63,10 @@ func (e Engine) marshalConfig() config {
 		Status:        e.Status,
 		AdvertiseAddr: parsedAddr,
 		ID:            e.Store.ID,
+		SerfPort:      e.Store.SerfPort,
+		WANSerfPort:   e.Store.WANSerfPort,
+		RaftPort:      e.Store.RaftPort,
+		RPCPort:       e.RPCServer.Port,
 	}
 }
 
@@ -65,6 +75,10 @@ func (e *Engine) unmarshalConfig(c config) {
 	e.Store.AdvertiseAddr = net.ParseIP(c.AdvertiseAddr)
 	e.Status = c.Status
 	e.Store.ID = c.ID
+	e.Store.RaftPort = c.RaftPort
+	e.Store.SerfPort = c.SerfPort
+	e.Store.WANSerfPort = c.WANSerfPort
+	e.RPCServer.Port = c.RPCPort
 }
 
 // readConfig will read in the configuration file and parse it.
