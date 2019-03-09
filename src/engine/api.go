@@ -316,6 +316,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		}
 
 		// Set up the local properties for ourselves.
+		engine.RPCServer.Port = body.RPCPort
 		store.RaftPort = body.RaftPort
 		store.SerfPort = body.SerfPort
 		store.WANSerfPort = body.WANSerfPort
@@ -360,6 +361,16 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		case proto.ClusterStatus_ERROR:
 			c.String(http.StatusInternalServerError, "There was an error in joining your node to the store.")
+			return
+		}
+
+		// Start the RPC server.
+		go func() { errCh <- engine.RPCServer.Start() }()
+		select {
+		case <-engine.RPCServer.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "There was an error starting the RPC server")
 			return
 		}
 
