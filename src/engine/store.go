@@ -169,6 +169,20 @@ func (s *Store) Bootstrap() error {
 	return nil
 }
 
+// GetCurrentNode is a helper method that returns a store state node object from
+// both the current state of the store and the engine. The purpose of this is to
+// make the &command{} to apply an easier process.
+func (s *Store) CurrentNode() *Node {
+	return &Node{
+		ID:          s.ID,
+		Address:     s.AdvertiseAddr,
+		RPCPort:     s.engine.RPCServer.Port,
+		RaftPort:    s.RaftPort,
+		SerfPort:    s.SerfPort,
+		WANSerfPort: s.WANSerfPort,
+	}
+}
+
 // Join will join a node to this store instance. The node must be ready to
 // respond to raft communications at that address (that means that the node must
 // have a store instance running).

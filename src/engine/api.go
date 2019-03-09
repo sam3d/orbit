@@ -255,15 +255,8 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 		// Prepare command to add this node's details to the store.
 		cmd := command{
-			Op: opNewNode,
-			Node: Node{
-				ID:          store.ID,
-				Address:     store.AdvertiseAddr,
-				RPCPort:     engine.RPCServer.Port,
-				RaftPort:    store.RaftPort,
-				SerfPort:    store.SerfPort,
-				WANSerfPort: store.WANSerfPort,
-			},
+			Op:   opNewNode,
+			Node: *store.CurrentNode(),
 		}
 
 		if err := cmd.Apply(store); err != nil {
@@ -409,7 +402,16 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
-		// TODO: Update the store list of nodes to include this store in it.
+		// Update the store list of nodes to include this store in it.
+		cmd := command{
+			Op:   opNewNode,
+			Node: *store.CurrentNode(),
+		}
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "There was an error in adding the node to store state list of nodes.")
+			return
+		}
 
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}
