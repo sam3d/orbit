@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
 	"orbit.sh/engine/proto"
 )
@@ -130,7 +129,7 @@ func (s *APIServer) handlers() {
 	}
 
 	{
-		r := r.Group("/user", s.ensureRaftLeader())
+		r := r.Group("/user")
 		r.POST("", s.handleUserSignup())
 		r.DELETE("/:id", s.handleUserRemove())
 	}
@@ -139,24 +138,6 @@ func (s *APIServer) handlers() {
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Printf("[INFO] api: Received %s at %s", c.Request.Method, c.Request.URL)
-		c.Next()
-	}
-}
-
-// ensureRaftLeader will redirect any further requests to the raft leader of the
-// cluster.
-func (s *APIServer) ensureRaftLeader() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if s.engine.Store.raft.State() != raft.Leader {
-			leaderAddr, _ := net.ResolveTCPAddr("tcp", string(s.engine.Store.raft.Leader()))
-			forwardAddr := fmt.Sprintf("%s:%d", leaderAddr.IP, 6505)
-
-			log.Printf("[INFO] api: Not leader - forwarding request to %s", forwardAddr)
-			c.Redirect(http.StatusTemporaryRedirect, forwardAddr)
-			c.Abort()
-			return
-		}
-
 		c.Next()
 	}
 }
