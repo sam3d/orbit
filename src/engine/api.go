@@ -121,6 +121,7 @@ func (s *APIServer) handlers() {
 
 	r.GET("/state", s.handleState())
 	r.GET("/users", s.handleListUsers())
+	r.GET("/nodes", s.handleListNodes())
 
 	{
 		r := r.Group("/cluster")
@@ -144,16 +145,14 @@ func (s *APIServer) simpleLogger() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status      `json:"status"`
-		StatusString string      `json:"status_string"`
-		State        *StoreState `json:"state"`
+		Status       Status `json:"status"`
+		StatusString string `json:"status_string"`
 	}
 
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, &res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
-			State:        s.engine.Store.state,
 		})
 	}
 }
