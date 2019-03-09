@@ -246,6 +246,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	var mu sync.Mutex
+
 	type body struct {
 		// Local node options.
 		RPCPort     int `form:"rpc_port" json:"rpc_port"`
@@ -259,6 +264,15 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		// Prevent using this route twice.
+		mu.Lock()
+		defer mu.Unlock()
+
+		if engine.Status >= StatusReady {
+			c.String(http.StatusConflict, "The node is already part of a cluster.")
+			return
+		}
+
 		// Bind the default settings from the body.
 		body := body{
 			RPCPort:     6501,
@@ -288,16 +302,72 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		client := proto.NewClusterClient(conn)
 
 		// Actually make the join request.
-		res, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
-			JoinToken: "",
+		joinRes, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
+			JoinToken: body.JoinToken,
 		})
 		if err != nil {
 			log.Printf("[ERR] api: %v", err)
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
+		if joinRes.JoinStatus == proto.ClusterStatus_UNAUTHORIZED {
+			c.String(http.StatusUnauthorized, "That join token is not authorized.")
+			return
+		}
 
-		c.JSON(http.StatusNotImplemented, res)
+		// Set up the local properties for ourselves.
+		store.RaftPort = body.RaftPort
+		store.SerfPort = body.SerfPort
+		store.WANSerfPort = body.WANSerfPort
+
+		// Use the address that we got from the server as our local advertise
+		// address, and use the generated ID from the remote server as well.
+		store.AdvertiseAddr = net.ParseIP(joinRes.AdvertiseAddr)
+		store.ID = joinRes.Id
+
+		// Attempt to open the store.
+		errCh := make(chan error)
+		go func() { errCh <- store.Open() }()
+		select {
+		case <-store.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusInternalServerError, "Could not open the store.")
+			return
+		}
+
+		// The engine is now ready to accept requests, let's save everything we have
+		// up until this point and ensure that this config gets maintained. This is
+		// because after the store open operation, Raft has started writing it's
+		// data to the raft directory, so it's important that we react to this
+		// properly.
+		engine.Status = StatusReady
+		engine.writeConfig()
+
+		// Let the primary server know that we're ready to be joined to it.
+		joinConfRes, err := client.ClusterJoinConfirm(context.Background(), &proto.ClusterJoinConfirmRequest{
+			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
+			Id:       store.ID,
+		})
+		if err != nil {
+			log.Printf("[ERR] api: %v", err)
+			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
+			return
+		}
+		switch joinConfRes.ConfirmStatus {
+		case proto.ClusterStatus_UNAUTHORIZED:
+			c.String(http.StatusUnauthorized, "That join token is no longer authorized.")
+			return
+		case proto.ClusterStatus_ERROR:
+			c.String(http.StatusInternalServerError, "There was an error in joining your node to the store.")
+			return
+		}
+
+		// The join occurred successfully! Update the engine status and config.
+		engine.Status = StatusRunning
+		engine.writeConfig()
+
+		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}
 }
 

@@ -75,12 +75,18 @@ func (s *RPCServer) ClusterJoin(ctx context.Context, in *proto.ClusterJoinReques
 		RaftPort:    uint32(store.RaftPort),
 		SerfPort:    uint32(store.SerfPort),
 		WanSerfPort: uint32(store.WANSerfPort),
-		JoinStatus:  proto.ClusterJoinStatus_ACCEPTED,
+		JoinStatus:  proto.ClusterStatus_OK,
+	}
+
+	// Ensure that the server is ready to receive connections.
+	if engine.Status != StatusRunning {
+		res.JoinStatus = proto.ClusterStatus_ERROR
+		return res, nil
 	}
 
 	// Ensure that the join token is valid.
 	if in.JoinToken != "" {
-		res.JoinStatus = proto.ClusterJoinStatus_UNAUTHORIZED
+		res.JoinStatus = proto.ClusterStatus_UNAUTHORIZED
 		return res, nil
 	}
 
@@ -93,11 +99,40 @@ func (s *RPCServer) ClusterJoin(ctx context.Context, in *proto.ClusterJoinReques
 	p, _ := peer.FromContext(ctx)
 	addr, _ := net.ResolveTCPAddr("tcp", p.Addr.String())
 	ip := addr.IP.String()
-	res.AdvertiseIp = ip
+	res.AdvertiseAddr = ip
 
 	// Generate an ID for the node.
 	id := store.state.Nodes.GenerateNodeID()
 	res.Id = id
+
+	return res, nil
+}
+
+// ClusterJoinConfirm handles a node after it has been given the required data
+// from the store. This will actually perform the join operation and create the
+// node.
+func (s *RPCServer) ClusterJoinConfirm(ctx context.Context, in *proto.ClusterJoinConfirmRequest) (*proto.ClusterJoinConfirmResponse, error) {
+	engine := s.engine
+	store := engine.Store
+
+	// Construct the response.
+	res := &proto.ClusterJoinConfirmResponse{
+		ConfirmStatus: proto.ClusterStatus_OK,
+	}
+
+	// Ensure we have a valid join token.
+	if in.JoinToken != "" {
+		res.ConfirmStatus = proto.ClusterStatus_UNAUTHORIZED
+		return res, nil
+	}
+
+	// Perform the join operation.
+	addr, _ := net.ResolveTCPAddr("tcp", in.RaftAddr)
+	if err := store.Join(in.Id, *addr); err != nil {
+		log.Printf("[ERR] store: Could not join %s to the store", in.RaftAddr)
+		res.ConfirmStatus = proto.ClusterStatus_ERROR
+		return res, nil
+	}
 
 	return res, nil
 }
