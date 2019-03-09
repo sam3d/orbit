@@ -1,17 +1,26 @@
 syntax = "proto3";
 package proto;
 
-message ClusterJoinRequest {
-  string join_token = 1; // Used to authenticate the request.
-}
-
-enum ClusterStatus {
+enum Status {
   OK = 0; // The request was accepted.
   UNAUTHORIZED = 1; // The request was unauthorized.
   ERROR = 2; // There was an error somewhere in the response.
 }
 
-message ClusterJoinResponse {
+//
+// Cluster methods.
+//
+
+service RPC {
+  rpc Join(JoinRequest) returns (JoinResponse) {}
+  rpc ConfirmJoin(ConfirmJoinRequest) returns (ConfirmJoinResponse) {}
+}
+
+message JoinRequest {
+  string join_token = 1; // Used to authenticate the request.
+}
+
+message JoinResponse {
   // Information that the joining node should adopt.
   string advertise_addr = 1;
   string id = 2;
@@ -22,10 +31,10 @@ message ClusterJoinResponse {
   uint32 wan_serf_port = 5;
 
   // Simple status response.
-  ClusterStatus join_status = 6;
+  Status status = 6;
 }
 
-message ClusterJoinConfirmRequest {
+message ConfirmJoinRequest {
   // Information about our node so that the store knows what we are.
   string id = 1;
   string raft_addr = 2;
@@ -34,11 +43,10 @@ message ClusterJoinConfirmRequest {
   string join_token = 3;
 }
 
-message ClusterJoinConfirmResponse {
-  ClusterStatus confirm_status = 1;
+message ConfirmJoinResponse {
+  Status status = 1;
 }
 
-service Cluster {
-  rpc ClusterJoin(ClusterJoinRequest) returns (ClusterJoinResponse) {}
-  rpc ClusterJoinConfirm(ClusterJoinConfirmRequest) returns (ClusterJoinConfirmResponse) {}
-}
+//
+// Leader forwarding.
+//

@@ -299,10 +299,10 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 		defer conn.Close()
-		client := proto.NewClusterClient(conn)
+		client := proto.NewRPCClient(conn)
 
 		// Actually make the join request.
-		joinRes, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
+		joinRes, err := client.Join(context.Background(), &proto.JoinRequest{
 			JoinToken: body.JoinToken,
 		})
 		if err != nil {
@@ -310,7 +310,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
-		if joinRes.JoinStatus == proto.ClusterStatus_UNAUTHORIZED {
+		if joinRes.Status == proto.Status_UNAUTHORIZED {
 			c.String(http.StatusUnauthorized, "That join token is not authorized.")
 			return
 		}
@@ -346,7 +346,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.writeConfig()
 
 		// Let the primary server know that we're ready to be joined to it.
-		joinConfRes, err := client.ClusterJoinConfirm(context.Background(), &proto.ClusterJoinConfirmRequest{
+		joinConfRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
 			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
 			Id:       store.ID,
 		})
@@ -355,11 +355,11 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
-		switch joinConfRes.ConfirmStatus {
-		case proto.ClusterStatus_UNAUTHORIZED:
+		switch joinConfRes.Status {
+		case proto.Status_UNAUTHORIZED:
 			c.String(http.StatusUnauthorized, "That join token is no longer authorized.")
 			return
-		case proto.ClusterStatus_ERROR:
+		case proto.Status_ERROR:
 			c.String(http.StatusInternalServerError, "There was an error in joining your node to the store.")
 			return
 		}

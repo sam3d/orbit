@@ -22,74 +22,74 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ClusterStatus int32
+type Status int32
 
 const (
-	ClusterStatus_OK           ClusterStatus = 0
-	ClusterStatus_UNAUTHORIZED ClusterStatus = 1
-	ClusterStatus_ERROR        ClusterStatus = 2
+	Status_OK           Status = 0
+	Status_UNAUTHORIZED Status = 1
+	Status_ERROR        Status = 2
 )
 
-var ClusterStatus_name = map[int32]string{
+var Status_name = map[int32]string{
 	0: "OK",
 	1: "UNAUTHORIZED",
 	2: "ERROR",
 }
 
-var ClusterStatus_value = map[string]int32{
+var Status_value = map[string]int32{
 	"OK":           0,
 	"UNAUTHORIZED": 1,
 	"ERROR":        2,
 }
 
-func (x ClusterStatus) String() string {
-	return proto.EnumName(ClusterStatus_name, int32(x))
+func (x Status) String() string {
+	return proto.EnumName(Status_name, int32(x))
 }
 
-func (ClusterStatus) EnumDescriptor() ([]byte, []int) {
+func (Status) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{0}
 }
 
-type ClusterJoinRequest struct {
+type JoinRequest struct {
 	JoinToken            string   `protobuf:"bytes,1,opt,name=join_token,json=joinToken,proto3" json:"join_token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClusterJoinRequest) Reset()         { *m = ClusterJoinRequest{} }
-func (m *ClusterJoinRequest) String() string { return proto.CompactTextString(m) }
-func (*ClusterJoinRequest) ProtoMessage()    {}
-func (*ClusterJoinRequest) Descriptor() ([]byte, []int) {
+func (m *JoinRequest) Reset()         { *m = JoinRequest{} }
+func (m *JoinRequest) String() string { return proto.CompactTextString(m) }
+func (*JoinRequest) ProtoMessage()    {}
+func (*JoinRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{0}
 }
 
-func (m *ClusterJoinRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClusterJoinRequest.Unmarshal(m, b)
+func (m *JoinRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_JoinRequest.Unmarshal(m, b)
 }
-func (m *ClusterJoinRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClusterJoinRequest.Marshal(b, m, deterministic)
+func (m *JoinRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_JoinRequest.Marshal(b, m, deterministic)
 }
-func (m *ClusterJoinRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClusterJoinRequest.Merge(m, src)
+func (m *JoinRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JoinRequest.Merge(m, src)
 }
-func (m *ClusterJoinRequest) XXX_Size() int {
-	return xxx_messageInfo_ClusterJoinRequest.Size(m)
+func (m *JoinRequest) XXX_Size() int {
+	return xxx_messageInfo_JoinRequest.Size(m)
 }
-func (m *ClusterJoinRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClusterJoinRequest.DiscardUnknown(m)
+func (m *JoinRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_JoinRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClusterJoinRequest proto.InternalMessageInfo
+var xxx_messageInfo_JoinRequest proto.InternalMessageInfo
 
-func (m *ClusterJoinRequest) GetJoinToken() string {
+func (m *JoinRequest) GetJoinToken() string {
 	if m != nil {
 		return m.JoinToken
 	}
 	return ""
 }
 
-type ClusterJoinResponse struct {
+type JoinResponse struct {
 	// Information that the joining node should adopt.
 	AdvertiseAddr string `protobuf:"bytes,1,opt,name=advertise_addr,json=advertiseAddr,proto3" json:"advertise_addr,omitempty"`
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
@@ -98,80 +98,80 @@ type ClusterJoinResponse struct {
 	SerfPort    uint32 `protobuf:"varint,4,opt,name=serf_port,json=serfPort,proto3" json:"serf_port,omitempty"`
 	WanSerfPort uint32 `protobuf:"varint,5,opt,name=wan_serf_port,json=wanSerfPort,proto3" json:"wan_serf_port,omitempty"`
 	// Simple status response.
-	JoinStatus           ClusterStatus `protobuf:"varint,6,opt,name=join_status,json=joinStatus,proto3,enum=proto.ClusterStatus" json:"join_status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	Status               Status   `protobuf:"varint,6,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClusterJoinResponse) Reset()         { *m = ClusterJoinResponse{} }
-func (m *ClusterJoinResponse) String() string { return proto.CompactTextString(m) }
-func (*ClusterJoinResponse) ProtoMessage()    {}
-func (*ClusterJoinResponse) Descriptor() ([]byte, []int) {
+func (m *JoinResponse) Reset()         { *m = JoinResponse{} }
+func (m *JoinResponse) String() string { return proto.CompactTextString(m) }
+func (*JoinResponse) ProtoMessage()    {}
+func (*JoinResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{1}
 }
 
-func (m *ClusterJoinResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClusterJoinResponse.Unmarshal(m, b)
+func (m *JoinResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_JoinResponse.Unmarshal(m, b)
 }
-func (m *ClusterJoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClusterJoinResponse.Marshal(b, m, deterministic)
+func (m *JoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_JoinResponse.Marshal(b, m, deterministic)
 }
-func (m *ClusterJoinResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClusterJoinResponse.Merge(m, src)
+func (m *JoinResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JoinResponse.Merge(m, src)
 }
-func (m *ClusterJoinResponse) XXX_Size() int {
-	return xxx_messageInfo_ClusterJoinResponse.Size(m)
+func (m *JoinResponse) XXX_Size() int {
+	return xxx_messageInfo_JoinResponse.Size(m)
 }
-func (m *ClusterJoinResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClusterJoinResponse.DiscardUnknown(m)
+func (m *JoinResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_JoinResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClusterJoinResponse proto.InternalMessageInfo
+var xxx_messageInfo_JoinResponse proto.InternalMessageInfo
 
-func (m *ClusterJoinResponse) GetAdvertiseAddr() string {
+func (m *JoinResponse) GetAdvertiseAddr() string {
 	if m != nil {
 		return m.AdvertiseAddr
 	}
 	return ""
 }
 
-func (m *ClusterJoinResponse) GetId() string {
+func (m *JoinResponse) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *ClusterJoinResponse) GetRaftPort() uint32 {
+func (m *JoinResponse) GetRaftPort() uint32 {
 	if m != nil {
 		return m.RaftPort
 	}
 	return 0
 }
 
-func (m *ClusterJoinResponse) GetSerfPort() uint32 {
+func (m *JoinResponse) GetSerfPort() uint32 {
 	if m != nil {
 		return m.SerfPort
 	}
 	return 0
 }
 
-func (m *ClusterJoinResponse) GetWanSerfPort() uint32 {
+func (m *JoinResponse) GetWanSerfPort() uint32 {
 	if m != nil {
 		return m.WanSerfPort
 	}
 	return 0
 }
 
-func (m *ClusterJoinResponse) GetJoinStatus() ClusterStatus {
+func (m *JoinResponse) GetStatus() Status {
 	if m != nil {
-		return m.JoinStatus
+		return m.Status
 	}
-	return ClusterStatus_OK
+	return Status_OK
 }
 
-type ClusterJoinConfirmRequest struct {
+type ConfirmJoinRequest struct {
 	// Information about our node so that the store knows what we are.
 	Id       string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	RaftAddr string `protobuf:"bytes,2,opt,name=raft_addr,json=raftAddr,proto3" json:"raft_addr,omitempty"`
@@ -182,127 +182,125 @@ type ClusterJoinConfirmRequest struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClusterJoinConfirmRequest) Reset()         { *m = ClusterJoinConfirmRequest{} }
-func (m *ClusterJoinConfirmRequest) String() string { return proto.CompactTextString(m) }
-func (*ClusterJoinConfirmRequest) ProtoMessage()    {}
-func (*ClusterJoinConfirmRequest) Descriptor() ([]byte, []int) {
+func (m *ConfirmJoinRequest) Reset()         { *m = ConfirmJoinRequest{} }
+func (m *ConfirmJoinRequest) String() string { return proto.CompactTextString(m) }
+func (*ConfirmJoinRequest) ProtoMessage()    {}
+func (*ConfirmJoinRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{2}
 }
 
-func (m *ClusterJoinConfirmRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClusterJoinConfirmRequest.Unmarshal(m, b)
+func (m *ConfirmJoinRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ConfirmJoinRequest.Unmarshal(m, b)
 }
-func (m *ClusterJoinConfirmRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClusterJoinConfirmRequest.Marshal(b, m, deterministic)
+func (m *ConfirmJoinRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ConfirmJoinRequest.Marshal(b, m, deterministic)
 }
-func (m *ClusterJoinConfirmRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClusterJoinConfirmRequest.Merge(m, src)
+func (m *ConfirmJoinRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfirmJoinRequest.Merge(m, src)
 }
-func (m *ClusterJoinConfirmRequest) XXX_Size() int {
-	return xxx_messageInfo_ClusterJoinConfirmRequest.Size(m)
+func (m *ConfirmJoinRequest) XXX_Size() int {
+	return xxx_messageInfo_ConfirmJoinRequest.Size(m)
 }
-func (m *ClusterJoinConfirmRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClusterJoinConfirmRequest.DiscardUnknown(m)
+func (m *ConfirmJoinRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConfirmJoinRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClusterJoinConfirmRequest proto.InternalMessageInfo
+var xxx_messageInfo_ConfirmJoinRequest proto.InternalMessageInfo
 
-func (m *ClusterJoinConfirmRequest) GetId() string {
+func (m *ConfirmJoinRequest) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *ClusterJoinConfirmRequest) GetRaftAddr() string {
+func (m *ConfirmJoinRequest) GetRaftAddr() string {
 	if m != nil {
 		return m.RaftAddr
 	}
 	return ""
 }
 
-func (m *ClusterJoinConfirmRequest) GetJoinToken() string {
+func (m *ConfirmJoinRequest) GetJoinToken() string {
 	if m != nil {
 		return m.JoinToken
 	}
 	return ""
 }
 
-type ClusterJoinConfirmResponse struct {
-	ConfirmStatus        ClusterStatus `protobuf:"varint,1,opt,name=confirm_status,json=confirmStatus,proto3,enum=proto.ClusterStatus" json:"confirm_status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+type ConfirmJoinResponse struct {
+	Status               Status   `protobuf:"varint,1,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClusterJoinConfirmResponse) Reset()         { *m = ClusterJoinConfirmResponse{} }
-func (m *ClusterJoinConfirmResponse) String() string { return proto.CompactTextString(m) }
-func (*ClusterJoinConfirmResponse) ProtoMessage()    {}
-func (*ClusterJoinConfirmResponse) Descriptor() ([]byte, []int) {
+func (m *ConfirmJoinResponse) Reset()         { *m = ConfirmJoinResponse{} }
+func (m *ConfirmJoinResponse) String() string { return proto.CompactTextString(m) }
+func (*ConfirmJoinResponse) ProtoMessage()    {}
+func (*ConfirmJoinResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{3}
 }
 
-func (m *ClusterJoinConfirmResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClusterJoinConfirmResponse.Unmarshal(m, b)
+func (m *ConfirmJoinResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ConfirmJoinResponse.Unmarshal(m, b)
 }
-func (m *ClusterJoinConfirmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClusterJoinConfirmResponse.Marshal(b, m, deterministic)
+func (m *ConfirmJoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ConfirmJoinResponse.Marshal(b, m, deterministic)
 }
-func (m *ClusterJoinConfirmResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClusterJoinConfirmResponse.Merge(m, src)
+func (m *ConfirmJoinResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfirmJoinResponse.Merge(m, src)
 }
-func (m *ClusterJoinConfirmResponse) XXX_Size() int {
-	return xxx_messageInfo_ClusterJoinConfirmResponse.Size(m)
+func (m *ConfirmJoinResponse) XXX_Size() int {
+	return xxx_messageInfo_ConfirmJoinResponse.Size(m)
 }
-func (m *ClusterJoinConfirmResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClusterJoinConfirmResponse.DiscardUnknown(m)
+func (m *ConfirmJoinResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConfirmJoinResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClusterJoinConfirmResponse proto.InternalMessageInfo
+var xxx_messageInfo_ConfirmJoinResponse proto.InternalMessageInfo
 
-func (m *ClusterJoinConfirmResponse) GetConfirmStatus() ClusterStatus {
+func (m *ConfirmJoinResponse) GetStatus() Status {
 	if m != nil {
-		return m.ConfirmStatus
+		return m.Status
 	}
-	return ClusterStatus_OK
+	return Status_OK
 }
 
 func init() {
-	proto.RegisterEnum("proto.ClusterStatus", ClusterStatus_name, ClusterStatus_value)
-	proto.RegisterType((*ClusterJoinRequest)(nil), "proto.ClusterJoinRequest")
-	proto.RegisterType((*ClusterJoinResponse)(nil), "proto.ClusterJoinResponse")
-	proto.RegisterType((*ClusterJoinConfirmRequest)(nil), "proto.ClusterJoinConfirmRequest")
-	proto.RegisterType((*ClusterJoinConfirmResponse)(nil), "proto.ClusterJoinConfirmResponse")
+	proto.RegisterEnum("proto.Status", Status_name, Status_value)
+	proto.RegisterType((*JoinRequest)(nil), "proto.JoinRequest")
+	proto.RegisterType((*JoinResponse)(nil), "proto.JoinResponse")
+	proto.RegisterType((*ConfirmJoinRequest)(nil), "proto.ConfirmJoinRequest")
+	proto.RegisterType((*ConfirmJoinResponse)(nil), "proto.ConfirmJoinResponse")
 }
 
 func init() { proto.RegisterFile("cluster.proto", fileDescriptor_3cfb3b8ec240c376) }
 
 var fileDescriptor_3cfb3b8ec240c376 = []byte{
-	// 376 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0xcf, 0x4e, 0xea, 0x40,
-	0x18, 0xc5, 0x99, 0x72, 0xe1, 0xde, 0x7e, 0xdc, 0x36, 0xcd, 0xdc, 0xbb, 0x28, 0x35, 0x26, 0xb5,
-	0x89, 0x09, 0x71, 0xc1, 0x02, 0x74, 0xe5, 0x8a, 0x20, 0xc6, 0x3f, 0x89, 0x98, 0x01, 0x16, 0xea,
-	0xa2, 0xa9, 0x74, 0x30, 0xf5, 0x4f, 0x07, 0x67, 0x06, 0x79, 0x2b, 0xdf, 0xc9, 0x37, 0x31, 0x9d,
-	0x69, 0x95, 0x0a, 0x61, 0xd5, 0xf6, 0x9c, 0xf3, 0x75, 0xe6, 0x77, 0xf2, 0x81, 0x35, 0x7d, 0x5e,
-	0x08, 0x49, 0x79, 0x7b, 0xce, 0x99, 0x64, 0xb8, 0xa6, 0x1e, 0x41, 0x17, 0x70, 0x5f, 0xeb, 0x17,
-	0x2c, 0x49, 0x09, 0x7d, 0x5d, 0x50, 0x21, 0xf1, 0x2e, 0xc0, 0x23, 0x4b, 0xd2, 0x50, 0xb2, 0x27,
-	0x9a, 0xba, 0xc8, 0x47, 0x2d, 0x93, 0x98, 0x99, 0x32, 0xce, 0x84, 0xe0, 0x03, 0xc1, 0xbf, 0xd2,
-	0x94, 0x98, 0xb3, 0x54, 0x50, 0xbc, 0x0f, 0x76, 0x14, 0xbf, 0x51, 0x2e, 0x13, 0x41, 0xc3, 0x28,
-	0x8e, 0x79, 0x3e, 0x6a, 0x7d, 0xa9, 0xbd, 0x38, 0xe6, 0xd8, 0x06, 0x23, 0x89, 0x5d, 0x43, 0x59,
-	0x46, 0x12, 0xe3, 0x1d, 0x30, 0x79, 0x34, 0x93, 0xe1, 0x9c, 0x71, 0xe9, 0x56, 0x7d, 0xd4, 0xb2,
-	0xc8, 0x9f, 0x4c, 0xb8, 0x66, 0x5c, 0x66, 0xa6, 0xa0, 0x7c, 0xa6, 0xcd, 0x5f, 0xda, 0xcc, 0x04,
-	0x65, 0x06, 0x60, 0x2d, 0xa3, 0x34, 0xfc, 0x0e, 0xd4, 0x54, 0xa0, 0xb1, 0x8c, 0xd2, 0x51, 0x91,
-	0x39, 0x82, 0x86, 0x62, 0x11, 0x32, 0x92, 0x0b, 0xe1, 0xd6, 0x7d, 0xd4, 0xb2, 0x3b, 0xff, 0x75,
-	0x0b, 0xed, 0x9c, 0x62, 0xa4, 0x3c, 0xa2, 0xa0, 0xf5, 0x7b, 0xf0, 0x00, 0xcd, 0x15, 0xc4, 0x3e,
-	0x4b, 0x67, 0x09, 0x7f, 0x29, 0xfa, 0xd1, 0x04, 0x68, 0x8d, 0x40, 0x31, 0x6b, 0x30, 0x45, 0xa0,
-	0x70, 0xcb, 0x65, 0x56, 0x7f, 0x96, 0x79, 0x03, 0xde, 0xa6, 0x83, 0xf2, 0x4a, 0x8f, 0xc1, 0x9e,
-	0x6a, 0xa9, 0x00, 0x40, 0x5b, 0x00, 0xac, 0x3c, 0xab, 0x3f, 0x0f, 0x0e, 0xc1, 0x2a, 0xf9, 0xb8,
-	0x0e, 0xc6, 0xf0, 0xd2, 0xa9, 0x60, 0x07, 0xfe, 0x4e, 0xae, 0x7a, 0x93, 0xf1, 0xd9, 0x90, 0x9c,
-	0xdf, 0x0e, 0x4e, 0x1c, 0x84, 0x4d, 0xa8, 0x0d, 0x08, 0x19, 0x12, 0xc7, 0xe8, 0xbc, 0x23, 0xf8,
-	0x9d, 0x8f, 0xe1, 0x53, 0x68, 0xac, 0x5c, 0x0e, 0x37, 0xcb, 0xa7, 0xae, 0xac, 0x8c, 0xe7, 0x6d,
-	0xb2, 0x34, 0x44, 0x50, 0xc1, 0x77, 0xa5, 0x35, 0xcb, 0x21, 0xb1, 0xbf, 0x3e, 0x53, 0x2e, 0xda,
-	0xdb, 0xdb, 0x92, 0x28, 0x7e, 0x7e, 0x5f, 0x57, 0x99, 0xee, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0x16, 0xc1, 0x76, 0x5f, 0xe2, 0x02, 0x00, 0x00,
+	// 348 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x90, 0x4f, 0x4f, 0xc2, 0x40,
+	0x14, 0xc4, 0xd9, 0x02, 0x8d, 0x7d, 0x50, 0xd2, 0x3c, 0x2e, 0x15, 0x63, 0x42, 0x9a, 0x90, 0x10,
+	0xa3, 0x24, 0xe2, 0xd5, 0x0b, 0x41, 0x8c, 0x7f, 0x12, 0x21, 0x0b, 0x5c, 0xbc, 0xd4, 0x6a, 0x97,
+	0xa4, 0xfe, 0xe9, 0xe2, 0xee, 0x22, 0x57, 0x3f, 0x9f, 0x9f, 0xca, 0x74, 0xb7, 0x20, 0x88, 0xf1,
+	0xd4, 0x64, 0x7e, 0xd3, 0x7d, 0x33, 0x03, 0xee, 0xd3, 0xeb, 0x42, 0x2a, 0x26, 0x3a, 0x73, 0xc1,
+	0x15, 0xc7, 0xb2, 0xfe, 0x04, 0xc7, 0x50, 0xb9, 0xe1, 0x49, 0x4a, 0xd9, 0xfb, 0x82, 0x49, 0x85,
+	0x87, 0x00, 0xcf, 0x3c, 0x49, 0x43, 0xc5, 0x5f, 0x58, 0xea, 0x93, 0x26, 0x69, 0x3b, 0xd4, 0xc9,
+	0x94, 0x49, 0x26, 0x04, 0x5f, 0x04, 0xaa, 0xc6, 0x2e, 0xe7, 0x3c, 0x95, 0x0c, 0x5b, 0x50, 0x8b,
+	0xe2, 0x0f, 0x26, 0x54, 0x22, 0x59, 0x18, 0xc5, 0xb1, 0xc8, 0xff, 0x71, 0xd7, 0x6a, 0x2f, 0x8e,
+	0x05, 0xd6, 0xc0, 0x4a, 0x62, 0xdf, 0xd2, 0xc8, 0x4a, 0x62, 0x3c, 0x00, 0x47, 0x44, 0x33, 0x15,
+	0xce, 0xb9, 0x50, 0x7e, 0xb1, 0x49, 0xda, 0x2e, 0xdd, 0xcb, 0x84, 0x11, 0x17, 0x2a, 0x83, 0x92,
+	0x89, 0x99, 0x81, 0x25, 0x03, 0x33, 0x41, 0xc3, 0x00, 0xdc, 0x65, 0x94, 0x86, 0x3f, 0x86, 0xb2,
+	0x36, 0x54, 0x96, 0x51, 0x3a, 0x5e, 0x79, 0x5a, 0x60, 0x4b, 0x15, 0xa9, 0x85, 0xf4, 0xed, 0x26,
+	0x69, 0xd7, 0xba, 0xae, 0xa9, 0xdc, 0x19, 0x6b, 0x91, 0xe6, 0x30, 0x78, 0x00, 0xec, 0xf3, 0x74,
+	0x96, 0x88, 0xb7, 0xcd, 0x05, 0x4c, 0x54, 0xb2, 0x13, 0x55, 0x97, 0x33, 0x0d, 0x74, 0x54, 0xdd,
+	0x6b, 0x7b, 0xae, 0xe2, 0xef, 0xb9, 0xce, 0xa1, 0xbe, 0x75, 0x61, 0x3d, 0xda, 0x2a, 0x1f, 0xf9,
+	0x27, 0xdf, 0xd1, 0x09, 0xd8, 0x46, 0x41, 0x1b, 0xac, 0xe1, 0xad, 0x57, 0x40, 0x0f, 0xaa, 0xd3,
+	0xbb, 0xde, 0x74, 0x72, 0x35, 0xa4, 0xd7, 0xf7, 0x83, 0x0b, 0x8f, 0xa0, 0x03, 0xe5, 0x01, 0xa5,
+	0x43, 0xea, 0x59, 0xdd, 0x4f, 0x02, 0x45, 0x3a, 0xea, 0xe3, 0x29, 0x94, 0xb2, 0x6b, 0x88, 0xf9,
+	0xab, 0x1b, 0xe5, 0x1a, 0xf5, 0x2d, 0xcd, 0xc4, 0x09, 0x0a, 0x78, 0x09, 0x95, 0x8d, 0x9c, 0xb8,
+	0x9f, 0xbb, 0x76, 0xd7, 0x69, 0x34, 0xfe, 0x42, 0xab, 0x77, 0x1e, 0x6d, 0x0d, 0xcf, 0xbe, 0x03,
+	0x00, 0x00, 0xff, 0xff, 0x80, 0x32, 0x1b, 0xab, 0x6b, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -313,97 +311,97 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// ClusterClient is the client API for Cluster service.
+// RPCClient is the client API for RPC service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type ClusterClient interface {
-	ClusterJoin(ctx context.Context, in *ClusterJoinRequest, opts ...grpc.CallOption) (*ClusterJoinResponse, error)
-	ClusterJoinConfirm(ctx context.Context, in *ClusterJoinConfirmRequest, opts ...grpc.CallOption) (*ClusterJoinConfirmResponse, error)
+type RPCClient interface {
+	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
+	ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*ConfirmJoinResponse, error)
 }
 
-type clusterClient struct {
+type rPCClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewClusterClient(cc *grpc.ClientConn) ClusterClient {
-	return &clusterClient{cc}
+func NewRPCClient(cc *grpc.ClientConn) RPCClient {
+	return &rPCClient{cc}
 }
 
-func (c *clusterClient) ClusterJoin(ctx context.Context, in *ClusterJoinRequest, opts ...grpc.CallOption) (*ClusterJoinResponse, error) {
-	out := new(ClusterJoinResponse)
-	err := c.cc.Invoke(ctx, "/proto.Cluster/ClusterJoin", in, out, opts...)
+func (c *rPCClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error) {
+	out := new(JoinResponse)
+	err := c.cc.Invoke(ctx, "/proto.RPC/Join", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *clusterClient) ClusterJoinConfirm(ctx context.Context, in *ClusterJoinConfirmRequest, opts ...grpc.CallOption) (*ClusterJoinConfirmResponse, error) {
-	out := new(ClusterJoinConfirmResponse)
-	err := c.cc.Invoke(ctx, "/proto.Cluster/ClusterJoinConfirm", in, out, opts...)
+func (c *rPCClient) ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*ConfirmJoinResponse, error) {
+	out := new(ConfirmJoinResponse)
+	err := c.cc.Invoke(ctx, "/proto.RPC/ConfirmJoin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ClusterServer is the server API for Cluster service.
-type ClusterServer interface {
-	ClusterJoin(context.Context, *ClusterJoinRequest) (*ClusterJoinResponse, error)
-	ClusterJoinConfirm(context.Context, *ClusterJoinConfirmRequest) (*ClusterJoinConfirmResponse, error)
+// RPCServer is the server API for RPC service.
+type RPCServer interface {
+	Join(context.Context, *JoinRequest) (*JoinResponse, error)
+	ConfirmJoin(context.Context, *ConfirmJoinRequest) (*ConfirmJoinResponse, error)
 }
 
-func RegisterClusterServer(s *grpc.Server, srv ClusterServer) {
-	s.RegisterService(&_Cluster_serviceDesc, srv)
+func RegisterRPCServer(s *grpc.Server, srv RPCServer) {
+	s.RegisterService(&_RPC_serviceDesc, srv)
 }
 
-func _Cluster_ClusterJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClusterJoinRequest)
+func _RPC_Join_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ClusterServer).ClusterJoin(ctx, in)
+		return srv.(RPCServer).Join(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Cluster/ClusterJoin",
+		FullMethod: "/proto.RPC/Join",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServer).ClusterJoin(ctx, req.(*ClusterJoinRequest))
+		return srv.(RPCServer).Join(ctx, req.(*JoinRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cluster_ClusterJoinConfirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClusterJoinConfirmRequest)
+func _RPC_ConfirmJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmJoinRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ClusterServer).ClusterJoinConfirm(ctx, in)
+		return srv.(RPCServer).ConfirmJoin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Cluster/ClusterJoinConfirm",
+		FullMethod: "/proto.RPC/ConfirmJoin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServer).ClusterJoinConfirm(ctx, req.(*ClusterJoinConfirmRequest))
+		return srv.(RPCServer).ConfirmJoin(ctx, req.(*ConfirmJoinRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Cluster_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Cluster",
-	HandlerType: (*ClusterServer)(nil),
+var _RPC_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.RPC",
+	HandlerType: (*RPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ClusterJoin",
-			Handler:    _Cluster_ClusterJoin_Handler,
+			MethodName: "Join",
+			Handler:    _RPC_Join_Handler,
 		},
 		{
-			MethodName: "ClusterJoinConfirm",
-			Handler:    _Cluster_ClusterJoinConfirm_Handler,
+			MethodName: "ConfirmJoin",
+			Handler:    _RPC_ConfirmJoin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

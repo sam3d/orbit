@@ -47,7 +47,7 @@ func (s *RPCServer) Started() <-chan struct{} {
 // otherwise it will hang forever.
 func (s *RPCServer) Start() error {
 	// Register the RPC server. This uses a GRPC package that is auto generated.
-	proto.RegisterClusterServer(s.server, s)
+	proto.RegisterRPCServer(s.server, s)
 
 	// Create the TCP listener.
 	listenAddr := fmt.Sprintf(":%d", s.Port)
@@ -65,28 +65,28 @@ func (s *RPCServer) Start() error {
 	return <-errCh
 }
 
-// ClusterJoin handle receiving an RPC to join the server.
-func (s *RPCServer) ClusterJoin(ctx context.Context, in *proto.ClusterJoinRequest) (*proto.ClusterJoinResponse, error) {
+// Join handle receiving an RPC to join the server.
+func (s *RPCServer) Join(ctx context.Context, in *proto.JoinRequest) (*proto.JoinResponse, error) {
 	engine := s.engine
 	store := engine.Store
 
 	// Begin constructing the response.
-	res := &proto.ClusterJoinResponse{
+	res := &proto.JoinResponse{
 		RaftPort:    uint32(store.RaftPort),
 		SerfPort:    uint32(store.SerfPort),
 		WanSerfPort: uint32(store.WANSerfPort),
-		JoinStatus:  proto.ClusterStatus_OK,
+		Status:      proto.Status_OK,
 	}
 
 	// Ensure that the server is ready to receive connections.
 	if engine.Status != StatusRunning {
-		res.JoinStatus = proto.ClusterStatus_ERROR
+		res.Status = proto.Status_ERROR
 		return res, nil
 	}
 
 	// Ensure that the join token is valid.
 	if in.JoinToken != "" {
-		res.JoinStatus = proto.ClusterStatus_UNAUTHORIZED
+		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
 
@@ -108,21 +108,21 @@ func (s *RPCServer) ClusterJoin(ctx context.Context, in *proto.ClusterJoinReques
 	return res, nil
 }
 
-// ClusterJoinConfirm handles a node after it has been given the required data
+// ConfirmJoin handles a node after it has been given the required data
 // from the store. This will actually perform the join operation and create the
 // node.
-func (s *RPCServer) ClusterJoinConfirm(ctx context.Context, in *proto.ClusterJoinConfirmRequest) (*proto.ClusterJoinConfirmResponse, error) {
+func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinRequest) (*proto.ConfirmJoinResponse, error) {
 	engine := s.engine
 	store := engine.Store
 
 	// Construct the response.
-	res := &proto.ClusterJoinConfirmResponse{
-		ConfirmStatus: proto.ClusterStatus_OK,
+	res := &proto.ConfirmJoinResponse{
+		Status: proto.Status_OK,
 	}
 
 	// Ensure we have a valid join token.
 	if in.JoinToken != "" {
-		res.ConfirmStatus = proto.ClusterStatus_UNAUTHORIZED
+		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
 
@@ -130,7 +130,7 @@ func (s *RPCServer) ClusterJoinConfirm(ctx context.Context, in *proto.ClusterJoi
 	addr, _ := net.ResolveTCPAddr("tcp", in.RaftAddr)
 	if err := store.Join(in.Id, *addr); err != nil {
 		log.Printf("[ERR] store: Could not join %s to the store", in.RaftAddr)
-		res.ConfirmStatus = proto.ClusterStatus_ERROR
+		res.Status = proto.Status_ERROR
 		return res, nil
 	}
 
