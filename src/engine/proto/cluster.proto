@@ -1,17 +1,35 @@
 syntax = "proto3";
 package proto;
 
-message ClusterJoinRequest {
-  string join_token = 1; // Used to authenticate the request.
-}
-
-enum ClusterStatus {
+enum Status {
   OK = 0; // The request was accepted.
   UNAUTHORIZED = 1; // The request was unauthorized.
   ERROR = 2; // There was an error somewhere in the response.
 }
 
-message ClusterJoinResponse {
+message StatusResponse {
+  Status status = 1;
+}
+
+//
+// Cluster methods.
+//
+
+service RPC {
+  // Cluster join and confirm join operations.
+  rpc Join(JoinRequest) returns (JoinResponse) {} // For when a node wishes to join another node.
+  rpc ConfirmJoin(ConfirmJoinRequest) returns (StatusResponse) {} // For when a node confirms it CAN join that other node.
+
+  // All RPC messages that must be forwarded for the leader to apply.
+  rpc Apply(ApplyRequest) returns (StatusResponse) {} // A raft log entry apply message for the leader.
+  rpc ForwardJoin(ForwardJoinRequest) returns (StatusResponse) {} // When a node wishes to join us.
+}
+
+message JoinRequest {
+  string join_token = 1; // Used to authenticate the request.
+}
+
+message JoinResponse {
   // Information that the joining node should adopt.
   string advertise_addr = 1;
   string id = 2;
@@ -22,10 +40,10 @@ message ClusterJoinResponse {
   uint32 wan_serf_port = 5;
 
   // Simple status response.
-  ClusterStatus join_status = 6;
+  Status status = 6;
 }
 
-message ClusterJoinConfirmRequest {
+message ConfirmJoinRequest {
   // Information about our node so that the store knows what we are.
   string id = 1;
   string raft_addr = 2;
@@ -34,11 +52,15 @@ message ClusterJoinConfirmRequest {
   string join_token = 3;
 }
 
-message ClusterJoinConfirmResponse {
-  ClusterStatus confirm_status = 1;
+//
+// Leader forwarding.
+//
+
+message ApplyRequest {
+  bytes body = 1;
 }
 
-service Cluster {
-  rpc ClusterJoin(ClusterJoinRequest) returns (ClusterJoinResponse) {}
-  rpc ClusterJoinConfirm(ClusterJoinConfirmRequest) returns (ClusterJoinConfirmResponse) {}
+message ForwardJoinRequest {
+  string node_id = 1;
+  string address = 2;
 }

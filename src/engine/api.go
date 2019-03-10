@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -121,6 +122,7 @@ func (s *APIServer) handlers() {
 
 	r.GET("/state", s.handleState())
 	r.GET("/users", s.handleListUsers())
+	r.GET("/nodes", s.handleListNodes())
 
 	{
 		r := r.Group("/cluster")
@@ -144,16 +146,14 @@ func (s *APIServer) simpleLogger() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status      `json:"status"`
-		StatusString string      `json:"status_string"`
-		State        *StoreState `json:"state"`
+		Status       Status `json:"status"`
+		StatusString string `json:"status_string"`
 	}
 
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, &res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
-			State:        s.engine.Store.state,
 		})
 	}
 }
@@ -229,6 +229,16 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Attempt to start the RPC server.
+		go func() { errCh <- engine.RPCServer.Start() }()
+		select {
+		case <-engine.RPCServer.Started():
+		case err := <-errCh:
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not start the RPC server.")
+			return
+		}
+
 		// Attempt to bootstrap the store.
 		if err := store.Bootstrap(); err != nil {
 			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
@@ -239,7 +249,31 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		engine.Status = StatusRunning
 		engine.writeConfig()
 
-		// TODO: Add the node to the store_nodes list.
+		// Wait for us to become the leader of the store.
+		select {
+		case leader := <-store.raft.LeaderCh():
+			if !leader {
+				log.Printf("[ERR] store: we did not become the leader of the store")
+				c.String(http.StatusInternalServerError, "There was an error establishing a leader for the cluster.")
+				return
+			}
+		case <-time.After(time.Second * 10):
+			log.Printf("[ERR] store: we never received leader information")
+			c.String(http.StatusInternalServerError, "There was an error establishing a leader for the cluster.")
+			return
+		}
+
+		// Prepare command to add this node's details to the store.
+		cmd := command{
+			Op:   opNewNode,
+			Node: *store.CurrentNode(),
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not add this node to the list of nodes in the store, despite being joined to it successfully.")
+			return
+		}
 
 		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
@@ -299,10 +333,10 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 		defer conn.Close()
-		client := proto.NewClusterClient(conn)
+		client := proto.NewRPCClient(conn)
 
 		// Actually make the join request.
-		joinRes, err := client.ClusterJoin(context.Background(), &proto.ClusterJoinRequest{
+		joinRes, err := client.Join(context.Background(), &proto.JoinRequest{
 			JoinToken: body.JoinToken,
 		})
 		if err != nil {
@@ -310,7 +344,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
-		if joinRes.JoinStatus == proto.ClusterStatus_UNAUTHORIZED {
+		if joinRes.Status == proto.Status_UNAUTHORIZED {
 			c.String(http.StatusUnauthorized, "That join token is not authorized.")
 			return
 		}
@@ -346,7 +380,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.writeConfig()
 
 		// Let the primary server know that we're ready to be joined to it.
-		joinConfRes, err := client.ClusterJoinConfirm(context.Background(), &proto.ClusterJoinConfirmRequest{
+		cRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
 			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
 			Id:       store.ID,
 		})
@@ -355,11 +389,11 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "Could not perform cluster join operation.")
 			return
 		}
-		switch joinConfRes.ConfirmStatus {
-		case proto.ClusterStatus_UNAUTHORIZED:
+		switch cRes.Status {
+		case proto.Status_UNAUTHORIZED:
 			c.String(http.StatusUnauthorized, "That join token is no longer authorized.")
 			return
-		case proto.ClusterStatus_ERROR:
+		case proto.Status_ERROR:
 			c.String(http.StatusInternalServerError, "There was an error in joining your node to the store.")
 			return
 		}
@@ -377,6 +411,17 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		// The join occurred successfully! Update the engine status and config.
 		engine.Status = StatusRunning
 		engine.writeConfig()
+
+		// Add this node to the list of nodes.
+		cmd := command{
+			Op:   opNewNode,
+			Node: *store.CurrentNode(),
+		}
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: could not apply new user: %s", err)
+			c.String(http.StatusInternalServerError, "Could not add this node to the store state list.")
+			return
+		}
 
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}
@@ -417,7 +462,7 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		}
 
 		cmd := command{
-			Op:   "User.New",
+			Op:   opNewUser,
 			User: *newUser,
 		}
 
@@ -459,6 +504,12 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleListNodes() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, s.engine.Store.state.Nodes)
+	}
+}
+
 func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 	store := s.engine.Store
 
@@ -471,11 +522,12 @@ func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 		}
 
 		cmd := command{
-			Op:   "User.Remove",
+			Op:   opRemoveUser,
 			User: User{ID: id},
 		}
 
 		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
 			c.String(http.StatusInternalServerError, "Could not remove that user.")
 			return
 		}

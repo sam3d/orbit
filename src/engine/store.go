@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"orbit.sh/engine/proto"
 )
 
 // Store is a replicated state machine, where all changes are made via Raft
@@ -169,11 +172,59 @@ func (s *Store) Bootstrap() error {
 	return nil
 }
 
+// CurrentNode is a helper method that returns a store state node object from
+// both the current state of the store and the engine. The purpose of this is to
+// make the &command{} to apply an easier process.
+func (s *Store) CurrentNode() *Node {
+	return &Node{
+		ID:          s.ID,
+		Address:     s.AdvertiseAddr,
+		RPCPort:     s.engine.RPCServer.Port,
+		RaftPort:    s.RaftPort,
+		SerfPort:    s.SerfPort,
+		WANSerfPort: s.WANSerfPort,
+	}
+}
+
 // Join will join a node to this store instance. The node must be ready to
 // respond to raft communications at that address (that means that the node must
 // have a store instance running).
 func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
 	log.Printf("[INFO] store: Received join request for node %s at %s", nodeID, addr.String())
+
+	if s.raft.State() != raft.Leader {
+		// Get the leader to forward the request to.
+		leader := s.engine.RPCServer.Leader()
+		if leader == "" {
+			msg := "failed to determine a leader for the cluster"
+			log.Printf("[ERR] rpc: %v", msg)
+			return errors.New(msg)
+		}
+
+		// Connect to the leader.
+		conn, err := grpc.Dial(leader, grpc.WithInsecure())
+		if err != nil {
+			log.Printf("[ERR] store: Could not dial the leader of the cluster: %v", err)
+			return err
+		}
+		defer conn.Close()
+		client := proto.NewRPCClient(conn)
+		res, err := client.ForwardJoin(context.Background(), &proto.ForwardJoinRequest{
+			NodeId:  nodeID,
+			Address: addr.String(),
+		})
+		if err != nil {
+			log.Printf("[ERR] store: Failed to make RPC request for join forwarding")
+			return err
+		}
+		if res.Status != proto.Status_OK {
+			log.Printf("[ERR] store: Join operation failed on forwarded node")
+			return errors.New("join operated failed on forwarded node")
+		}
+
+		// The join operation worked!
+		return nil
+	}
 
 	configFuture := s.raft.GetConfiguration()
 	if err := configFuture.Error(); err != nil {
