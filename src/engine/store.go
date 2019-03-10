@@ -169,7 +169,7 @@ func (s *Store) Bootstrap() error {
 	return nil
 }
 
-// GetCurrentNode is a helper method that returns a store state node object from
+// CurrentNode is a helper method that returns a store state node object from
 // both the current state of the store and the engine. The purpose of this is to
 // make the &command{} to apply an easier process.
 func (s *Store) CurrentNode() *Node {
