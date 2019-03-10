@@ -50,6 +50,45 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{0}
 }
 
+type StatusResponse struct {
+	Status               Status   `protobuf:"varint,1,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StatusResponse) Reset()         { *m = StatusResponse{} }
+func (m *StatusResponse) String() string { return proto.CompactTextString(m) }
+func (*StatusResponse) ProtoMessage()    {}
+func (*StatusResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3cfb3b8ec240c376, []int{0}
+}
+
+func (m *StatusResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatusResponse.Unmarshal(m, b)
+}
+func (m *StatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatusResponse.Marshal(b, m, deterministic)
+}
+func (m *StatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatusResponse.Merge(m, src)
+}
+func (m *StatusResponse) XXX_Size() int {
+	return xxx_messageInfo_StatusResponse.Size(m)
+}
+func (m *StatusResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatusResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatusResponse proto.InternalMessageInfo
+
+func (m *StatusResponse) GetStatus() Status {
+	if m != nil {
+		return m.Status
+	}
+	return Status_OK
+}
+
 type JoinRequest struct {
 	JoinToken            string   `protobuf:"bytes,1,opt,name=join_token,json=joinToken,proto3" json:"join_token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -61,7 +100,7 @@ func (m *JoinRequest) Reset()         { *m = JoinRequest{} }
 func (m *JoinRequest) String() string { return proto.CompactTextString(m) }
 func (*JoinRequest) ProtoMessage()    {}
 func (*JoinRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3cfb3b8ec240c376, []int{0}
+	return fileDescriptor_3cfb3b8ec240c376, []int{1}
 }
 
 func (m *JoinRequest) XXX_Unmarshal(b []byte) error {
@@ -108,7 +147,7 @@ func (m *JoinResponse) Reset()         { *m = JoinResponse{} }
 func (m *JoinResponse) String() string { return proto.CompactTextString(m) }
 func (*JoinResponse) ProtoMessage()    {}
 func (*JoinResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3cfb3b8ec240c376, []int{1}
+	return fileDescriptor_3cfb3b8ec240c376, []int{2}
 }
 
 func (m *JoinResponse) XXX_Unmarshal(b []byte) error {
@@ -186,7 +225,7 @@ func (m *ConfirmJoinRequest) Reset()         { *m = ConfirmJoinRequest{} }
 func (m *ConfirmJoinRequest) String() string { return proto.CompactTextString(m) }
 func (*ConfirmJoinRequest) ProtoMessage()    {}
 func (*ConfirmJoinRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3cfb3b8ec240c376, []int{2}
+	return fileDescriptor_3cfb3b8ec240c376, []int{3}
 }
 
 func (m *ConfirmJoinRequest) XXX_Unmarshal(b []byte) error {
@@ -228,45 +267,6 @@ func (m *ConfirmJoinRequest) GetJoinToken() string {
 	return ""
 }
 
-type ConfirmJoinResponse struct {
-	Status               Status   `protobuf:"varint,1,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ConfirmJoinResponse) Reset()         { *m = ConfirmJoinResponse{} }
-func (m *ConfirmJoinResponse) String() string { return proto.CompactTextString(m) }
-func (*ConfirmJoinResponse) ProtoMessage()    {}
-func (*ConfirmJoinResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3cfb3b8ec240c376, []int{3}
-}
-
-func (m *ConfirmJoinResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ConfirmJoinResponse.Unmarshal(m, b)
-}
-func (m *ConfirmJoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ConfirmJoinResponse.Marshal(b, m, deterministic)
-}
-func (m *ConfirmJoinResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfirmJoinResponse.Merge(m, src)
-}
-func (m *ConfirmJoinResponse) XXX_Size() int {
-	return xxx_messageInfo_ConfirmJoinResponse.Size(m)
-}
-func (m *ConfirmJoinResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ConfirmJoinResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ConfirmJoinResponse proto.InternalMessageInfo
-
-func (m *ConfirmJoinResponse) GetStatus() Status {
-	if m != nil {
-		return m.Status
-	}
-	return Status_OK
-}
-
 type ApplyRequest struct {
 	Body                 []byte   `protobuf:"bytes,1,opt,name=body,proto3" json:"body,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -306,84 +306,94 @@ func (m *ApplyRequest) GetBody() []byte {
 	return nil
 }
 
-type ApplyResponse struct {
-	Status               Status   `protobuf:"varint,1,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
+type ForwardJoinRequest struct {
+	NodeId               string   `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Address              string   `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ApplyResponse) Reset()         { *m = ApplyResponse{} }
-func (m *ApplyResponse) String() string { return proto.CompactTextString(m) }
-func (*ApplyResponse) ProtoMessage()    {}
-func (*ApplyResponse) Descriptor() ([]byte, []int) {
+func (m *ForwardJoinRequest) Reset()         { *m = ForwardJoinRequest{} }
+func (m *ForwardJoinRequest) String() string { return proto.CompactTextString(m) }
+func (*ForwardJoinRequest) ProtoMessage()    {}
+func (*ForwardJoinRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3cfb3b8ec240c376, []int{5}
 }
 
-func (m *ApplyResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ApplyResponse.Unmarshal(m, b)
+func (m *ForwardJoinRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ForwardJoinRequest.Unmarshal(m, b)
 }
-func (m *ApplyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ApplyResponse.Marshal(b, m, deterministic)
+func (m *ForwardJoinRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ForwardJoinRequest.Marshal(b, m, deterministic)
 }
-func (m *ApplyResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ApplyResponse.Merge(m, src)
+func (m *ForwardJoinRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ForwardJoinRequest.Merge(m, src)
 }
-func (m *ApplyResponse) XXX_Size() int {
-	return xxx_messageInfo_ApplyResponse.Size(m)
+func (m *ForwardJoinRequest) XXX_Size() int {
+	return xxx_messageInfo_ForwardJoinRequest.Size(m)
 }
-func (m *ApplyResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ApplyResponse.DiscardUnknown(m)
+func (m *ForwardJoinRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ForwardJoinRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ApplyResponse proto.InternalMessageInfo
+var xxx_messageInfo_ForwardJoinRequest proto.InternalMessageInfo
 
-func (m *ApplyResponse) GetStatus() Status {
+func (m *ForwardJoinRequest) GetNodeId() string {
 	if m != nil {
-		return m.Status
+		return m.NodeId
 	}
-	return Status_OK
+	return ""
+}
+
+func (m *ForwardJoinRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
 }
 
 func init() {
 	proto.RegisterEnum("proto.Status", Status_name, Status_value)
+	proto.RegisterType((*StatusResponse)(nil), "proto.StatusResponse")
 	proto.RegisterType((*JoinRequest)(nil), "proto.JoinRequest")
 	proto.RegisterType((*JoinResponse)(nil), "proto.JoinResponse")
 	proto.RegisterType((*ConfirmJoinRequest)(nil), "proto.ConfirmJoinRequest")
-	proto.RegisterType((*ConfirmJoinResponse)(nil), "proto.ConfirmJoinResponse")
 	proto.RegisterType((*ApplyRequest)(nil), "proto.ApplyRequest")
-	proto.RegisterType((*ApplyResponse)(nil), "proto.ApplyResponse")
+	proto.RegisterType((*ForwardJoinRequest)(nil), "proto.ForwardJoinRequest")
 }
 
 func init() { proto.RegisterFile("cluster.proto", fileDescriptor_3cfb3b8ec240c376) }
 
 var fileDescriptor_3cfb3b8ec240c376 = []byte{
-	// 396 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x90, 0xdf, 0x8a, 0xd3, 0x40,
-	0x18, 0xc5, 0x77, 0xd2, 0x26, 0x98, 0xaf, 0x49, 0x09, 0xdf, 0x7a, 0x11, 0x23, 0x42, 0x09, 0x2c,
-	0x14, 0xd1, 0x05, 0x57, 0xf1, 0xca, 0x9b, 0xb2, 0xae, 0xf8, 0x07, 0xec, 0x32, 0x6d, 0x6f, 0xbc,
-	0x89, 0xa9, 0x33, 0x85, 0x68, 0xcd, 0xc4, 0x99, 0xa9, 0xa5, 0x2f, 0xe6, 0x43, 0xf8, 0x54, 0x92,
-	0x99, 0xa4, 0x26, 0x56, 0x04, 0xaf, 0x12, 0x7e, 0xe7, 0xcc, 0xcc, 0x39, 0x07, 0xc2, 0x4f, 0xdb,
-	0x9d, 0xd2, 0x5c, 0x5e, 0x56, 0x52, 0x68, 0x81, 0xae, 0xf9, 0xa4, 0x8f, 0x60, 0xf4, 0x56, 0x14,
-	0x25, 0xe5, 0xdf, 0x76, 0x5c, 0x69, 0x7c, 0x00, 0xf0, 0x59, 0x14, 0x65, 0xa6, 0xc5, 0x17, 0x5e,
-	0xc6, 0x64, 0x42, 0xa6, 0x3e, 0xf5, 0x6b, 0xb2, 0xac, 0x41, 0xfa, 0x93, 0x40, 0x60, 0xed, 0xaa,
-	0x12, 0xa5, 0xe2, 0x78, 0x01, 0xe3, 0x9c, 0x7d, 0xe7, 0x52, 0x17, 0x8a, 0x67, 0x39, 0x63, 0xb2,
-	0x39, 0x13, 0x1e, 0xe9, 0x8c, 0x31, 0x89, 0x63, 0x70, 0x0a, 0x16, 0x3b, 0x46, 0x72, 0x0a, 0x86,
-	0xf7, 0xc1, 0x97, 0xf9, 0x46, 0x67, 0x95, 0x90, 0x3a, 0x1e, 0x4c, 0xc8, 0x34, 0xa4, 0x77, 0x6a,
-	0x70, 0x2b, 0xa4, 0xae, 0x45, 0xc5, 0xe5, 0xc6, 0x8a, 0x43, 0x2b, 0xd6, 0xc0, 0x88, 0x29, 0x84,
-	0xfb, 0xbc, 0xcc, 0x7e, 0x1b, 0x5c, 0x63, 0x18, 0xed, 0xf3, 0x72, 0xd1, 0x7a, 0x2e, 0xc0, 0x53,
-	0x3a, 0xd7, 0x3b, 0x15, 0x7b, 0x13, 0x32, 0x1d, 0x5f, 0x85, 0xb6, 0xf2, 0xe5, 0xc2, 0x40, 0xda,
-	0x88, 0xe9, 0x47, 0xc0, 0x6b, 0x51, 0x6e, 0x0a, 0xf9, 0xb5, 0xbb, 0x80, 0x8d, 0x4a, 0x4e, 0xa2,
-	0x9a, 0x72, 0xb6, 0x81, 0x89, 0x6a, 0x7a, 0xf5, 0xe7, 0x1a, 0xfc, 0x39, 0xd7, 0x0b, 0x38, 0xef,
-	0xbd, 0x70, 0x1c, 0xad, 0xcd, 0x47, 0xfe, 0x95, 0x2f, 0x85, 0x60, 0x56, 0x55, 0xdb, 0x43, 0x9b,
-	0x0c, 0x61, 0xb8, 0x16, 0xec, 0x60, 0x0e, 0x05, 0xd4, 0xfc, 0xa7, 0xcf, 0x21, 0x6c, 0x3c, 0xff,
-	0x75, 0xf7, 0xc3, 0xc7, 0xe0, 0x59, 0x82, 0x1e, 0x38, 0xf3, 0x77, 0xd1, 0x19, 0x46, 0x10, 0xac,
-	0xde, 0xcf, 0x56, 0xcb, 0xd7, 0x73, 0xfa, 0xe6, 0xc3, 0xcd, 0xcb, 0x88, 0xa0, 0x0f, 0xee, 0x0d,
-	0xa5, 0x73, 0x1a, 0x39, 0x57, 0x3f, 0x08, 0x0c, 0xe8, 0xed, 0x35, 0x3e, 0x81, 0x61, 0xdd, 0x04,
-	0xb1, 0xb9, 0xb5, 0x33, 0x5c, 0x72, 0xde, 0x63, 0x36, 0x4e, 0x7a, 0x86, 0xaf, 0x60, 0xd4, 0xd9,
-	0x00, 0xef, 0x35, 0xae, 0xd3, 0xe5, 0x93, 0xe4, 0x6f, 0xd2, 0xf1, 0x9e, 0x67, 0xe0, 0x9a, 0xa6,
-	0xd8, 0xbe, 0xd3, 0xdd, 0x26, 0xb9, 0xdb, 0x87, 0xed, 0xa9, 0xb5, 0x67, 0xf0, 0xd3, 0x5f, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0x7f, 0x82, 0xef, 0x0a, 0xfd, 0x02, 0x00, 0x00,
+	// 425 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x51, 0x5d, 0x6b, 0xd4, 0x40,
+	0x14, 0x6d, 0xb2, 0xbb, 0xa9, 0xb9, 0xf9, 0x20, 0x5c, 0x11, 0x63, 0x45, 0x28, 0x01, 0xa1, 0x88,
+	0x16, 0xac, 0x88, 0xcf, 0xa1, 0x56, 0xad, 0x82, 0x5b, 0xa6, 0xed, 0x8b, 0x2f, 0x31, 0x75, 0x66,
+	0x21, 0x5a, 0x67, 0xe2, 0xcc, 0xac, 0x4b, 0xff, 0xa2, 0xff, 0xc7, 0x77, 0x99, 0x99, 0x24, 0x9b,
+	0x75, 0x69, 0x9f, 0x76, 0xe7, 0x9c, 0x73, 0xef, 0x3d, 0xe7, 0x04, 0x92, 0x6f, 0xd7, 0x4b, 0xa5,
+	0x99, 0x3c, 0x6c, 0xa5, 0xd0, 0x02, 0x67, 0xf6, 0xa7, 0x78, 0x03, 0xe9, 0xb9, 0xae, 0xf5, 0x52,
+	0x11, 0xa6, 0x5a, 0xc1, 0x15, 0xc3, 0xa7, 0x10, 0x28, 0x8b, 0xe4, 0xde, 0xbe, 0x77, 0x90, 0x1e,
+	0x25, 0x6e, 0xe0, 0xb0, 0x93, 0x75, 0x64, 0xf1, 0x1c, 0xa2, 0x8f, 0xa2, 0xe1, 0x84, 0xfd, 0x5a,
+	0x32, 0xa5, 0xf1, 0x09, 0xc0, 0x77, 0xd1, 0xf0, 0x4a, 0x8b, 0x1f, 0x8c, 0xdb, 0xc9, 0x90, 0x84,
+	0x06, 0xb9, 0x30, 0x40, 0xf1, 0xc7, 0x83, 0xd8, 0xc9, 0x87, 0x2b, 0x69, 0x4d, 0x7f, 0x33, 0xa9,
+	0x1b, 0xc5, 0xaa, 0x9a, 0x52, 0xd9, 0xcd, 0x24, 0x03, 0x5a, 0x52, 0x2a, 0x31, 0x05, 0xbf, 0xa1,
+	0xb9, 0x6f, 0x29, 0xbf, 0xa1, 0xf8, 0x18, 0x42, 0x59, 0x2f, 0x74, 0xd5, 0x0a, 0xa9, 0xf3, 0xc9,
+	0xbe, 0x77, 0x90, 0x90, 0x7b, 0x06, 0x38, 0x13, 0x52, 0x1b, 0x52, 0x31, 0xb9, 0x70, 0xe4, 0xd4,
+	0x91, 0x06, 0xb0, 0x64, 0x01, 0xc9, 0xaa, 0xe6, 0xd5, 0x5a, 0x30, 0xb3, 0x82, 0x68, 0x55, 0xf3,
+	0xf3, 0x5e, 0xb3, 0x8e, 0x1e, 0xdc, 0x15, 0xfd, 0x2b, 0xe0, 0xb1, 0xe0, 0x8b, 0x46, 0xfe, 0x1c,
+	0x37, 0xe0, 0xac, 0x7a, 0x5b, 0x56, 0x6d, 0x38, 0x97, 0xc0, 0x5a, 0xb5, 0xb9, 0x36, 0xeb, 0x9a,
+	0xfc, 0x5f, 0x57, 0x01, 0x71, 0xd9, 0xb6, 0xd7, 0x37, 0xfd, 0x6e, 0x84, 0xe9, 0x95, 0xa0, 0x37,
+	0x76, 0x7b, 0x4c, 0xec, 0xff, 0xe2, 0x3d, 0xe0, 0x3b, 0x21, 0x57, 0xb5, 0xa4, 0x63, 0x17, 0x0f,
+	0x61, 0x97, 0x0b, 0xca, 0xaa, 0xc1, 0x4a, 0x60, 0x9e, 0xa7, 0x14, 0x73, 0xd8, 0x35, 0x4e, 0x98,
+	0x52, 0x9d, 0x99, 0xfe, 0xf9, 0xec, 0x05, 0x04, 0x2e, 0x20, 0x06, 0xe0, 0xcf, 0x3f, 0x65, 0x3b,
+	0x98, 0x41, 0x7c, 0xf9, 0xb9, 0xbc, 0xbc, 0xf8, 0x30, 0x27, 0xa7, 0x5f, 0x4e, 0xde, 0x66, 0x1e,
+	0x86, 0x30, 0x3b, 0x21, 0x64, 0x4e, 0x32, 0xff, 0xe8, 0xaf, 0x07, 0x13, 0x72, 0x76, 0x8c, 0x2f,
+	0x61, 0x6a, 0x0e, 0x23, 0x76, 0x25, 0x8d, 0x5c, 0xec, 0xdd, 0xdf, 0xc0, 0xdc, 0x27, 0x2f, 0x76,
+	0xb0, 0x84, 0x68, 0x54, 0x1c, 0x3e, 0xea, 0x54, 0xdb, 0x65, 0xee, 0x3d, 0xd8, 0x6c, 0x7e, 0xbd,
+	0xe2, 0x35, 0xcc, 0x6c, 0x33, 0xd8, 0x9f, 0x18, 0xf7, 0x74, 0xfb, 0x58, 0x09, 0xd1, 0xa8, 0xac,
+	0xe1, 0xf2, 0x76, 0x81, 0xb7, 0xae, 0xb8, 0x0a, 0x2c, 0xfe, 0xea, 0x5f, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x86, 0x3f, 0xfa, 0x3c, 0x48, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -400,9 +410,10 @@ const _ = grpc.SupportPackageIsVersion4
 type RPCClient interface {
 	// Cluster join and confirm join operations.
 	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
-	ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*ConfirmJoinResponse, error)
-	// Apply is used for leader forwarding.
-	Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error)
+	ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// All RPC messages that must be forwarded for the leader to apply.
+	Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	ForwardJoin(ctx context.Context, in *ForwardJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 }
 
 type rPCClient struct {
@@ -422,8 +433,8 @@ func (c *rPCClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *rPCClient) ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*ConfirmJoinResponse, error) {
-	out := new(ConfirmJoinResponse)
+func (c *rPCClient) ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, "/proto.RPC/ConfirmJoin", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -431,9 +442,18 @@ func (c *rPCClient) ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opt
 	return out, nil
 }
 
-func (c *rPCClient) Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error) {
-	out := new(ApplyResponse)
+func (c *rPCClient) Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, "/proto.RPC/Apply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rPCClient) ForwardJoin(ctx context.Context, in *ForwardJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, "/proto.RPC/ForwardJoin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -444,9 +464,10 @@ func (c *rPCClient) Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.Ca
 type RPCServer interface {
 	// Cluster join and confirm join operations.
 	Join(context.Context, *JoinRequest) (*JoinResponse, error)
-	ConfirmJoin(context.Context, *ConfirmJoinRequest) (*ConfirmJoinResponse, error)
-	// Apply is used for leader forwarding.
-	Apply(context.Context, *ApplyRequest) (*ApplyResponse, error)
+	ConfirmJoin(context.Context, *ConfirmJoinRequest) (*StatusResponse, error)
+	// All RPC messages that must be forwarded for the leader to apply.
+	Apply(context.Context, *ApplyRequest) (*StatusResponse, error)
+	ForwardJoin(context.Context, *ForwardJoinRequest) (*StatusResponse, error)
 }
 
 func RegisterRPCServer(s *grpc.Server, srv RPCServer) {
@@ -507,6 +528,24 @@ func _RPC_Apply_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RPC_ForwardJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForwardJoinRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RPCServer).ForwardJoin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.RPC/ForwardJoin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RPCServer).ForwardJoin(ctx, req.(*ForwardJoinRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _RPC_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.RPC",
 	HandlerType: (*RPCServer)(nil),
@@ -522,6 +561,10 @@ var _RPC_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Apply",
 			Handler:    _RPC_Apply_Handler,
+		},
+		{
+			MethodName: "ForwardJoin",
+			Handler:    _RPC_ForwardJoin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

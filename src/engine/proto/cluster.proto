@@ -7,17 +7,22 @@ enum Status {
   ERROR = 2; // There was an error somewhere in the response.
 }
 
+message StatusResponse {
+  Status status = 1;
+}
+
 //
 // Cluster methods.
 //
 
 service RPC {
   // Cluster join and confirm join operations.
-  rpc Join(JoinRequest) returns (JoinResponse) {}
-  rpc ConfirmJoin(ConfirmJoinRequest) returns (ConfirmJoinResponse) {}
+  rpc Join(JoinRequest) returns (JoinResponse) {} // For when a node wishes to join another node.
+  rpc ConfirmJoin(ConfirmJoinRequest) returns (StatusResponse) {} // For when a node confirms it CAN join that other node.
 
-  // Apply is used for leader forwarding.
-  rpc Apply(ApplyRequest) returns (ApplyResponse) {}
+  // All RPC messages that must be forwarded for the leader to apply.
+  rpc Apply(ApplyRequest) returns (StatusResponse) {} // A raft log entry apply message for the leader.
+  rpc ForwardJoin(ForwardJoinRequest) returns (StatusResponse) {} // When a node wishes to join us.
 }
 
 message JoinRequest {
@@ -47,10 +52,6 @@ message ConfirmJoinRequest {
   string join_token = 3;
 }
 
-message ConfirmJoinResponse {
-  Status status = 1;
-}
-
 //
 // Leader forwarding.
 //
@@ -59,6 +60,7 @@ message ApplyRequest {
   bytes body = 1;
 }
 
-message ApplyResponse {
-  Status status = 1;
+message ForwardJoinRequest {
+  string node_id = 1;
+  string address = 2;
 }

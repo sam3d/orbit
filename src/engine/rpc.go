@@ -112,12 +112,12 @@ func (s *RPCServer) Join(ctx context.Context, in *proto.JoinRequest) (*proto.Joi
 // ConfirmJoin handles a node after it has been given the required data
 // from the store. This will actually perform the join operation and create the
 // node.
-func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinRequest) (*proto.ConfirmJoinResponse, error) {
+func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinRequest) (*proto.StatusResponse, error) {
 	engine := s.engine
 	store := engine.Store
 
 	// Construct the response.
-	res := &proto.ConfirmJoinResponse{
+	res := &proto.StatusResponse{
 		Status: proto.Status_OK,
 	}
 
@@ -140,8 +140,8 @@ func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinReques
 
 // Apply is called when a node that isn't a leader forwards an fsm apply blob to
 // us. That means that we're the leader of the cluster, so go us!
-func (s *RPCServer) Apply(ctx context.Context, in *proto.ApplyRequest) (*proto.ApplyResponse, error) {
-	res := &proto.ApplyResponse{
+func (s *RPCServer) Apply(ctx context.Context, in *proto.ApplyRequest) (*proto.StatusResponse, error) {
+	res := &proto.StatusResponse{
 		Status: proto.Status_OK,
 	}
 
@@ -149,6 +149,33 @@ func (s *RPCServer) Apply(ctx context.Context, in *proto.ApplyRequest) (*proto.A
 	if err := f.Error(); err != nil {
 		log.Printf("[ERR] store: %s", err)
 		res.Status = proto.Status_ERROR
+	}
+
+	return res, nil
+}
+
+// ForwardJoin is the method that handles us receiving a join request forwarded
+// to us from another node. This request is already authenticated, and it means
+// that we are the leader o the cluster, so this simply has to be applied.
+func (s *RPCServer) ForwardJoin(ctx context.Context, in *proto.ForwardJoinRequest) (*proto.StatusResponse, error) {
+	log.Printf("[INFO] rpc: Received forwarded join request")
+
+	res := &proto.StatusResponse{
+		Status: proto.Status_OK,
+	}
+
+	addr, err := net.ResolveTCPAddr("tcp", in.Address)
+	if err != nil {
+		log.Printf("[ERR] rpc: Received forwarded request but can't parse TCP address: %v", err)
+		res.Status = proto.Status_ERROR
+		return res, nil
+	}
+
+	err = s.engine.Store.Join(in.NodeId, *addr)
+	if err != nil {
+		log.Printf("[ERR] rpc: Cannot perform store join operation: %v", err)
+		res.Status = proto.Status_ERROR
+		return res, nil
 	}
 
 	return res, nil

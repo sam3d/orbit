@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"orbit.sh/engine/proto"
 )
 
 // Store is a replicated state machine, where all changes are made via Raft
@@ -190,8 +193,37 @@ func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
 	log.Printf("[INFO] store: Received join request for node %s at %s", nodeID, addr.String())
 
 	if s.raft.State() != raft.Leader {
-		return fmt.Errorf("not leader")
-		// TODO: Make this use forwardJoin
+		// Get the leader to forward the request to.
+		leader := s.engine.RPCServer.Leader()
+		if leader == "" {
+			msg := "failed to determine a leader for the cluster"
+			log.Printf("[ERR] rpc: %v", msg)
+			return errors.New(msg)
+		}
+
+		// Connect to the leader.
+		conn, err := grpc.Dial(leader, grpc.WithInsecure())
+		if err != nil {
+			log.Printf("[ERR] store: Could not dial the leader of the cluster: %v", err)
+			return err
+		}
+		defer conn.Close()
+		client := proto.NewRPCClient(conn)
+		res, err := client.ForwardJoin(context.Background(), &proto.ForwardJoinRequest{
+			NodeId:  nodeID,
+			Address: addr.String(),
+		})
+		if err != nil {
+			log.Printf("[ERR] store: Failed to make RPC request for join forwarding")
+			return err
+		}
+		if res.Status != proto.Status_OK {
+			log.Printf("[ERR] store: Join operation failed on forwarded node")
+			return errors.New("join operated failed on forwarded node")
+		}
+
+		// The join operation worked!
+		return nil
 	}
 
 	configFuture := s.raft.GetConfiguration()
@@ -208,11 +240,5 @@ func (s *Store) Join(nodeID string, addr net.TCPAddr) error {
 	}
 
 	log.Printf("[INFO] store: Node %s at %s has joined successfully", nodeID, addr.String())
-	return nil
-}
-
-// forwardJoin will forward a join cluster request to the leader of the cluster.
-func forwardJoin(nodeID string, addr net.TCPAddr) error {
-	// TODO: Implement the forward join method.
 	return nil
 }
