@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/raft"
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"orbit.sh/engine/proto"
@@ -126,18 +127,71 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	return nil
 }
 
+// Snapshot is a method that a raft finite state machine requires to operate. It
+// simply copies the data into an FSM snapshot.
 func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
-	return nil, nil
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	snapshot := &fsmSnapshot{}
+	if err := copier.Copy(snapshot, f.state); err != nil {
+		log.Println("[ERR] fsm: Could not copy data into snapshot")
+		return nil, err
+	}
+
+	return snapshot, nil
 }
 
+// Restore will restore the store state back to a previous state.
 func (f *fsm) Restore(rc io.ReadCloser) error {
+	state := &StoreState{}
+
+	if err := json.NewDecoder(rc).Decode(state); err != nil {
+		log.Println("[ERR] fsm: Could not restore snapshot")
+		return err
+	}
+
+	// Set the state from the snapshot. This does not require a mutex lock.
+	f.state = state
 	return nil
 }
 
-type fsmSnapshot struct{}
+// fsmSnapshot is an instance of the fsm state that implements the required
+// methods to function as a snapshot. This should be cloned from the fsm
+// instance so as to avoid corrupting any of the data latent there.
+type fsmSnapshot StoreState
 
+// Persist will take the data from the snapshot method and marshal it into data
+// that it can persist on the disk as a binary blob.
+//
+// The data is taken back on the fsm using the Restore method.
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
-	return nil
+	// This is encapsulated in a method so that we ensure that we cancel the sink
+	// should an error occur at any point in the process and can also ensure that
+	// no other methods get written. It's the cleanest way to implement this.
+	err := func() error {
+		// Encode the store data.
+		b, err := json.Marshal(f)
+		if err != nil {
+			return err
+		}
+
+		// Write the data to the sink.
+		if _, err := sink.Write(b); err != nil {
+			return err
+		}
+
+		// Close the sink.
+		return sink.Close()
+	}()
+
+	// If an error occurred at any point in the process, ensure that we cancel the
+	// process.
+	if err != nil {
+		sink.Cancel()
+	}
+
+	return err
 }
 
 func (f *fsmSnapshot) Release() {}
