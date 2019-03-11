@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/raft"
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"orbit.sh/engine/proto"
