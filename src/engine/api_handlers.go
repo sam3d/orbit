@@ -26,6 +26,8 @@ func (s *APIServer) handlers() {
 	r.GET("/users", s.handleListUsers())
 	r.GET("/nodes", s.handleListNodes())
 
+	r.POST("/snapshot/*op", s.handleSnapshot())
+
 	{
 		r := r.Group("/cluster")
 		r.POST("/bootstrap", s.handleClusterBootstrap())

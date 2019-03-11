@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -470,5 +471,46 @@ func (s *APIServer) handleUserRemove() gin.HandlerFunc {
 		}
 
 		c.String(http.StatusOK, "The user has been removed.")
+	}
+}
+
+func (s *APIServer) handleSnapshot() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		op := c.Param("op")
+		switch op {
+		case "take":
+			// Take a snapshot.
+			f := s.engine.Store.raft.Snapshot()
+			if err := f.Error(); err != nil {
+				c.String(http.StatusInternalServerError, "Error processing the snapshot: %s", err)
+				return
+			}
+
+			// Attempt to open the snapshot.
+			_, rc, err := f.Open()
+			if err != nil {
+				c.String(http.StatusInternalServerError, "Error opening the snapshot: %s", err)
+				return
+			}
+
+			// Plop the snapshot in JSON and send to the user.
+			snapshot := &fsmSnapshot{}
+			if err := json.NewDecoder(rc).Decode(snapshot); err != nil {
+				c.String(http.StatusInternalServerError, "Error decoding the snapshot: %s", err)
+				return
+			}
+			c.JSON(http.StatusOK, snapshot)
+
+		case "restore":
+			c.String(
+				http.StatusNotImplemented,
+				`The restore method of the snapshot hasn't been implemented.
+This is because it is for testing purposes.`,
+			)
+
+		default:
+			c.String(http.StatusBadRequest, "Operation must be 'take' or 'restore'.")
+			return
+		}
 	}
 }
