@@ -376,6 +376,9 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleListNodes() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
 	type raftState string
 	const (
 		Worker  raftState = "worker"
@@ -398,11 +401,16 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		if engine.Status < StatusReady {
+			c.JSON(http.StatusBadRequest, []interface{}{})
+			return
+		}
+
 		nodes := []node{}
 		raftServers := make(map[raft.ServerID]raft.Server)
 
 		// Sort the raft servers by ID.
-		configFuture := s.engine.Store.raft.GetConfiguration()
+		configFuture := store.raft.GetConfiguration()
 		if err := configFuture.Error(); err != nil {
 			c.String(http.StatusInternalServerError, "Could not retrieve raft configuration.")
 			return
@@ -412,12 +420,12 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 		}
 
 		// Construct the list of nodes.
-		for _, n := range s.engine.Store.state.Nodes {
+		for _, n := range store.state.Nodes {
 			// Compute the state.
 			var state raftState
 			if _, ok := raftServers[raft.ServerID(n.ID)]; !ok {
 				state = Worker // Raft doesn't have this, so Serf must.
-			} else if s.engine.Store.raft.Leader() == raft.ServerAddress(fmt.Sprintf("%s:%d", n.Address, n.RaftPort)) {
+			} else if store.raft.Leader() == raft.ServerAddress(fmt.Sprintf("%s:%d", n.Address, n.RaftPort)) {
 				state = Leader // This node is the leader of the cluster.
 			} else {
 				state = Manager // This is node must be a manager of the cluster.
