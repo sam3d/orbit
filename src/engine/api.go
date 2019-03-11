@@ -507,7 +507,6 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleListNodes() gin.HandlerFunc {
-
 	type raftState string
 	const (
 		Worker  raftState = "worker"
@@ -521,7 +520,6 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 		Address string `json:"address"`
 
 		// Process ports.
-		APIPort     int `json:"api_port"` // Not used by Orbit.
 		RPCPort     int `json:"rpc_port"`
 		RaftPort    int `json:"raft_port"`
 		SerfPort    int `json:"serf_port"`
