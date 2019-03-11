@@ -141,7 +141,17 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	return snapshot, nil
 }
 
+// Restore will restore the store state back to a previous state.
 func (f *fsm) Restore(rc io.ReadCloser) error {
+	state := &StoreState{}
+
+	if err := json.NewDecoder(rc).Decode(state); err != nil {
+		log.Println("[ERR] fsm: Could not restore snapshot")
+		return err
+	}
+
+	// Set the state from the snapshot. This does not require a mutex lock.
+	f.state = state
 	return nil
 }
 
