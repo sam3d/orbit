@@ -126,15 +126,29 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	return nil
 }
 
+// Snapshot is a method that a raft finite state machine requires to operate. It
+// simply copies the data into an FSM snapshot.
 func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
-	return nil, nil
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	snapshot := &fsmSnapshot{}
+	if err := copier.Copy(snapshot, f.state); err != nil {
+		log.Println("[ERR] fsm: Could not copy data into snapshot")
+		return nil, err
+	}
+
+	return snapshot, nil
 }
 
 func (f *fsm) Restore(rc io.ReadCloser) error {
 	return nil
 }
 
-type fsmSnapshot struct{}
+// fsmSnapshot is an instance of the fsm state that implements the required
+// methods to function as a snapshot. This should be cloned from the fsm
+// instance so as to avoid corrupting any of the data latent there.
+type fsmSnapshot StoreState
 
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 	return nil
