@@ -160,8 +160,37 @@ func (f *fsm) Restore(rc io.ReadCloser) error {
 // instance so as to avoid corrupting any of the data latent there.
 type fsmSnapshot StoreState
 
+// Persist will take the data from the snapshot method and marshal it into data
+// that it can persist on the disk as a binary blob.
+//
+// The data is taken back on the fsm using the Restore method.
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
-	return nil
+	// This is encapsulated in a method so that we ensure that we cancel the sink
+	// should an error occur at any point in the process and can also ensure that
+	// no other methods get written. It's the cleanest way to implement this.
+	err := func() error {
+		// Encode the store data.
+		b, err := json.Marshal(f)
+		if err != nil {
+			return err
+		}
+
+		// Write the data to the sink.
+		if _, err := sink.Write(b); err != nil {
+			return err
+		}
+
+		// Close the sink.
+		return sink.Close()
+	}()
+
+	// If an error occurred at any point in the process, ensure that we cancel the
+	// process.
+	if err != nil {
+		sink.Cancel()
+	}
+
+	return err
 }
 
 func (f *fsmSnapshot) Release() {}
