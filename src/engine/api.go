@@ -541,7 +541,6 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 			return
 		}
 		for _, srv := range configFuture.Configuration().Servers {
-			fmt.Printf("%+v\n", srv)
 			raftServers[srv.ID] = srv
 		}
 
