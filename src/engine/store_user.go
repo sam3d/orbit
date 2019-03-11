@@ -74,7 +74,7 @@ func (u *Users) Generate(config UserConfig) (*User, error) {
 func (u *Users) GenerateID() string {
 search:
 	for {
-		b := make([]byte, 16)
+		b := make([]byte, 32)
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 

@@ -25,8 +25,8 @@ type Nodes []Node
 func (n *Nodes) GenerateNodeID() string {
 search:
 	for {
-		// Generate random 16 byte slice.
-		b := make([]byte, 16)
+		// Generate random 32 byte slice.
+		b := make([]byte, 32)
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 
