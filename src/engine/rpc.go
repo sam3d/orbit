@@ -183,35 +183,50 @@ func (s *RPCServer) ForwardJoin(ctx context.Context, in *proto.ForwardJoinReques
 
 // Leader gets the RPC address of the leader of the cluster.
 func (s *RPCServer) Leader() string {
+	opTimeout := time.Second * 20             // Length of time for operation timeouts.
+	opRetryInterval := time.Millisecond * 200 // Retry operations 5 times a second.
+
 	// Add a timeout handler to ensure that there is a raft leader.
 	for start := time.Now(); ; {
 		if s.engine.Store.raft.Leader() != "" {
 			break
 		}
-		if time.Since(start) > time.Second*10 {
+		if time.Since(start) > opTimeout {
 			log.Printf("[ERR] rpc: could not get leader status")
 			return ""
 		}
-		time.Sleep(time.Millisecond * 200)
+		time.Sleep(opRetryInterval)
 	}
 
 	// Get the raft address of the leader.
 	rawRaftAddr := string(s.engine.Store.raft.Leader())
 	raftAddr, err := net.ResolveTCPAddr("tcp", rawRaftAddr)
 	if err != nil {
+		log.Printf("[ERR] rpc: Could not resolve TCP address of leader")
 		return ""
 	}
 	ip := raftAddr.IP.String()
 
 	// Look up the required port from the IP address in the store state node list.
 	var rpcPort int
-	for _, node := range s.engine.Store.state.Nodes {
-		if node.Address.String() == ip {
-			rpcPort = node.RPCPort
-			break
+found:
+	for start := time.Now(); ; {
+		if time.Since(start) > opTimeout {
+			log.Printf("[ERR] rpc: Our copy of the node list never got updated")
+			return ""
 		}
+
+		for _, node := range s.engine.Store.state.Nodes {
+			if node.Address.String() == ip {
+				rpcPort = node.RPCPort
+				break found
+			}
+		}
+
+		time.Sleep(opRetryInterval)
 	}
 	if rpcPort == 0 {
+		log.Printf("[ERR] rpc: Could not load the leader port in the store state node list")
 		return ""
 	}
 
