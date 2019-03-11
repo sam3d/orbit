@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/raft"
+
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"orbit.sh/engine/proto"
@@ -505,8 +507,69 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleListNodes() gin.HandlerFunc {
+
+	type raftState string
+	const (
+		Worker  raftState = "worker"
+		Leader            = "leader"
+		Manager           = "manager"
+	)
+
+	type node struct {
+		// Node identifiers.
+		ID      string `json:"id"`
+		Address string `json:"address"`
+
+		// Process ports.
+		APIPort     int `json:"api_port"` // Not used by Orbit.
+		RPCPort     int `json:"rpc_port"`
+		RaftPort    int `json:"raft_port"`
+		SerfPort    int `json:"serf_port"`
+		WANSerfPort int `json:"wan_serf_port"`
+
+		State raftState `json:"state"`
+	}
+
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, s.engine.Store.state.Nodes)
+		nodes := []node{}
+		raftServers := make(map[raft.ServerID]raft.Server)
+
+		// Sort the raft servers by ID.
+		configFuture := s.engine.Store.raft.GetConfiguration()
+		if err := configFuture.Error(); err != nil {
+			c.String(http.StatusInternalServerError, "Could not retrieve raft configuration.")
+			return
+		}
+		for _, srv := range configFuture.Configuration().Servers {
+			fmt.Printf("%+v\n", srv)
+			raftServers[srv.ID] = srv
+		}
+
+		// Construct the list of nodes.
+		for _, n := range s.engine.Store.state.Nodes {
+			// Compute the state.
+			var state raftState
+			if _, ok := raftServers[raft.ServerID(n.ID)]; !ok {
+				state = Worker // Raft doesn't have this, so Serf must.
+			} else if s.engine.Store.raft.Leader() == raft.ServerAddress(fmt.Sprintf("%s:%d", n.Address, n.RaftPort)) {
+				state = Leader // This node is the leader of the cluster.
+			} else {
+				state = Manager // This is node must be a manager of the cluster.
+			}
+
+			nodes = append(nodes, node{
+				ID:      n.ID,
+				Address: n.Address.String(),
+
+				RPCPort:     n.RPCPort,
+				RaftPort:    n.RaftPort,
+				SerfPort:    n.SerfPort,
+				WANSerfPort: n.WANSerfPort,
+				State:       state,
+			})
+		}
+
+		c.JSON(http.StatusOK, &nodes)
 	}
 }
 
