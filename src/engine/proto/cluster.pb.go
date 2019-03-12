@@ -25,9 +25,12 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type Status int32
 
 const (
-	Status_OK           Status = 0
+	// The request was accepted.
+	Status_OK Status = 0
+	// The request was unauthorized.
 	Status_UNAUTHORIZED Status = 1
-	Status_ERROR        Status = 2
+	// There was an error somewhere in the response.
+	Status_ERROR Status = 2
 )
 
 var Status_name = map[int32]string{
@@ -129,14 +132,11 @@ func (m *JoinRequest) GetJoinToken() string {
 }
 
 type JoinResponse struct {
-	// Information that the joining node should adopt.
-	AdvertiseAddr string `protobuf:"bytes,1,opt,name=advertise_addr,json=advertiseAddr,proto3" json:"advertise_addr,omitempty"`
-	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	// Metadata about the node to join.
-	RaftPort    uint32 `protobuf:"varint,3,opt,name=raft_port,json=raftPort,proto3" json:"raft_port,omitempty"`
-	SerfPort    uint32 `protobuf:"varint,4,opt,name=serf_port,json=serfPort,proto3" json:"serf_port,omitempty"`
-	WanSerfPort uint32 `protobuf:"varint,5,opt,name=wan_serf_port,json=wanSerfPort,proto3" json:"wan_serf_port,omitempty"`
-	// Simple status response.
+	AdvertiseAddr        string   `protobuf:"bytes,1,opt,name=advertise_addr,json=advertiseAddr,proto3" json:"advertise_addr,omitempty"`
+	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	RaftPort             uint32   `protobuf:"varint,3,opt,name=raft_port,json=raftPort,proto3" json:"raft_port,omitempty"`
+	SerfPort             uint32   `protobuf:"varint,4,opt,name=serf_port,json=serfPort,proto3" json:"serf_port,omitempty"`
+	WanSerfPort          uint32   `protobuf:"varint,5,opt,name=wan_serf_port,json=wanSerfPort,proto3" json:"wan_serf_port,omitempty"`
 	Status               Status   `protobuf:"varint,6,opt,name=status,proto3,enum=proto.Status" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -211,10 +211,8 @@ func (m *JoinResponse) GetStatus() Status {
 }
 
 type ConfirmJoinRequest struct {
-	// Information about our node so that the store knows what we are.
-	Id       string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RaftAddr string `protobuf:"bytes,2,opt,name=raft_addr,json=raftAddr,proto3" json:"raft_addr,omitempty"`
-	// Ensure we authenticate the request.
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	RaftAddr             string   `protobuf:"bytes,2,opt,name=raft_addr,json=raftAddr,proto3" json:"raft_addr,omitempty"`
 	JoinToken            string   `protobuf:"bytes,3,opt,name=join_token,json=joinToken,proto3" json:"join_token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -408,11 +406,13 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RPCClient interface {
-	// Cluster join and confirm join operations.
+	// Join is for when a node wishes to join another node.
 	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
+	// ConfirmJoin is for when a node confirms it CAN join that other node.
 	ConfirmJoin(ctx context.Context, in *ConfirmJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// All RPC messages that must be forwarded for the leader to apply.
+	// A raft log entry apply message for the leader.
 	Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// When a node wishes to join us.
 	ForwardJoin(ctx context.Context, in *ForwardJoinRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 }
 
@@ -462,11 +462,13 @@ func (c *rPCClient) ForwardJoin(ctx context.Context, in *ForwardJoinRequest, opt
 
 // RPCServer is the server API for RPC service.
 type RPCServer interface {
-	// Cluster join and confirm join operations.
+	// Join is for when a node wishes to join another node.
 	Join(context.Context, *JoinRequest) (*JoinResponse, error)
+	// ConfirmJoin is for when a node confirms it CAN join that other node.
 	ConfirmJoin(context.Context, *ConfirmJoinRequest) (*StatusResponse, error)
-	// All RPC messages that must be forwarded for the leader to apply.
+	// A raft log entry apply message for the leader.
 	Apply(context.Context, *ApplyRequest) (*StatusResponse, error)
+	// When a node wishes to join us.
 	ForwardJoin(context.Context, *ForwardJoinRequest) (*StatusResponse, error)
 }
 

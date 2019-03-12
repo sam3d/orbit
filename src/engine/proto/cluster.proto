@@ -2,9 +2,12 @@ syntax = "proto3";
 package proto;
 
 enum Status {
-  OK = 0; // The request was accepted.
-  UNAUTHORIZED = 1; // The request was unauthorized.
-  ERROR = 2; // There was an error somewhere in the response.
+  // The request was accepted.
+  OK = 0;
+  // The request was unauthorized.
+  UNAUTHORIZED = 1;
+  // There was an error somewhere in the response.
+  ERROR = 2;
 }
 
 message StatusResponse {
@@ -16,40 +19,45 @@ message StatusResponse {
 //
 
 service RPC {
-  // Cluster join and confirm join operations.
-  rpc Join(JoinRequest) returns (JoinResponse) {} // For when a node wishes to join another node.
-  rpc ConfirmJoin(ConfirmJoinRequest) returns (StatusResponse) {} // For when a node confirms it CAN join that other node.
+  //
+  // Cluster join operations.
+  //
 
-  // All RPC messages that must be forwarded for the leader to apply.
-  rpc Apply(ApplyRequest) returns (StatusResponse) {} // A raft log entry apply message for the leader.
-  rpc ForwardJoin(ForwardJoinRequest) returns (StatusResponse) {} // When a node wishes to join us.
+  // Join is for when a node wishes to join another node.
+  rpc Join(JoinRequest) returns (JoinResponse) {}
+  // ConfirmJoin is for when a node confirms it CAN join that other node.
+  rpc ConfirmJoin(ConfirmJoinRequest) returns (StatusResponse) {}
+
+  //
+  // Leader forwarding messages.
+  //
+
+  // A raft log entry apply message for the leader.
+  rpc Apply(ApplyRequest) returns (StatusResponse) {}
+  // When a node wishes to join us.
+  rpc ForwardJoin(ForwardJoinRequest) returns (StatusResponse) {}
 }
 
 message JoinRequest {
-  string join_token = 1; // Used to authenticate the request.
+  string join_token = 1; // Authenticate the request.
 }
 
 message JoinResponse {
-  // Information that the joining node should adopt.
   string advertise_addr = 1;
   string id = 2;
 
-  // Metadata about the node to join.
   uint32 raft_port = 3;
   uint32 serf_port = 4;
   uint32 wan_serf_port = 5;
 
-  // Simple status response.
   Status status = 6;
 }
 
 message ConfirmJoinRequest {
-  // Information about our node so that the store knows what we are.
   string id = 1;
   string raft_addr = 2;
 
-  // Ensure we authenticate the request.
-  string join_token = 3;
+  string join_token = 3; // Re-authenticate the request.
 }
 
 //
