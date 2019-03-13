@@ -16,6 +16,12 @@ import (
 	"orbit.sh/engine/proto"
 )
 
+func (s *APIServer) handleIndex() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
+	}
+}
+
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
 		Status       Status `json:"status"`
