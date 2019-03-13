@@ -11,19 +11,26 @@
 
     <div class="body">
       <div class="inner">
-        <template v-if="stage === 'welcome'">
-          <h1 class="large">Welcome to Orbit</h1>
+        <transition name="fade" mode="out-in">
+          <div key="welcome" v-if="stage === 'welcome'">
+            <h1 class="large">Welcome to Orbit</h1>
 
-          <p class="large">
-            This node still needs to be configured before it is able to join or
-            start a cluster. Please configure it as soon as possible, as this
-            page is publicly accessible over the web to anybody with the link.
-          </p>
+            <p class="large">
+              This node still needs to be configured before it is able to join
+              or start a cluster. Please configure it as soon as possible, as
+              this page is publicly accessible over the web to anybody with the
+              link.
+            </p>
 
-          <div class="button purple" @click="stage = 'mode'">
-            Start setup
+            <div class="button purple" @click="stage = 'mode'">
+              Start setup
+            </div>
           </div>
-        </template>
+
+          <div key="mode" v-if="stage === 'mode'">
+            Mode view
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -96,6 +103,16 @@ section.setup {
 
   display: flex;
   flex-direction: column;
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s;
+  }
+
+  .fade-enter,
+  .fade-leave-active {
+    opacity: 0;
+  }
 
   nav {
     display: flex;
