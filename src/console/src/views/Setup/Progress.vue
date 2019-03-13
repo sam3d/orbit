@@ -6,6 +6,7 @@
         class="stage"
         :class="stage.state"
         :style="{ minWidth: originalHeight + 'px' }"
+        @click="$emit('input', stage.name)"
       >
         <div class="icon">
           <div v-if="stage.state === 'complete'" class="tick">✔</div>
@@ -20,7 +21,7 @@
 
 <script>
 export default {
-  props: ["stages", "hidden"],
+  props: ["stages", "hidden", "value"],
 
   data() {
     return {

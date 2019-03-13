@@ -27,7 +27,11 @@
       </div>
     </div>
 
-    <ProgressView :stages="stages" :hidden="stage === 'welcome'" />
+    <ProgressView
+      v-model="stage"
+      :stages="stages"
+      :hidden="stage === 'welcome'"
+    />
   </section>
 </template>
 
@@ -40,16 +44,34 @@ export default {
 
   data() {
     return {
-      stage: "",
-
-      stages: [
-        { name: "welcome", state: "complete" },
-        { name: "mode", state: "complete" },
-        { name: "domain", state: "active" },
-        { name: "user", state: "incomplete" },
-        { name: "complete", state: "incomplete" }
-      ]
+      stage: "welcome",
+      stageNames: ["welcome", "mode", "domain", "user", "complete"]
     };
+  },
+
+  computed: {
+    stages() {
+      const stages = [];
+
+      let markAsIncomplete = false;
+      for (name of this.stageNames) {
+        let state = "complete"; // Assume all stages complete by default.
+
+        // If this is the current stage, everything that comes after must now be
+        // marked as incomplete, except for the current stage, which is marked
+        // as "active".
+        if (name === this.stage) {
+          state = "active";
+          markAsIncomplete = true;
+        } else if (markAsIncomplete) {
+          state = "incomplete";
+        }
+
+        stages.push({ name, state });
+      }
+
+      return stages;
+    }
   }
 };
 </script>
