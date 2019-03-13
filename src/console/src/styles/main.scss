@@ -2,6 +2,28 @@ body {
   font-family: "Montserrat", sans-serif;
   background-color: #f5f6fa;
   color: "#02101C";
+  font-size: 16px;
+}
+
+@keyframes fadeUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+a {
+  color: #47c1e2;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .button {
@@ -9,10 +31,25 @@ body {
   display: inline-block; // Prevent width from expanding
 
   background-color: #fff;
-  padding: 15px 25px;
+  padding: 15px 30px;
   font-size: 18px;
   font-family: "Cabin", sans-serif;
   border-radius: 1000px;
+
+  transition: box-shadow 0.2s, transform 0.2s, opacity 0.2s;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+
+  &:active {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    transform: translateY(1px);
+    opacity: 0.8;
+  }
 
   &.purple {
     background-color: #8959ea;

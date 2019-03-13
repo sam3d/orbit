@@ -1,20 +1,26 @@
 <template>
   <section class="setup">
     <nav>
-      <img class="logo" src="@/assets/logo/gradient-thick.svg" />
-      <div class="logo-text">Orbit</div>
+      <div class="logo">
+        <img src="@/assets/logo/gradient-thick.svg" />
+        <span>Orbit</span>
+      </div>
+
+      <a href="https://docs.orbit.sh">Docs</a>
     </nav>
 
     <div class="body">
       <div class="inner">
         <template v-if="page === 0">
           <h1 class="large">Welcome to Orbit</h1>
+
           <p class="large">
             This node still needs to be configured before it is able to join or
             start a cluster. Please configure it as soon as possible, as this
             page is publicly accessible over the web to anybody with the link.
           </p>
-          <div class="button purple">Begin set up</div>
+
+          <div class="button purple">Start setup</div>
         </template>
       </div>
     </div>
@@ -47,17 +53,24 @@ section.setup {
   nav {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 20px;
     flex-shrink: 0;
 
     .logo {
-      height: 40px;
-    }
+      display: flex;
+      align-items: center;
 
-    .logo-text {
-      margin-left: 10px;
-      font-family: "Cabin", sans-serif;
-      font-size: 24px;
+      img {
+        height: 40px;
+      }
+
+      span {
+        margin-left: 10px;
+        font-family: "Cabin", sans-serif;
+        font-size: 24px;
+        margin-top: 3px; // The text is a bit weird, so this centers it
+      }
     }
   }
 
@@ -84,6 +97,12 @@ section.setup {
     margin: 50px 0;
     font-size: 18px;
     line-height: 2rem;
+
+    animation-delay: 0.3s;
+  }
+
+  .button {
+    animation-delay: 0.6s;
   }
 }
 </style>
