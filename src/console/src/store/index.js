@@ -17,15 +17,17 @@ const store = new Vuex.Store({
       const res = await api.get("/state", { redirect: false });
       if (res.status !== 200) return;
 
-      switch (res.data.status_string) {
-        case "setup":
-          router.push("/setup");
-          return;
-        case "ready":
-        case "running":
-          console.log("Show the standard login process");
-          break;
-      }
+      const path = window.location.pathname;
+      const engineStatus = res.data.status_string;
+
+      /**
+       * If not already on the setup page and the engine status is setup, then
+       * push it in that direction. This is done because if the user is already
+       * on the setup page, the query parameter is lost as a result of the
+       * "push".
+       */
+      if (path !== "/setup" && engineStatus === "setup")
+        return router.push("/setup");
     }
   }
 });

@@ -1,7 +1,7 @@
 <template>
   <section class="setup">
     <nav>
-      <div class="logo" @click="page = 0">
+      <div class="logo" @click="stage = 'welcome'">
         <img src="@/assets/logo/gradient-thick.svg" />
         <span>Orbit</span>
       </div>
@@ -11,7 +11,7 @@
 
     <div class="body">
       <div class="inner">
-        <template v-if="page === 0">
+        <template v-if="stage === 'welcome'">
           <h1 class="large">Welcome to Orbit</h1>
 
           <p class="large">
@@ -20,12 +20,14 @@
             page is publicly accessible over the web to anybody with the link.
           </p>
 
-          <div class="button purple" @click="page = 1">Start setup</div>
+          <div class="button purple" @click="stage = 'mode'">
+            Start setup
+          </div>
         </template>
       </div>
     </div>
 
-    <ProgressView :stages="stages" :hidden="page === 0" />
+    <ProgressView :stages="stages" :hidden="stage === 'welcome'" />
   </section>
 </template>
 
@@ -34,17 +36,15 @@ import ProgressView from "./Progress";
 
 export default {
   meta: { title: "Setup" },
-
   components: { ProgressView },
 
   data() {
     return {
-      page: 0,
       stages: [
-        { name: "Welcome", state: "complete" },
-        { name: "Mode", state: "active" },
-        { name: "Domain", state: "incomplete" },
-        { name: "User", state: "incomplete" },
+        { name: "welcome", state: "complete" },
+        { name: "mode", state: "complete" },
+        { name: "domain", state: "active" },
+        { name: "user", state: "incomplete" },
         { name: "complete", state: "incomplete" }
       ]
     };
