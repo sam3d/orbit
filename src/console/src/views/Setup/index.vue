@@ -40,6 +40,8 @@ export default {
 
   data() {
     return {
+      stage: "",
+
       stages: [
         { name: "welcome", state: "complete" },
         { name: "mode", state: "complete" },

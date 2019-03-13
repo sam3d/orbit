@@ -1,7 +1,12 @@
 <template>
   <div class="progress" ref="container" :style="style">
     <div class="stages">
-      <div class="stage" :class="stage.state" v-for="stage in stages">
+      <div
+        v-for="stage in stages"
+        class="stage"
+        :class="stage.state"
+        :style="{ minWidth: originalHeight + 'px' }"
+      >
         <div class="icon">
           <div v-if="stage.state === 'complete'" class="tick">✔</div>
           <div v-if="stage.state === 'active'" class="dot"></div>
