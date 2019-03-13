@@ -45,11 +45,21 @@ export default {
   data() {
     return {
       stage: "welcome",
-      stageNames: ["welcome", "mode", "domain", "user", "complete"]
+      mode: "bootstrap" // bootstrap || join
     };
   },
 
   computed: {
+    stageNames() {
+      let names = ["welcome", "mode"]; // Will always use these first two stages.
+
+      if (this.mode === "bootstrap") names.push("address", "domain", "user");
+      else if (this.mode === "join") names.push("cluster");
+
+      names.push("complete"); // Will always have a last stage.
+      return names;
+    },
+
     stages() {
       const stages = [];
 
