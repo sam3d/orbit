@@ -1,7 +1,7 @@
 <template>
   <section class="setup">
     <nav>
-      <div class="logo">
+      <div class="logo" @click="page = 0">
         <img src="@/assets/logo/gradient-thick.svg" />
         <span>Orbit</span>
       </div>
@@ -20,12 +20,12 @@
             page is publicly accessible over the web to anybody with the link.
           </p>
 
-          <div class="button purple">Start setup</div>
+          <div class="button purple" @click="page = 1">Start setup</div>
         </template>
       </div>
     </div>
 
-    <ProgressView />
+    <ProgressView :stages="stages" :hidden="page === 0" />
   </section>
 </template>
 
@@ -39,7 +39,14 @@ export default {
 
   data() {
     return {
-      page: 0
+      page: 0,
+      stages: [
+        { name: "Welcome", state: "complete" },
+        { name: "Mode", state: "active" },
+        { name: "Domain", state: "incomplete" },
+        { name: "User", state: "incomplete" },
+        { name: "complete", state: "incomplete" }
+      ]
     };
   }
 };
@@ -64,6 +71,8 @@ section.setup {
     flex-shrink: 0;
 
     .logo {
+      cursor: pointer;
+
       display: flex;
       align-items: center;
 

@@ -1,7 +1,7 @@
 <template>
-  <div class="progress">
+  <div class="progress" ref="container" :style="style">
     <div class="stages">
-      <div v-for="stage in stages" class="stage" :class="stage.state">
+      <div class="stage" :class="stage.state" v-for="stage in stages">
         <div class="icon">
           <div v-if="stage.state === 'complete'" class="tick">✔</div>
           <div v-if="stage.state === 'active'" class="dot"></div>
@@ -15,16 +15,26 @@
 
 <script>
 export default {
+  props: ["stages", "hidden"],
+
   data() {
     return {
-      stages: [
-        { name: "Welcome", state: "complete" },
-        { name: "Mode", state: "active" },
-        { name: "Domain", state: "incomplete" },
-        { name: "User", state: "incomplete" },
-        { name: "complete", state: "incomplete" }
-      ]
+      originalHeight: 0
     };
+  },
+
+  mounted() {
+    const { container } = this.$refs;
+    this.originalHeight = container.scrollHeight;
+  },
+
+  computed: {
+    style() {
+      return {
+        height: (this.hidden ? 0 : this.originalHeight) + "px",
+        margin: this.hidden ? "0 20px" : "20px"
+      };
+    }
   }
 };
 </script>
@@ -32,11 +42,16 @@ export default {
 <style lang="scss" scoped>
 .progress {
   margin: 20px;
+
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.025);
 
   overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+
+  transition: height 0.5s, margin-top 0.5s, margin-bottom 0.5s;
 
   .stages {
     cursor: default;
