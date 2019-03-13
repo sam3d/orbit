@@ -1,4 +1,21 @@
 body {
-  font-family: sans-serif;
+  font-family: "Montserrat", sans-serif;
   background-color: #f5f6fa;
+  color: "#02101C";
+}
+
+.button {
+  cursor: pointer;
+  display: inline-block; // Prevent width from expanding
+
+  background-color: #fff;
+  padding: 15px 25px;
+  font-size: 18px;
+  font-family: "Cabin", sans-serif;
+  border-radius: 1000px;
+
+  &.purple {
+    background-color: #8959ea;
+    color: #fff;
+  }
 }

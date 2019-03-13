@@ -3,6 +3,7 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 import api from "@/api";
+import router from "@/router";
 
 const store = new Vuex.Store({
   actions: {
@@ -14,6 +15,17 @@ const store = new Vuex.Store({
      */
     async init() {
       const res = await api.get("/state", { redirect: false });
+      if (res.status !== 200) return;
+
+      switch (res.data.status_string) {
+        case "setup":
+          router.push("/setup");
+          return;
+        case "ready":
+        case "running":
+          console.log("Show the standard login process");
+          break;
+      }
     }
   }
 });
