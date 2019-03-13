@@ -24,12 +24,18 @@
         </template>
       </div>
     </div>
+
+    <ProgressView />
   </section>
 </template>
 
 <script>
+import ProgressView from "./Progress";
+
 export default {
   meta: { title: "Setup" },
+
+  components: { ProgressView },
 
   data() {
     return {

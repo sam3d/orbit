@@ -5,18 +5,6 @@ body {
   font-size: 16px;
 }
 
-@keyframes fadeUp {
-  from {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
 a {
   color: #47c1e2;
   text-decoration: none;
