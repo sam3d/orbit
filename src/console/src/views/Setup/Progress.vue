@@ -11,7 +11,7 @@
         <div class="icon">
           <div v-if="stage.state === 'complete'" class="tick">✔</div>
           <div v-if="stage.state === 'active'" class="dot"></div>
-          <div v-if="stage.state === 'incomplete'" class="dot purple"></div>
+          <div v-if="stage.state === 'incomplete'" class="dot incomplete"></div>
         </div>
         <div class="text">{{ stage.name }}</div>
       </div>
@@ -74,15 +74,10 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: #8959ea;
     flex-shrink: 0;
 
     padding: 14px;
     border-radius: 7px;
-
-    &:hover {
-      background-color: transparentize(#8959ea, 0.95);
-    }
 
     .icon {
       width: 32px;
@@ -99,17 +94,36 @@ export default {
         width: 10px;
         height: 10px;
         border-radius: 10px;
-
-        &.purple {
-          background-color: #8959ea;
-        }
       }
     }
 
-    &.complete,
+    &.incomplete {
+      color: #888;
+      .dot {
+        background-color: #888;
+      }
+      &:hover {
+        background-color: transparentize(#888, 0.95);
+      }
+    }
+
+    &.complete {
+      color: #1dd1a1;
+      .icon {
+        background-color: #1dd1a1;
+      }
+      &:hover {
+        background-color: transparentize(#1dd1a1, 0.95);
+      }
+    }
+
     &.active {
+      color: #8959ea;
       .icon {
         background-color: #8959ea;
+      }
+      &:hover {
+        background-color: transparentize(#8959ea, 0.95);
       }
     }
 
