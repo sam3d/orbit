@@ -78,7 +78,7 @@ export default {
     margin: 20px;
     border: solid 1px #fff;
 
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s;
 
     img {
       width: 60px;
@@ -96,6 +96,14 @@ export default {
     p {
       margin-top: 20px;
       line-height: 1.5rem;
+    }
+
+    &:hover {
+      transform: scale(1.025);
+    }
+
+    &:active {
+      transform: scale(0.975);
     }
 
     &.selected {
