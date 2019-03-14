@@ -98,6 +98,7 @@ export default {
 input {
   margin-top: 34px;
   font-size: 20px;
+  font-family: "Source Code Pro", sans-serif;
 }
 
 a {
