@@ -12,7 +12,7 @@
         <h3>Create a new cluster</h3>
         <p>
           Don't already have a cluster? Not a problem, click here to create a
-          brand new single-node cluster on this node.
+          brand new single-node cluster.
         </p>
       </div>
 
@@ -26,7 +26,7 @@
         <h3>Join an existing cluster</h3>
         <p>
           If you already have a cluster in operation, great! Click here and
-          continue on to get this node joined up to it.
+          continue to get this node joined up to it.
         </p>
       </div>
     </div>
@@ -87,7 +87,7 @@ export default {
 
     p {
       margin-top: 20px;
-      line-height: 1.4rem;
+      line-height: 1.5rem;
     }
 
     &.selected {
