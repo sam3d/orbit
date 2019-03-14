@@ -1,36 +1,19 @@
 <template>
   <section class="setup">
-    <nav>
-      <div class="logo">
-        <img src="@/assets/logo/gradient.svg" />
-        <span class="name">Orbit</span>
-      </div>
-
-      <ul>
-        <li><a href="https://orbit.sh/docs">Read the docs</a></li>
-        <li><a href="https://orbit.sh/support">Support</a></li>
-      </ul>
-    </nav>
+    <Navbar />
 
     <div class="body">
       <div class="inner">
         <transition name="fade" mode="out-in">
-          <div key="welcome" v-if="stage === 'welcome'">
-            <h1 class="large">Welcome to Orbit</h1>
+          <!-- The very first stage with a simply progression button -->
+          <WelcomeStage
+            key="welcome"
+            v-if="stage === 'welcome'"
+            @click="stage = 'mode'"
+          />
 
-            <p class="large">
-              This node still needs to be configured before it is able to join
-              or start a cluster. Please configure it as soon as possible, as
-              this page is publicly accessible over the web to anybody with the
-              link.
-            </p>
-
-            <div class="button purple" @click="stage = 'mode'">
-              Start setup
-            </div>
-          </div>
-
-          <div key="mode" v-if="stage === 'mode'"></div>
+          <!-- Choose whether to bootstrap a cluster or simply join one -->
+          <ModeStage key="mode" v-if="stage === 'mode'" />
         </transition>
       </div>
     </div>
@@ -45,10 +28,18 @@
 
 <script>
 import ProgressView from "./Progress";
+import WelcomeStage from "./WelcomeStage";
+import ModeStage from "./ModeStage";
+import Navbar from "./Navbar";
 
 export default {
   meta: { title: "Setup" },
-  components: { ProgressView },
+  components: {
+    ProgressView,
+    WelcomeStage,
+    ModeStage,
+    Navbar
+  },
 
   data() {
     return {
@@ -58,6 +49,10 @@ export default {
   },
 
   computed: {
+    /**
+     * stageNames simply returns an array of strings containing the stages that
+     * should be present given the selected mode.
+     */
     stageNames() {
       let names = ["welcome", "mode"]; // Will always use these first two stages.
 
@@ -68,6 +63,12 @@ export default {
       return names;
     },
 
+    /**
+     * Stages returns an object containing the stages that the progress bar
+     * needs to show. It figures out what the current page is and therefore the
+     * overall progress indicators for each icon. It derives its state from
+     * this.stageNames().
+     */
     stages() {
       const stages = [];
 
@@ -115,41 +116,6 @@ section.setup {
     opacity: 0;
   }
 
-  nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    flex-shrink: 0;
-
-    .logo {
-      cursor: default;
-
-      display: flex;
-      align-items: center;
-
-      img {
-        height: 50px;
-      }
-
-      span.name {
-        margin-left: 15px;
-        font-family: "Cabin", sans-serif;
-        font-weight: 500;
-        opacity: 0.8;
-        font-size: 34px;
-        margin-top: 3px; // The text is too high, so this centers it
-      }
-    }
-
-    ul li {
-      display: inline-block;
-      &:not(:last-of-type) {
-        margin-right: 24px;
-      }
-    }
-  }
-
   .body {
     text-align: center;
     flex-grow: 1;
@@ -164,6 +130,7 @@ section.setup {
     }
   }
 
+  // Styles used in all components.
   h1.large {
     font-size: 45px;
   }
@@ -173,12 +140,6 @@ section.setup {
     margin: 50px 0;
     font-size: 18px;
     line-height: 2rem;
-
-    animation-delay: 0.3s;
-  }
-
-  .button {
-    animation-delay: 0.6s;
   }
 }
 </style>
