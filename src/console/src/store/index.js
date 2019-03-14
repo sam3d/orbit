@@ -7,12 +7,18 @@ import router from "@/router";
 
 const store = new Vuex.Store({
   state: {
-    ip: null
+    init: {
+      ip: null,
+      status: null,
+      status_string: null,
+      stage: null,
+      mode: null
+    }
   },
 
   mutations: {
-    ip(state, ip) {
-      state.ip = ip;
+    init(state, data) {
+      state.init = data;
     }
   },
 
@@ -25,13 +31,13 @@ const store = new Vuex.Store({
      */
     async init({ commit }) {
       const res = await api.get("/state", { redirect: false });
-      if (res.status !== 200) return;
-
-      // Keep the public IP that we get back.
-      commit("ip", res.data.ip);
+      if (res.status !== 200) return router.push("/error");
 
       const path = window.location.pathname;
       const engineStatus = res.data.status_string;
+
+      // Keep the data that we get back in the store.
+      commit("init", res.data);
 
       /**
        * If not already on the setup page and the engine status is setup, then
@@ -39,8 +45,10 @@ const store = new Vuex.Store({
        * on the setup page, the query parameter is lost as a result of the
        * "push".
        */
-      if (path !== "/setup" && engineStatus === "setup")
+      if (path !== "/setup" && engineStatus !== "running")
         return router.push("/setup");
+      if (path === "/setup" && engineStatus === "running")
+        return router.push("/");
     }
   }
 });

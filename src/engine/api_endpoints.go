@@ -25,15 +25,21 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status  `json:"status"`
-		StatusString string  `json:"status_string"`
-		IP           *string `json:"ip"`
+		Status       Status  `json:"status"`        // Engine status int
+		StatusString string  `json:"status_string"` // Engine status string
+		Stage        string  `json:"stage"`         // The set up stage
+		Mode         string  `json:"mode"`          // The set up mode
+		IP           *string `json:"ip"`            // Node IP address
 	}
 
 	return func(c *gin.Context) {
+		mode, stage := s.engine.SetupStatus()
+
 		res := res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
+			Stage:        stage,
+			Mode:         mode,
 		}
 
 		// If the engine is not ready, send an IP address retrieved from the API.
@@ -142,7 +148,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		}
 
 		// Save the state and set the engine status.
-		engine.Status = StatusRunning
+		engine.Status = StatusReady
 		engine.writeConfig()
 
 		// Wait for us to become the leader of the store.
@@ -267,14 +273,6 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
-		// The engine is now ready to accept requests, let's save everything we have
-		// up until this point and ensure that this config gets maintained. This is
-		// because after the store open operation, Raft has started writing it's
-		// data to the raft directory, so it's important that we react to this
-		// properly.
-		engine.Status = StatusReady
-		engine.writeConfig()
-
 		// Let the primary server know that we're ready to be joined to it.
 		cRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
 			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
@@ -304,10 +302,6 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
-		// The join occurred successfully! Update the engine status and config.
-		engine.Status = StatusRunning
-		engine.writeConfig()
-
 		// Add this node to the list of nodes.
 		cmd := command{
 			Op:   opNewNode,
@@ -318,6 +312,9 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Could not add this node to the store state list.")
 			return
 		}
+
+		engine.Status = StatusReady
+		engine.writeConfig()
 
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}

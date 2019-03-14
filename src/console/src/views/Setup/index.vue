@@ -56,9 +56,11 @@ export default {
   },
 
   data() {
+    const state = this.$store.state.init;
+
     return {
-      stage: "welcome",
-      mode: "bootstrap" // bootstrap || join
+      stage: state.stage,
+      mode: state.mode // bootstrap || join
     };
   },
 
@@ -88,7 +90,7 @@ export default {
       if (this.mode === "bootstrap") names.push("address", "domain", "user");
       else if (this.mode === "join") names.push("cluster");
 
-      names.push("complete"); // Will always have a last stage.
+      names.push("node", "complete"); // Will always have a last stage.
       return names;
     },
 

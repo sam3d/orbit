@@ -91,7 +91,7 @@ export default {
     },
 
     publicIP() {
-      return this.$store.state.ip;
+      return this.$store.state.init.ip;
     },
 
     valid() {

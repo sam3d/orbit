@@ -153,7 +153,7 @@ func (s *Store) Open() error {
 // Bootstrap will actually start the store if it's the only node. This will only
 // work if the store is not open or joined to another node.
 func (s *Store) Bootstrap() error {
-	if s.engine.Status == StatusRunning {
+	if s.engine.Status >= StatusReady {
 		err := fmt.Errorf("Cannot bootstrap a store that is already bootstrapped")
 		log.Printf("[ERR] store: %s", err)
 		return err
