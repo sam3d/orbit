@@ -7,20 +7,26 @@
       this node is in the network environment it will remain in.
     </p>
 
-    <input type="text" placeholder="0.0.0.0" v-model="address" ref="input" />
+    <input
+      type="text"
+      placeholder="0.0.0.0"
+      v-model="address"
+      ref="input"
+      :disabled="busy"
+    />
 
     <a
       href="#"
       @click.prevent="address = urlIP"
-      v-if="address !== urlIP && urlIP"
+      v-if="address !== urlIP && urlIP && !busy"
       >Use URL IP ({{ urlIP }})</a
     >
 
     <a
       href="#"
       @click.prevent="address = publicIP"
-      v-if="address !== publicIP && publicIP"
-      >Use Node Public IP ({{ publicIP }})</a
+      v-if="address !== publicIP && publicIP && !busy"
+      >Use Node's Public IP ({{ publicIP }})</a
     >
 
     <Button
@@ -28,7 +34,7 @@
       :class="{ disabled: !valid }"
       text="Continue"
       :busy="busy"
-      @click="busy = !busy"
+      @click="bootstrap"
     />
   </div>
 </template>
@@ -49,6 +55,22 @@ export default {
 
   mounted() {
     this.$refs.input.focus();
+  },
+
+  methods: {
+    // Perform the bootstrap operation.
+    async bootstrap() {
+      if (this.busy || !this.valid) return;
+      this.busy = true;
+
+      const res = await this.$api.post(
+        "/cluster/bootstrap",
+        { advertise_address: this.address },
+        { redirect: false }
+      );
+
+      console.log(res);
+    }
   },
 
   computed: {
