@@ -6,6 +6,16 @@ import api from "@/api";
 import router from "@/router";
 
 const store = new Vuex.Store({
+  state: {
+    ip: null
+  },
+
+  mutations: {
+    ip(state, ip) {
+      state.ip = ip;
+    }
+  },
+
   actions: {
     /**
      * The init action is responsible for retrieving the overall cluster state
@@ -13,9 +23,12 @@ const store = new Vuex.Store({
      * information. During the setup phase, the user route won't get called as
      * there can't be any user information.
      */
-    async init() {
+    async init({ commit }) {
       const res = await api.get("/state", { redirect: false });
       if (res.status !== 200) return;
+
+      // Keep the public IP that we get back.
+      commit("ip", res.data.public_ip);
 
       const path = window.location.pathname;
       const engineStatus = res.data.status_string;

@@ -26,12 +26,16 @@ func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
 		Status       Status `json:"status"`
 		StatusString string `json:"status_string"`
+		IP           string `json:"public_ip"`
 	}
 
 	return func(c *gin.Context) {
+		ip, _ := getPublicIP()
+
 		c.JSON(http.StatusOK, &res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
+			IP:           ip.String(),
 		})
 	}
 }

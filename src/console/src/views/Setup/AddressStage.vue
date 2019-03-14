@@ -16,6 +16,13 @@
       >Use URL IP ({{ urlIP }})</a
     >
 
+    <a
+      href="#"
+      @click.prevent="address = publicIP"
+      v-if="address !== publicIP && publicIP"
+      >Use Node Public IP ({{ publicIP }})</a
+    >
+
     <Button
       class="green"
       :class="{ disabled: !valid }"
@@ -48,6 +55,10 @@ export default {
     urlIP() {
       const [ip] = window.location.host.split(":");
       if (validator.isIP(ip)) return ip;
+    },
+
+    publicIP() {
+      return this.$store.state.ip;
     },
 
     valid() {
