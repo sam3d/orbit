@@ -25,19 +25,31 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status `json:"status"`
-		StatusString string `json:"status_string"`
-		IP           string `json:"public_ip"`
+		Status       Status  `json:"status"`
+		StatusString string  `json:"status_string"`
+		IP           *string `json:"ip"`
 	}
 
 	return func(c *gin.Context) {
-		ip, _ := getPublicIP()
-
-		c.JSON(http.StatusOK, &res{
+		res := res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
-			IP:           ip.String(),
-		})
+		}
+
+		// If the engine is not ready, send an IP address retrieved from the API.
+		// Otherwise, simply append the advertise address that we're using.
+		if s.engine.Status < StatusReady {
+			ip, err := getPublicIP()
+			if ip != nil && err == nil {
+				ip := ip.String()
+				res.IP = &ip
+			}
+		} else {
+			ip := s.engine.Store.AdvertiseAddr.String()
+			res.IP = &ip
+		}
+
+		c.JSON(http.StatusOK, &res)
 	}
 }
 

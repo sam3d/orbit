@@ -13,6 +13,7 @@
       v-model="address"
       ref="input"
       :disabled="busy"
+      @input="error = ''"
     />
 
     <div class="error" v-if="error">{{ error }}</div>

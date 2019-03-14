@@ -28,7 +28,7 @@ const store = new Vuex.Store({
       if (res.status !== 200) return;
 
       // Keep the public IP that we get back.
-      commit("ip", res.data.public_ip);
+      commit("ip", res.data.ip);
 
       const path = window.location.pathname;
       const engineStatus = res.data.status_string;
