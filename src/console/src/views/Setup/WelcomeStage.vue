@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="large">Welcome to Orbit</h1>
+    <h1>Welcome to Orbit</h1>
 
     <p class="large">
       This node still needs to be configured before it is able to join or start

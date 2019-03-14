@@ -13,7 +13,7 @@
           />
 
           <!-- Choose whether to bootstrap a cluster or simply join one -->
-          <ModeStage key="mode" v-if="stage === 'mode'" />
+          <ModeStage key="mode" v-if="stage === 'mode'" @click="changeMode" />
         </transition>
       </div>
     </div>
@@ -48,11 +48,26 @@ export default {
     };
   },
 
+  methods: {
+    // changeMode will change whether or not we are bootstrapping this node or
+    // joining another cluster.
+    changeMode(mode) {
+      this.mode = mode;
+      this.nextStage();
+    },
+
+    // nextStage checks the current stages and navigates to the next logical
+    // stage in the process.
+    nextStage() {
+      let names = this.stageNames;
+      let i = names.indexOf(this.stage);
+      this.stage = names[++i];
+    }
+  },
+
   computed: {
-    /**
-     * stageNames simply returns an array of strings containing the stages that
-     * should be present given the selected mode.
-     */
+    // stageNames simply returns an array of strings containing the stages that
+    // should be present given the selected mode.
     stageNames() {
       let names = ["welcome", "mode"]; // Will always use these first two stages.
 
@@ -130,9 +145,16 @@ section.setup {
     }
   }
 
+  //
   // Styles used in all components.
-  h1.large {
+  //
+
+  h1 {
     font-size: 45px;
+  }
+
+  h2 {
+    font-size: 32px;
   }
 
   p.large {

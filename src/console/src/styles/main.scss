@@ -15,32 +15,47 @@ a {
 }
 
 .button {
-  cursor: pointer;
+  cursor: not-allowed;
   display: inline-block; // Prevent width from expanding
 
-  background-color: #fff;
+  background-color: #ddd;
   padding: 15px 30px;
   font-size: 18px;
   font-family: "Cabin", sans-serif;
   border-radius: 1000px;
 
-  transition: box-shadow 0.2s, transform 0.2s, opacity 0.2s;
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
 
-  &:hover {
-    box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
-    opacity: 0.9;
-  }
+  &:not(.disabled) {
+    cursor: pointer;
+    background-color: #fff;
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
 
-  &:active {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
-    transform: translateY(1px);
-    opacity: 0.8;
-  }
+    &:hover {
+      box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
 
-  &.purple {
-    background-color: #8959ea;
-    color: #fff;
+    &:active {
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+      transform: translateY(1px);
+      opacity: 0.8;
+    }
+
+    &.purple {
+      background-color: #8959ea;
+      color: #fff;
+    }
+
+    &.green {
+      background-color: #1dd1a1;
+      color: #fff;
+    }
+
+    &.blue {
+      background-color: #0abde3;
+      color: #fff;
+    }
   }
 }
