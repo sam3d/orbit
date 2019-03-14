@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,9 +59,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		mu.Lock()
 		defer mu.Unlock()
 
+		res := "Could not boostrap the cluster." // General error response.
+
 		// Ensure that the store can be bootstrapped.
 		if engine.Status >= StatusReady {
-			c.String(http.StatusConflict, "The engine is already running and cannot be bootstrapped.")
+			c.String(http.StatusConflict, "This node already belongs to a cluster, and cannot be bootstrapped again.")
 			return
 		}
 
@@ -72,7 +75,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			WANSerfPort: 6504,
 		}
 		if err := c.Bind(&body); err != nil {
-			c.String(http.StatusBadRequest, "Invalid request body fields.")
+			c.String(http.StatusBadRequest, "Some invalid fields were provided, please check your request and try again.")
 			return
 		}
 
@@ -81,7 +84,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		if body.RawAdvertiseAddr != "" {
 			ip := net.ParseIP(body.RawAdvertiseAddr)
 			if ip == nil {
-				c.String(http.StatusBadRequest, "Your provided advertise address is not valid.")
+				c.String(http.StatusBadRequest, "That advertise address is not valid, please make sure it's in the form of an IP address.")
 				return
 			}
 			advertiseAddr = ip
@@ -101,7 +104,12 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		case <-store.Started():
 		case err := <-errCh:
 			log.Printf("[ERR] store: %s", err)
-			c.String(http.StatusInternalServerError, "Could not open the store instance to bootstrap.")
+
+			if strings.Contains(err.Error(), "bind: cannot assign requested address") {
+				res = "That address could not be used on this node, please ensure that IP provided address can be used to reach the node."
+			}
+
+			c.String(http.StatusInternalServerError, res)
 			return
 		}
 
@@ -117,7 +125,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 		// Attempt to bootstrap the store.
 		if err := store.Bootstrap(); err != nil {
-			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
+			c.String(http.StatusInternalServerError, res)
 			return
 		}
 

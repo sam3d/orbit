@@ -15,6 +15,8 @@
       :disabled="busy"
     />
 
+    <div class="error" v-if="error">{{ error }}</div>
+
     <a
       href="#"
       @click.prevent="address = urlIP"
@@ -49,6 +51,7 @@ export default {
   data() {
     return {
       address: "",
+      error: "",
       busy: false
     };
   },
@@ -61,15 +64,22 @@ export default {
     // Perform the bootstrap operation.
     async bootstrap() {
       if (this.busy || !this.valid) return;
-      this.busy = true;
+      this.error = "";
 
+      this.busy = true;
       const res = await this.$api.post(
         "/cluster/bootstrap",
         { advertise_address: this.address },
         { redirect: false }
       );
+      this.busy = false;
 
-      console.log(res);
+      if (res.status === 200) {
+        this.$emit("complete");
+        return;
+      }
+
+      this.error = res.data;
     }
   },
 
@@ -103,5 +113,10 @@ input {
 
 a {
   margin-top: 15px;
+}
+
+.error {
+  margin: 20px 0;
+  max-width: 400px;
 }
 </style>

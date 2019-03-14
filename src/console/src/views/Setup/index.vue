@@ -9,14 +9,22 @@
           <WelcomeStage
             key="welcome"
             v-if="stage === 'welcome'"
-            @click="stage = 'mode'"
+            @complete="stage = 'mode'"
           />
 
           <!-- Choose whether to bootstrap a cluster or simply join one -->
-          <ModeStage key="mode" v-if="stage === 'mode'" @click="changeMode" />
+          <ModeStage
+            key="mode"
+            v-if="stage === 'mode'"
+            @complete="changeMode"
+          />
 
           <!-- Choose the address that this node operates on -->
-          <AddressStage key="address" v-if="stage === 'address'" />
+          <AddressStage
+            key="address"
+            v-if="stage === 'address'"
+            @complete="nextStage"
+          />
         </transition>
       </div>
     </div>

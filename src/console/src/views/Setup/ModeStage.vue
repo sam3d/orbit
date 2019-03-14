@@ -52,7 +52,7 @@ export default {
   methods: {
     click() {
       if (this.mode) {
-        this.$emit("click", this.mode);
+        this.$emit("complete", this.mode);
       }
     }
   }

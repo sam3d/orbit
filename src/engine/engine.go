@@ -123,3 +123,8 @@ func (e *Engine) Stop() error {
 	log.Println("[INFO] engine: Stopped")
 	return nil
 }
+
+// Reset will reset all engine properties and wipe all local data files.
+func (e *Engine) Reset() error {
+	return nil
+}

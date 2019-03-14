@@ -8,7 +8,7 @@
       publicly accessible over the web to anybody with the link.
     </p>
 
-    <div class="button purple" @click="$emit('click')">
+    <div class="button purple" @click="$emit('complete')">
       Start setup
     </div>
   </div>

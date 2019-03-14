@@ -91,3 +91,12 @@ input {
   align-items: center;
   justify-content: center;
 }
+
+.error {
+  background-color: transparentize(#ee5253, 0.925);
+  color: #ee5253;
+  border: solid 1px #ee5253;
+  padding: 10px;
+  border-radius: 4px;
+  line-height: 1.6rem;
+}
