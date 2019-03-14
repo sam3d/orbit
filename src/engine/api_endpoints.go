@@ -85,12 +85,6 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 				return
 			}
 			advertiseAddr = ip
-		} else {
-			ip, err := getPublicIP()
-			if err != nil {
-				c.String(http.StatusBadRequest, "Could not automatically obtain public advertise address.")
-			}
-			advertiseAddr = ip
 		}
 
 		// Set all of the engine component properties.
