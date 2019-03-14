@@ -124,7 +124,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			log.Printf("[ERR] store: %s", err)
 
 			if strings.Contains(err.Error(), "bind: cannot assign requested address") {
-				res = "That address could not be used on this node, please ensure that IP provided address can be used to reach the node."
+				res = "That address could not be used on this node, please ensure that the IP address provided can be used to reach the node."
 			}
 
 			c.String(http.StatusInternalServerError, res)
