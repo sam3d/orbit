@@ -9,6 +9,13 @@
 
     <input type="text" placeholder="0.0.0.0" v-model="address" ref="input" />
 
+    <a
+      href="#"
+      @click.prevent="address = urlIP"
+      v-if="address !== urlIP && urlIP"
+      >Use URL IP ({{ urlIP }})</a
+    >
+
     <Button
       class="green"
       :class="{ disabled: !valid }"
@@ -34,7 +41,6 @@ export default {
   },
 
   mounted() {
-    this.address = this.urlIP;
     this.$refs.input.focus();
   },
 
@@ -52,7 +58,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.button {
+  margin-top: 34px;
+}
+
 input {
-  margin: 34px 0;
+  margin-top: 34px;
+  font-size: 20px;
+}
+
+a {
+  margin-top: 15px;
 }
 </style>
