@@ -33,8 +33,8 @@
 
     <div
       class="button green"
-      :class="{ disabled: mode === '', blue: mode === 'join' }"
-      @click="$emit('click', mode)"
+      :class="{ disabled: !mode, blue: mode === 'join' }"
+      @click="click"
     >
       Continue
     </div>
@@ -47,6 +47,14 @@ export default {
     return {
       mode: ""
     };
+  },
+
+  methods: {
+    click() {
+      if (this.mode) {
+        this.$emit("click", this.mode);
+      }
+    }
   }
 };
 </script>
