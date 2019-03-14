@@ -96,6 +96,7 @@ export default {
     p {
       margin-top: 20px;
       line-height: 1.5rem;
+      font-size: 16px;
     }
 
     &:hover {

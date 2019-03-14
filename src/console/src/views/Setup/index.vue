@@ -14,6 +14,9 @@
 
           <!-- Choose whether to bootstrap a cluster or simply join one -->
           <ModeStage key="mode" v-if="stage === 'mode'" @click="changeMode" />
+
+          <!-- Choose the address that this node operates on -->
+          <AddressStage key="address" v-if="stage === 'address'" />
         </transition>
       </div>
     </div>
@@ -28,9 +31,11 @@
 
 <script>
 import ProgressView from "./Progress";
+import Navbar from "./Navbar";
+
 import WelcomeStage from "./WelcomeStage";
 import ModeStage from "./ModeStage";
-import Navbar from "./Navbar";
+import AddressStage from "./AddressStage";
 
 export default {
   meta: { title: "Setup" },
@@ -38,6 +43,7 @@ export default {
     ProgressView,
     WelcomeStage,
     ModeStage,
+    AddressStage,
     Navbar
   },
 
@@ -157,11 +163,20 @@ section.setup {
     font-size: 32px;
   }
 
+  p {
+    font-size: 18px;
+    line-height: 1.8rem;
+  }
+
   p.large {
     max-width: 600px;
     margin: 50px 0;
-    font-size: 18px;
     line-height: 2rem;
+  }
+
+  p.subheader {
+    margin-top: 24px;
+    max-width: 600px;
   }
 }
 </style>
