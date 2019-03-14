@@ -1,29 +1,52 @@
 <template>
   <div class="flex-center">
-    <h2>Address</h2>
+    <h2>Network address</h2>
     <p class="subheader">
       The is the IP address that can be used to reach this node from the
       internet. This can't be changed after the node is set up, so make sure
       this node is in the network environment it will remain in.
     </p>
 
-    <input
-      type="text"
-      placeholder="192.168.56.11"
-      v-model="address"
-      autofocus
-    />
+    <input type="text" placeholder="0.0.0.0" v-model="address" ref="input" />
 
-    <div class="button" :class="{ disabled: !address }">Continue</div>
+    <Button
+      class="green"
+      :class="{ disabled: !valid }"
+      text="Continue"
+      :busy="busy"
+      @click="busy = !busy"
+    />
   </div>
 </template>
 
 <script>
+import validator from "validator";
+import Button from "@/components/Button";
+
 export default {
+  components: { Button },
+
   data() {
     return {
-      address: ""
+      address: "",
+      busy: false
     };
+  },
+
+  mounted() {
+    this.address = this.urlIP;
+    this.$refs.input.focus();
+  },
+
+  computed: {
+    urlIP() {
+      const [ip] = window.location.host.split(":");
+      if (validator.isIP(ip)) return ip;
+    },
+
+    valid() {
+      return validator.isIP(this.address);
+    }
   }
 };
 </script>

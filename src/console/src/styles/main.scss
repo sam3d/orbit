@@ -17,6 +17,7 @@ a {
 .button {
   cursor: not-allowed;
   display: inline-block; // Prevent width from expanding
+  position: relative;
 
   background-color: #ddd;
   padding: 15px 30px;
@@ -74,6 +75,14 @@ input {
     outline: none;
     box-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.05);
   }
+
+  &:disabled {
+    opacity: 0.7;
+  }
+}
+
+.hidden {
+  opacity: 0;
 }
 
 .flex-center {
