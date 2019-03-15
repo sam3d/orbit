@@ -144,7 +144,7 @@ section.setup {
   .body {
     text-align: center;
     flex-grow: 1;
-    padding: 20px;
+    padding: 30px;
     padding-bottom: 50px;
 
     display: flex;
