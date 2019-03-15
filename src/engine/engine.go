@@ -46,9 +46,11 @@ const (
 	StatusInit Status = iota
 	// StatusSetup is when the engine has not yet been bootstrapped.
 	StatusSetup
-	// StatusReady is when the engine can properly be used.
+	// StatusReady is when the engine has been successfully bootstrapped, but
+	// before it has been fully configured with a domain name or user.
 	StatusReady
-	// StatusRunning is when the store has been successfully bootstrapped.
+	// StatusRunning is when the store has been successfully bootstrapped and a
+	// user has set themselves up fully.
 	StatusRunning
 )
 
@@ -65,6 +67,35 @@ func (s Status) String() string {
 	default:
 		return ""
 	}
+}
+
+// SetupStatus is a string representation of the stage and mode.
+func (e *Engine) SetupStatus() (mode, stage string) {
+	// If the engine is in running mode, then there is nothing to do.
+	if e.Status == StatusRunning {
+		return "complete", "complete"
+	}
+
+	// If the engine is in setup mode, then there is nothing to do.
+	if e.Status == StatusSetup {
+		return "bootstrap", "welcome"
+	}
+
+	// If the engine is not ready, don't do anything. It's only if the engine is
+	// ready that all of the following conditions apply about the setup location.
+	if e.Status != StatusReady {
+		return
+	}
+
+	// If there is only one node that the cluster is aware of, it means that this
+	// node must be the one responsible for establishing the cluster. Otherwise,
+	// it means that this node must be joining the cluster, which means that
+	// because the engine is not running, they must be in the node configuration stage.
+	if len(e.Store.state.Nodes) > 1 {
+		return "join", "node"
+	}
+
+	return "bootstrap", "domain"
 }
 
 // Start starts the engine and all of its subcomponents. This is dependent on
@@ -121,5 +152,10 @@ func (e *Engine) Start() error {
 func (e *Engine) Stop() error {
 	log.Println("[INFO] engine: Stopping...")
 	log.Println("[INFO] engine: Stopped")
+	return nil
+}
+
+// Reset will reset all engine properties and wipe all local data files.
+func (e *Engine) Reset() error {
 	return nil
 }

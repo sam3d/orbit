@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <link rel="icon" href="<%= BASE_URL %>favicon.png" type="image/png" />
 
+    <link
+      href="https://fonts.googleapis.com/css?family=Cabin:400,500|Montserrat:400,500|Source+Code+Pro"
+      rel="stylesheet"
+    />
+
     <title>Orbit</title>
   </head>
 
@@ -31,7 +36,7 @@
 
         #page-loader #spinner-container {
           opacity: 0;
-          animation: fadeIn 0.5s forwards ease;
+          animation: shrinkIn 0.5s forwards ease;
         }
 
         #page-loader #spinner {
@@ -40,15 +45,15 @@
           animation: rotate 2s infinite linear;
         }
 
+        #page-loader #spinner-container.shrinkOut {
+          animation: shrinkOut 0.5s forwards ease;
+        }
+
         #page-loader.fadeOut {
           animation: fadeOut 0.5s forwards ease;
         }
 
-        #page-loader.fadeOut #spinner-container {
-          animation: shrink 0.5s forwards ease;
-        }
-
-        @keyframes fadeIn {
+        @keyframes shrinkIn {
           from {
             opacity: 0;
             transform: scale(1.2);
@@ -70,14 +75,14 @@
           }
         }
 
-        @keyframes shrink {
+        @keyframes shrinkOut {
           from {
             opacity: 1;
             transform: scale(1);
           }
 
           to {
-            opacity: 1;
+            opacity: 0;
             transform: scale(0.8);
           }
         }
@@ -135,12 +140,19 @@
             if (isRemoved) console.warn("The loader has already been removed");
             else isRemoved = true;
 
-            var el = document.getElementById("page-loader");
-            el.classList.add("fadeOut");
+            var spinner = document.getElementById("spinner-container");
+            var container = document.getElementById("page-loader");
 
-            // Clean up the page loader elements after timeout
+            // Remove the spinner.
+            spinner.classList.add("shrinkOut");
             setTimeout(function() {
-              el.remove();
+              spinner.remove();
+
+              // Remove the container.
+              container.classList.add("fadeOut");
+              setTimeout(function() {
+                container.remove();
+              }, 500);
             }, 500);
           };
         })();

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,17 +17,45 @@ import (
 	"orbit.sh/engine/proto"
 )
 
+func (s *APIServer) handleIndex() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome to the Orbit Engine API.\nAll systems are operational.")
+	}
+}
+
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status `json:"status"`
-		StatusString string `json:"status_string"`
+		Status       Status  `json:"status"`        // Engine status int
+		StatusString string  `json:"status_string"` // Engine status string
+		Stage        string  `json:"stage"`         // The set up stage
+		Mode         string  `json:"mode"`          // The set up mode
+		IP           *string `json:"ip"`            // Node IP address
 	}
 
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, &res{
+		mode, stage := s.engine.SetupStatus()
+
+		res := res{
 			Status:       s.engine.Status,
 			StatusString: fmt.Sprintf("%s", s.engine.Status),
-		})
+			Stage:        stage,
+			Mode:         mode,
+		}
+
+		// If the engine is not ready, send an IP address retrieved from the API.
+		// Otherwise, simply append the advertise address that we're using.
+		if s.engine.Status < StatusReady {
+			ip, err := getPublicIP()
+			if ip != nil && err == nil {
+				ip := ip.String()
+				res.IP = &ip
+			}
+		} else {
+			ip := s.engine.Store.AdvertiseAddr.String()
+			res.IP = &ip
+		}
+
+		c.JSON(http.StatusOK, &res)
 	}
 }
 
@@ -48,9 +77,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		mu.Lock()
 		defer mu.Unlock()
 
+		res := "Could not boostrap the cluster." // General error response.
+
 		// Ensure that the store can be bootstrapped.
 		if engine.Status >= StatusReady {
-			c.String(http.StatusConflict, "The engine is already running and cannot be bootstrapped.")
+			c.String(http.StatusConflict, "This node already belongs to a cluster, and cannot be bootstrapped again.")
 			return
 		}
 
@@ -62,7 +93,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			WANSerfPort: 6504,
 		}
 		if err := c.Bind(&body); err != nil {
-			c.String(http.StatusBadRequest, "Invalid request body fields.")
+			c.String(http.StatusBadRequest, "Some invalid fields were provided, please check your request and try again.")
 			return
 		}
 
@@ -71,14 +102,8 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		if body.RawAdvertiseAddr != "" {
 			ip := net.ParseIP(body.RawAdvertiseAddr)
 			if ip == nil {
-				c.String(http.StatusBadRequest, "Your provided advertise address is not valid.")
+				c.String(http.StatusBadRequest, "That advertise address is not valid, please make sure it's in the form of an IP address.")
 				return
-			}
-			advertiseAddr = ip
-		} else {
-			ip, err := getPublicIP()
-			if err != nil {
-				c.String(http.StatusBadRequest, "Could not automatically obtain public advertise address.")
 			}
 			advertiseAddr = ip
 		}
@@ -97,7 +122,12 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		case <-store.Started():
 		case err := <-errCh:
 			log.Printf("[ERR] store: %s", err)
-			c.String(http.StatusInternalServerError, "Could not open the store instance to bootstrap.")
+
+			if strings.Contains(err.Error(), "bind: cannot assign requested address") {
+				res = "That address could not be used on this node, please ensure that the IP address provided can be used to reach the node."
+			}
+
+			c.String(http.StatusInternalServerError, res)
 			return
 		}
 
@@ -113,12 +143,12 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 		// Attempt to bootstrap the store.
 		if err := store.Bootstrap(); err != nil {
-			c.String(http.StatusInternalServerError, "Could not bootstrap the store instance.")
+			c.String(http.StatusInternalServerError, res)
 			return
 		}
 
 		// Save the state and set the engine status.
-		engine.Status = StatusRunning
+		engine.Status = StatusReady
 		engine.writeConfig()
 
 		// Wait for us to become the leader of the store.
@@ -243,14 +273,6 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
-		// The engine is now ready to accept requests, let's save everything we have
-		// up until this point and ensure that this config gets maintained. This is
-		// because after the store open operation, Raft has started writing it's
-		// data to the raft directory, so it's important that we react to this
-		// properly.
-		engine.Status = StatusReady
-		engine.writeConfig()
-
 		// Let the primary server know that we're ready to be joined to it.
 		cRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
 			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
@@ -280,10 +302,6 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
-		// The join occurred successfully! Update the engine status and config.
-		engine.Status = StatusRunning
-		engine.writeConfig()
-
 		// Add this node to the list of nodes.
 		cmd := command{
 			Op:   opNewNode,
@@ -294,6 +312,9 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Could not add this node to the store state list.")
 			return
 		}
+
+		engine.Status = StatusReady
+		engine.writeConfig()
 
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
 	}
