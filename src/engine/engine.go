@@ -71,6 +71,10 @@ func (s Status) String() string {
 
 // SetupStatus is a string representation of the stage and mode.
 func (e *Engine) SetupStatus() (mode, stage string) {
+	// If the engine is in running mode, then there is nothing to do.
+	if e.Status == StatusRunning {
+		return "complete", "complete"
+	}
 
 	// If the engine is in setup mode, then there is nothing to do.
 	if e.Status == StatusSetup {
