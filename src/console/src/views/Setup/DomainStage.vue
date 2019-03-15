@@ -16,8 +16,6 @@
         ref="input"
         size="30"
       />
-
-      <span>checking</span>
     </div>
 
     <a
@@ -27,12 +25,69 @@
       >Use URL Domain ({{ urlDomain }})</a
     >
 
-    <Button
-      class="green"
-      :class="{ disabled: !validDomain }"
-      text="Continue"
-      @click="processing = !processing"
-    />
+    <div class="certificate-group">
+      <h4>Add an SSL certificate</h4>
+      <p class="subheader">
+        This will encrypt all of your communications to Orbit. How would you
+        like to add an SSL certificate?
+      </p>
+      <div class="options">
+        <div
+          class="option blue"
+          :class="{ selected: certMethod === 'upload' }"
+          @click="certMethod = 'upload'"
+        >
+          <img />
+
+          <h5>Upload</h5>
+          <p>Upload a certificate from your computer</p>
+        </div>
+
+        <div
+          class="option green"
+          :class="{ selected: certMethod === 'letsencrypt' }"
+          @click="certMethod = 'letsencrypt'"
+        >
+          <img />
+
+          <h5>LetsEncrypt</h5>
+          <p>Obtain a free certificate from LetsEncrypt</p>
+        </div>
+
+        <div
+          class="option red"
+          :class="{ selected: certMethod === 'none' }"
+          @click="certMethod = 'none'"
+        >
+          <img />
+
+          <h5>None</h5>
+          <p>Don't use an SSL certificate</p>
+        </div>
+      </div>
+
+      <div class="warning" v-if="certMethod === 'none'">
+        <h5 class="error">Not recommended</h5>
+        <p>
+          Not having a certificate for the domain means that anything you do
+          will be sent over plain text. That means anybody could steal your
+          username and password.
+        </p>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <Button
+        :class="{
+          green: certMethod === 'letsencrypt',
+          blue: certMethod === 'upload',
+          red: certMethod === 'none'
+        }"
+        :busy="busy"
+        text="Continue"
+        @click="addDomain"
+      />
+    </div>
   </div>
 </template>
 
@@ -51,7 +106,9 @@ export default {
   data() {
     return {
       domain: "",
-      processing: false
+      busy: false,
+
+      certMethod: "letsencrypt"
     };
   },
 
@@ -71,6 +128,13 @@ export default {
     validDomain() {
       return validator.isFQDN(this.domain);
     }
+  },
+
+  methods: {
+    addDomain() {
+      this.busy = true;
+      setTimeout(() => (this.busy = false), 2000);
+    }
   }
 };
 </script>
@@ -79,11 +143,129 @@ export default {
 .domain-group {
   margin-top: 30px;
   align-items: center;
-  display: inline-flex;
+  justify-content: center;
+  display: flex;
 }
 
-input[name="domain"] {
-  margin: 0 14px;
+.certificate-group {
+  margin-top: 40px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 30px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 2px 6px 0 rgba(0, 0, 0, 0.05);
+
+  max-width: 700px;
+
+  h4 {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  p.subheader {
+    font-size: 16px;
+    max-width: 500px;
+    line-height: 1.4rem;
+    margin-top: 10px;
+  }
+
+  .options {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 20px;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+
+    .option {
+      border: solid 1px #fff;
+      border-radius: 4px;
+      padding: 14px;
+      background-color: #fff;
+
+      cursor: pointer;
+
+      img {
+        width: 40px;
+        height: 40px;
+      }
+
+      h5 {
+        font-size: 17px;
+        font-weight: 500;
+        margin-top: 14px;
+
+        transition: color 0.2s;
+      }
+
+      p {
+        font-size: 14px;
+        line-height: 1.2rem;
+        margin-top: 6px;
+        opacity: 0.7;
+      }
+
+      transition: border-color 0.2s, transform 0.2s;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &.green {
+        &.selected {
+          border: solid 1px #1dd1a1;
+          h5 {
+            color: #1dd1a1;
+          }
+        }
+      }
+
+      &.blue {
+        &.selected {
+          border: solid 1px #0abde3;
+          h5 {
+            color: #0abde3;
+          }
+        }
+      }
+
+      &.red {
+        &.selected {
+          border: solid 1px #ee5253;
+          h5 {
+            color: #ee5253;
+          }
+        }
+      }
+    }
+  }
+
+  .warning {
+    h5 {
+      font-weight: 500;
+      display: inline-block;
+      padding: 5px 14px;
+      margin-top: 20px;
+      text-transform: uppercase;
+    }
+
+    p {
+      font-size: 16px;
+      max-width: 500px;
+      margin-top: 10px;
+      line-height: 1.5rem;
+      color: #ee5253;
+    }
+  }
 }
 
 a {
@@ -91,7 +273,7 @@ a {
   display: block;
 }
 
-.button {
+.button-group {
   margin-top: 30px;
 }
 </style>

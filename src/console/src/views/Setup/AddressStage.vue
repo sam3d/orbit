@@ -66,7 +66,7 @@ export default {
   methods: {
     // Perform the bootstrap operation.
     async bootstrap() {
-      if (this.busy || !this.valid) return;
+      if (!this.valid) return;
       this.error = "";
 
       this.busy = true;

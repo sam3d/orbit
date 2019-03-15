@@ -145,6 +145,7 @@ section.setup {
     text-align: center;
     flex-grow: 1;
     padding: 20px;
+    padding-bottom: 50px;
 
     display: flex;
     text-align: center;
@@ -179,6 +180,7 @@ section.setup {
   }
 
   p.subheader {
+    margin: 0 auto;
     margin-top: 24px;
     max-width: 600px;
   }
