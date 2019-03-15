@@ -25,11 +25,10 @@ func (s *APIServer) handleIndex() gin.HandlerFunc {
 
 func (s *APIServer) handleState() gin.HandlerFunc {
 	type res struct {
-		Status       Status  `json:"status"`        // Engine status int
-		StatusString string  `json:"status_string"` // Engine status string
-		Stage        string  `json:"stage"`         // The set up stage
-		Mode         string  `json:"mode"`          // The set up mode
-		IP           *string `json:"ip"`            // Node IP address
+		Status       Status `json:"status"`        // Engine status int
+		StatusString string `json:"status_string"` // Engine status string
+		Stage        string `json:"stage"`         // The set up stage
+		Mode         string `json:"mode"`          // The set up mode
 	}
 
 	return func(c *gin.Context) {
@@ -42,20 +41,18 @@ func (s *APIServer) handleState() gin.HandlerFunc {
 			Mode:         mode,
 		}
 
-		// If the engine is not ready, send an IP address retrieved from the API.
-		// Otherwise, simply append the advertise address that we're using.
-		if s.engine.Status < StatusReady {
-			ip, err := getPublicIP()
-			if ip != nil && err == nil {
-				ip := ip.String()
-				res.IP = &ip
-			}
-		} else {
-			ip := s.engine.Store.AdvertiseAddr.String()
-			res.IP = &ip
-		}
-
 		c.JSON(http.StatusOK, &res)
+	}
+}
+
+func (s *APIServer) handleIP() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip, err := getPublicIP()
+		if err == nil && ip != nil {
+			c.JSON(http.StatusOK, gin.H{"ip": ip.String()})
+		} else {
+			c.Status(http.StatusNotFound)
+		}
 	}
 }
 

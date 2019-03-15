@@ -8,17 +8,21 @@ import router from "@/router";
 const store = new Vuex.Store({
   state: {
     init: {
-      ip: null,
       status: null,
       status_string: null,
       stage: null,
       mode: null
-    }
+    },
+    ip: null
   },
 
   mutations: {
     init(state, data) {
       state.init = data;
+    },
+
+    ip(state, ip) {
+      state.ip = ip;
     }
   },
 
@@ -38,6 +42,14 @@ const store = new Vuex.Store({
 
       // Keep the data that we get back in the store.
       commit("init", res.data);
+
+      // If we need to retrieve the IP address for the setup process, then do.
+      if (engineStatus !== "running") {
+        let res = await api.get("/ip", { redirect: false });
+        if (res.status === 200) {
+          commit("ip", res.data.ip);
+        }
+      }
 
       /**
        * If not already on the setup page and the engine status is setup, then

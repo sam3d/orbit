@@ -22,6 +22,7 @@ func (s *APIServer) handlers() {
 	r.GET("", s.handleIndex())
 
 	r.GET("/state", s.handleState())
+	r.GET("/ip", s.handleIP())
 	r.GET("/users", s.handleListUsers())
 	r.GET("/nodes", s.handleListNodes())
 
