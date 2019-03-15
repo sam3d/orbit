@@ -6,25 +6,16 @@
       <div class="inner">
         <transition name="fade" mode="out-in">
           <!-- The very first stage with a simply progression button -->
-          <WelcomeStage
-            key="welcome"
-            v-if="stage === 'welcome'"
-            @complete="stage = 'mode'"
-          />
+          <WelcomeStage v-if="stage === 'welcome'" @complete="stage = 'mode'" />
 
           <!-- Choose whether to bootstrap a cluster or simply join one -->
-          <ModeStage
-            key="mode"
-            v-if="stage === 'mode'"
-            @complete="changeMode"
-          />
+          <ModeStage v-if="stage === 'mode'" @complete="changeMode" />
 
           <!-- Choose the address that this node operates on -->
-          <AddressStage
-            key="address"
-            v-if="stage === 'address'"
-            @complete="nextStage"
-          />
+          <AddressStage v-if="stage === 'address'" @complete="nextStage" />
+
+          <!-- Choose a domain and certificate -->
+          <DomainStage v-if="stage === 'domain'" />
         </transition>
       </div>
     </div>
@@ -44,15 +35,18 @@ import Navbar from "./Navbar";
 import WelcomeStage from "./WelcomeStage";
 import ModeStage from "./ModeStage";
 import AddressStage from "./AddressStage";
+import DomainStage from "./DomainStage";
 
 export default {
   meta: { title: "Setup" },
   components: {
     ProgressView,
+    Navbar,
+
     WelcomeStage,
     ModeStage,
     AddressStage,
-    Navbar
+    DomainStage
   },
 
   data() {

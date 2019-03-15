@@ -12,6 +12,8 @@
       placeholder="0.0.0.0"
       v-model="address"
       ref="input"
+      size="15"
+      maxlength="15"
       :disabled="busy"
       @input="error = ''"
     />

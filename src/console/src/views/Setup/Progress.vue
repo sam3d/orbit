@@ -5,7 +5,7 @@
         v-for="stage in stages"
         class="stage"
         :class="stage.state"
-        :style="{ minWidth: originalHeight + 'px' }"
+        :style="{ minWidth: height + 'px' }"
         @click="$emit('input', stage.name)"
       >
         <div class="icon">
@@ -25,19 +25,19 @@ export default {
 
   data() {
     return {
-      originalHeight: 0
+      height: 0
     };
   },
 
   mounted() {
     const { container } = this.$refs;
-    this.originalHeight = container.scrollHeight;
+    this.height = container.scrollHeight;
   },
 
   computed: {
     style() {
       return {
-        height: (this.hidden ? 0 : this.originalHeight) + "px",
+        height: (this.hidden ? 0 : this.height) + "px",
         margin: this.hidden ? `0 20px` : `0 20px 20px 20px`
       };
     }
