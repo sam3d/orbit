@@ -36,9 +36,9 @@
 
     <Button
       class="green"
-      :class="{ disabled: !valid }"
-      text="Continue"
+      :disabled="!valid"
       :busy="busy"
+      text="Continue"
       @click="bootstrap"
     />
   </div>

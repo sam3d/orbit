@@ -1,5 +1,5 @@
 <template>
-  <div class="button" :class="{ disabled: busy }" @click="$emit('click')">
+  <div class="button" :class="{ disabled: busy || disabled }" @click="click">
     <div v-if="busy" class="overlay">
       <Spinner />
     </div>
@@ -12,10 +12,17 @@
 import Spinner from "@/components/Spinner";
 
 export default {
-  props: ["text", "busy"],
+  props: ["text", "busy", "disabled"],
 
   components: {
     Spinner
+  },
+
+  methods: {
+    click() {
+      if (this.busy || this.disabled) return;
+      this.$emit("click");
+    }
   }
 };
 </script>
