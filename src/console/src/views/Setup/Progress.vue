@@ -38,7 +38,7 @@ export default {
     style() {
       return {
         height: (this.hidden ? 0 : this.originalHeight) + "px",
-        margin: this.hidden ? "0 20px" : "20px"
+        margin: this.hidden ? `0 20px` : `0 20px 20px 20px`
       };
     }
   }
