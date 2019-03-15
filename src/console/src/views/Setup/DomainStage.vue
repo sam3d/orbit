@@ -15,6 +15,7 @@
         v-model="domain"
         ref="input"
         size="30"
+        :disabled="busy"
       />
     </div>
 
@@ -31,11 +32,11 @@
         This will encrypt all of your communications to Orbit. How would you
         like to add an SSL certificate?
       </p>
-      <div class="options">
+      <div class="options" :class="{ disabled: busy }">
         <div
           class="option blue"
           :class="{ selected: certMethod === 'upload' }"
-          @click="certMethod = 'upload'"
+          @click="!busy && (certMethod = 'upload')"
         >
           <img />
 
@@ -46,7 +47,7 @@
         <div
           class="option green"
           :class="{ selected: certMethod === 'letsencrypt' }"
-          @click="certMethod = 'letsencrypt'"
+          @click="!busy && (certMethod = 'letsencrypt')"
         >
           <img />
 
@@ -57,7 +58,7 @@
         <div
           class="option red"
           :class="{ selected: certMethod === 'none' }"
-          @click="certMethod = 'none'"
+          @click="!busy && (certMethod = 'none')"
         >
           <img />
 
@@ -83,6 +84,7 @@
           blue: certMethod === 'upload',
           red: certMethod === 'none'
         }"
+        :disabled="!validCert || !validDomain"
         :busy="busy"
         text="Continue"
         @click="addDomain"
@@ -108,7 +110,8 @@ export default {
       domain: "",
       busy: false,
 
-      certMethod: "letsencrypt"
+      certMethod: "letsencrypt",
+      certFile: null // The certificate file if method is "upload"
     };
   },
 
@@ -127,6 +130,11 @@ export default {
     // This checks whether the domain provided is actually valid.
     validDomain() {
       return validator.isFQDN(this.domain);
+    },
+
+    // This checks whether the SSL certificate option is valid.
+    validCert() {
+      return true;
     }
   },
 
@@ -244,6 +252,23 @@ export default {
           h5 {
             color: #ee5253;
           }
+        }
+      }
+    }
+
+    // Disabled occurs when there is an operation processing, and we need to
+    // mimic input being disabled.
+    &.disabled {
+      .option {
+        cursor: default;
+        opacity: 0.6;
+
+        &:hover {
+          transform: none;
+        }
+
+        &:active {
+          transform: none;
         }
       }
     }
