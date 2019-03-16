@@ -44,7 +44,7 @@ const store = new Vuex.Store({
       commit("init", res.data);
 
       // If we need to retrieve the IP address for the setup process, then do.
-      if (engineStatus !== "running") {
+      if (engineStatus === "setup") {
         let res = await api.get("/ip", { redirect: false });
         if (res.status === 200) {
           commit("ip", res.data.ip);
