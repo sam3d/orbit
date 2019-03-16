@@ -15,6 +15,9 @@
       size="15"
       maxlength="15"
       autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
       :disabled="busy"
       @input="error = ''"
     />
