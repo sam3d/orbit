@@ -12,6 +12,7 @@
         name="domain"
         type="text"
         placeholder="orbit.example.com"
+        autocomplete="off"
         v-model="domain"
         ref="input"
         size="30"

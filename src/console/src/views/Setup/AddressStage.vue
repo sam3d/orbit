@@ -14,6 +14,7 @@
       ref="input"
       size="15"
       maxlength="15"
+      autocomplete="off"
       :disabled="busy"
       @input="error = ''"
     />
