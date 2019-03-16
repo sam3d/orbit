@@ -144,8 +144,6 @@ section.setup {
   .body {
     text-align: center;
     flex-grow: 1;
-    padding: 30px;
-    padding-bottom: 50px;
 
     display: flex;
     text-align: center;
@@ -153,6 +151,8 @@ section.setup {
 
     .inner {
       margin: auto;
+      padding: 30px;
+      padding-bottom: 50px;
     }
   }
 
