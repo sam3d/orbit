@@ -7,6 +7,8 @@ package engine
 // Important to note is that the state is not aware of its distributed nature,
 // and is simply for keeping track of the current data.
 type StoreState struct {
-	Users Users `json:"users"`
-	Nodes Nodes `json:"nodes"`
+	Users        Users        `json:"users"`
+	Nodes        Nodes        `json:"nodes"`
+	Routers      Routers      `json:"routers"`
+	Certificates Certificates `json:"certificates"`
 }
