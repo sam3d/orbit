@@ -20,6 +20,7 @@
         ref="input"
         size="30"
         :disabled="busy"
+        @keyup.enter="addDomain"
       />
     </div>
 
@@ -120,7 +121,7 @@ export default {
   },
 
   mounted() {
-    this.$refs.input.focus(); // Focus the domain input on page entry
+    this.focus();
   },
 
   computed: {
@@ -143,9 +144,21 @@ export default {
   },
 
   methods: {
-    addDomain() {
+    // Add the domain name to the store.
+    async addDomain() {
+      if (!this.validCert || !this.validDomain || this.busy) return;
       this.busy = true;
-      setTimeout(() => (this.busy = false), 2000);
+
+      setTimeout(() => {
+        this.busy = false;
+        this.focus();
+      }, 2000);
+    },
+
+    // Focus on the input element.
+    async focus() {
+      await this.$nextTick();
+      this.$refs.input.focus();
     }
   }
 };

@@ -20,6 +20,7 @@
       spellcheck="false"
       :disabled="busy"
       @input="error = ''"
+      @keyup.enter="bootstrap"
     />
 
     <div class="error" v-if="error">{{ error }}</div>
@@ -64,7 +65,7 @@ export default {
   },
 
   mounted() {
-    this.$refs.input.focus();
+    this.focus();
   },
 
   methods: {
@@ -87,6 +88,13 @@ export default {
       }
 
       this.error = res.data;
+      this.focus();
+    },
+
+    // Focus on the main input element.
+    async focus() {
+      await this.$nextTick();
+      this.$refs.input.focus();
     }
   },
 
