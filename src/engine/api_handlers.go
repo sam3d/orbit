@@ -25,6 +25,7 @@ func (s *APIServer) handlers() {
 	r.GET("/ip", s.handleIP())
 	r.GET("/users", s.handleListUsers())
 	r.GET("/nodes", s.handleListNodes())
+	r.GET("/routers", s.handleListRouters())
 
 	r.POST("/snapshot/*op", s.handleSnapshot())
 
@@ -38,6 +39,11 @@ func (s *APIServer) handlers() {
 		r := r.Group("/user")
 		r.POST("", s.handleUserSignup())
 		r.DELETE("/:id", s.handleUserRemove())
+	}
+
+	{
+		r := r.Group("/router")
+		r.POST("", s.handleRouterAdd())
 	}
 }
 

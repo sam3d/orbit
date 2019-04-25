@@ -532,3 +532,64 @@ This is because it is for testing purposes.`,
 		}
 	}
 }
+
+func (s *APIServer) handleListRouters() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+
+		c.JSON(http.StatusOK, store.state.Routers)
+	}
+}
+
+// This will add a router object to the store.
+func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Domain string `form:"domain" json:"domain"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		// Generate the ID for the router.
+		id := store.state.Routers.GenerateID()
+
+		// Create a new router without a certificate.
+		cmd := &command{
+			Op: opNewRouter,
+			Router: Router{
+				ID:     id,
+				Domain: body.Domain,
+			},
+		}
+
+		// Actually create the router.
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not create that router.")
+			return
+		}
+
+		c.String(http.StatusOK, "That router has been created.")
+	}
+}
+
+// This will add a certificate to the store. Either raw certificate data can be
+// uploaded, or it can be enabled for auto renewal so that certificate data
+// doesn't need to be uploaded.
+func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
+	type body struct {
+		AutoRenew string `form:"auto_renew" json:"auto_renew"`
+		RawCert   []byte `form:"raw_cert" json:"raw_cert"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+	}
+}

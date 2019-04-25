@@ -25,13 +25,16 @@ const (
 	opRemoveUser
 
 	opNewNode
+
+	opNewRouter
 )
 
 type command struct {
 	Op op `json:"op"`
 
-	User User `json:"user,omitempty"`
-	Node Node `json:"node,omitempty"`
+	User   User   `json:"user,omitempty"`
+	Node   Node   `json:"node,omitempty"`
+	Router Router `json:"router,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -92,15 +95,19 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	}
 
 	switch c.Op {
-	// User operations
+	// User operations.
 	case opNewUser:
 		return f.applyNewUser(c.User)
 	case opRemoveUser:
 		return f.applyRemoveUser(c.User.ID)
 
-		// Node operations
+	// Node operations.
 	case opNewNode:
 		return f.applyNewNode(c.Node)
+
+	// Router operations.
+	case opNewRouter:
+		return f.applyNewRouter(c.Router)
 	}
 
 	return nil
@@ -124,6 +131,13 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Nodes = append(f.state.Nodes, n)
+	return nil
+}
+
+func (f *fsm) applyNewRouter(r Router) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Routers = append(f.state.Routers, r)
 	return nil
 }
 

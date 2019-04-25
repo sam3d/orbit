@@ -112,7 +112,7 @@ export default {
 
   data() {
     return {
-      domain: "",
+      domain: "orbit.samholmes.net",
       busy: false,
 
       certMethod: "letsencrypt",
@@ -149,10 +149,13 @@ export default {
       if (!this.validCert || !this.validDomain || this.busy) return;
       this.busy = true;
 
-      setTimeout(() => {
-        this.busy = false;
-        this.focus();
-      }, 2000);
+      const res = await this.$api.post(
+        "/router",
+        { domain: this.domain },
+        { redirect: false }
+      );
+      console.log(res);
+      this.busy = false;
     },
 
     // Focus on the input element.
