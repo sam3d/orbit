@@ -575,7 +575,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 			return
 		}
 
-		c.String(http.StatusOK, "That router has been created.")
+		c.JSON(http.StatusOK, gin.H{"id": id, "domain": body.Domain})
 	}
 }
 
