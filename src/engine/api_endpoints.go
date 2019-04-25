@@ -560,7 +560,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		id := store.state.Routers.GenerateID()
 
 		// Create a new router without a certificate.
-		cmd := &command{
+		cmd := command{
 			Op: opNewRouter,
 			Router: Router{
 				ID:     id,
@@ -575,7 +575,18 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"id": id, "domain": body.Domain})
+		c.String(http.StatusCreated, id)
+	}
+}
+
+func (s *APIServer) handleListCertificates() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+
+		c.JSON(http.StatusOK, store.state.Certificates)
 	}
 }
 
@@ -583,13 +594,45 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 // uploaded, or it can be enabled for auto renewal so that certificate data
 // doesn't need to be uploaded.
 func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
 	type body struct {
-		AutoRenew string `form:"auto_renew" json:"auto_renew"`
+		AutoRenew bool   `form:"auto_renew" json:"auto_renew"`
 		RawCert   []byte `form:"raw_cert" json:"raw_cert"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
 		c.Bind(&body)
+
+		// Generate the certificate ID.
+		id := store.state.Certificates.GenerateID()
+
+		// Construct the command.
+		cmd := command{
+			Op: opNewCertificate,
+			Certificate: Certificate{
+				ID:        id,
+				AutoRenew: body.AutoRenew,
+				Data:      body.RawCert,
+			},
+		}
+
+		// Ensure that the data is correct.
+		if !cmd.Certificate.AutoRenew && len(cmd.Certificate.Data) == 0 {
+			log.Printf("[INFO] api: Neither auto renew or certificate supplied")
+			c.String(http.StatusBadRequest, "You must supply either auto renew or certificate data.")
+			return
+		}
+
+		// Apply the certificate to the store.
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR]: store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not add the certificate to the store.")
+			return
+		}
+
+		// Otherwise, return the ID of the generated certificate.
+		c.String(http.StatusCreated, id)
 	}
 }

@@ -27,14 +27,16 @@ const (
 	opNewNode
 
 	opNewRouter
+	opNewCertificate
 )
 
 type command struct {
 	Op op `json:"op"`
 
-	User   User   `json:"user,omitempty"`
-	Node   Node   `json:"node,omitempty"`
-	Router Router `json:"router,omitempty"`
+	User        User        `json:"user,omitempty"`
+	Node        Node        `json:"node,omitempty"`
+	Router      Router      `json:"router,omitempty"`
+	Certificate Certificate `json:"certificate,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -105,9 +107,11 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case opNewNode:
 		return f.applyNewNode(c.Node)
 
-	// Router operations.
+	// Router and certificate operations.
 	case opNewRouter:
 		return f.applyNewRouter(c.Router)
+	case opNewCertificate:
+		return f.applyNewCertificate(c.Certificate)
 	}
 
 	return nil
@@ -138,6 +142,13 @@ func (f *fsm) applyNewRouter(r Router) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Routers = append(f.state.Routers, r)
+	return nil
+}
+
+func (f *fsm) applyNewCertificate(c Certificate) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Certificates = append(f.state.Certificates, c)
 	return nil
 }
 
