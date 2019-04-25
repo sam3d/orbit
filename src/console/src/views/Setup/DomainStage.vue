@@ -149,13 +149,69 @@ export default {
       if (!this.validCert || !this.validDomain || this.busy) return;
       this.busy = true;
 
-      const res = await this.$api.post(
-        "/router",
-        { domain: this.domain },
-        { redirect: false }
-      );
-      console.log(res);
-      this.busy = false;
+      // Globally scoped variables that we retrieve over the course of the API
+      // access.
+      let routerID, certificateID;
+
+      /**
+       * Create the router.
+       */
+      {
+        const body = { domain: this.domain };
+        const opts = { redirect: false };
+        const res = await this.$api.post("/router", body, opts);
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        routerID = res.data;
+        console.log(`Created router with ID ${routerID}`);
+      }
+
+      // If we are not adding a certificate, we don't need to do anything
+      // further.
+      if (this.certMethod === "none") {
+        this.busy === false;
+        return;
+      }
+
+      /**
+       * Create the certificate.
+       */
+      {
+        const body =
+          this.certMethod === "letsencrypt"
+            ? { auto_renew: true }
+            : this.certMethod === "upload"
+            ? { raw_cert: this.certFile }
+            : {};
+        const opts = { redirect: false };
+        const res = await this.$api.post("/certificate", body, opts);
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        certificateID = res.data;
+        console.log(`Created certificate with ID ${certificateID}`);
+      }
+
+      /**
+       * Add the certificate ID to the existing router object.
+       */
+      {
+        const path = `/router/${routerID}`;
+        const body = { certificate_id: certificateID };
+        const opts = { redirect: false };
+        const res = await this.$api.put(path, body, opts);
+        if (res.status !== 200) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        console.log(res.data);
+      }
     },
 
     // Focus on the input element.

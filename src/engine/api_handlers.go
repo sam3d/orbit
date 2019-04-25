@@ -47,6 +47,7 @@ func (s *APIServer) handlers() {
 	{
 		r := r.Group("/router")
 		r.POST("", s.handleRouterAdd())
+		r.PUT("/:id", s.handleRouterUpdate())
 	}
 
 	{

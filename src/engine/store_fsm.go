@@ -27,6 +27,7 @@ const (
 	opNewNode
 
 	opNewRouter
+	opUpdateRouter
 	opNewCertificate
 )
 
@@ -110,6 +111,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	// Router and certificate operations.
 	case opNewRouter:
 		return f.applyNewRouter(c.Router)
+	case opUpdateRouter:
+		return f.applyUpdateRouter(c.Router)
 	case opNewCertificate:
 		return f.applyNewCertificate(c.Certificate)
 	}
@@ -149,6 +152,35 @@ func (f *fsm) applyNewCertificate(c Certificate) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Certificates = append(f.state.Certificates, c)
+	return nil
+}
+
+func (f *fsm) applyUpdateRouter(r Router) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the existing router so we can keep the details from it, and then
+	// remove it from the store so that we can add it again.
+	currentRouter := func() *Router {
+		for i, router := range f.state.Routers {
+			if router.ID == r.ID {
+				f.state.Routers = append(f.state.Routers[:i], f.state.Routers[i+1:]...)
+				return &router
+			}
+		}
+		return nil
+	}()
+
+	// Update the router object if the properties have been specified.
+	if r.CertificateID != "" {
+		currentRouter.CertificateID = r.CertificateID
+	}
+	if r.Domain != "" {
+		currentRouter.Domain = r.Domain
+	}
+
+	// Re-create the router object.
+	f.state.Routers = append(f.state.Routers, *currentRouter)
 	return nil
 }
 

@@ -579,6 +579,40 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 	}
 }
 
+// Update a router object.
+func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		CertificateID string `form:"certificate_id" json:"certificate_id"`
+	}
+
+	return func(c *gin.Context) {
+		id := c.Param("id") // The ID of the router to update
+		var body body
+		c.Bind(&body)
+
+		// Create the update command.
+		cmd := command{
+			Op: opUpdateRouter,
+			Router: Router{
+				ID:            id,
+				CertificateID: body.CertificateID,
+			},
+		}
+
+		// Attempt to apply the update command.
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not update the router.")
+			return
+		}
+
+		// This was successful.
+		c.String(http.StatusOK, "Successfully updated your router.")
+	}
+}
+
 func (s *APIServer) handleListCertificates() gin.HandlerFunc {
 	store := s.engine.Store
 
