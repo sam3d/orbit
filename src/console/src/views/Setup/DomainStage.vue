@@ -151,13 +151,26 @@ export default {
 
       // Globally scoped variables that we retrieve over the course of the API
       // access.
-      let routerID, certificateID;
+      let routerID, certificateID, namespaceID;
+
+      /**
+       * Retrieve the orbit-system namespace ID.
+       */
+      {
+        const res = await this.$api.get("/namespaces", { redirect: false });
+        if (res.status !== 200) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        namespaceID = res.data.find(ns => ns.name === "orbit-system").id;
+      }
 
       /**
        * Create the router.
        */
       {
-        const body = { domain: this.domain };
+        const body = { domain: this.domain, namespace_id: namespaceID };
         const opts = { redirect: false };
         const res = await this.$api.post("/router", body, opts);
         if (res.status !== 201) {
@@ -186,6 +199,7 @@ export default {
             : this.certMethod === "upload"
             ? { raw_cert: this.certFile }
             : {};
+        body.namespace_id = namespaceID; // Ensure we set the correct namespace.
         const opts = { redirect: false };
         const res = await this.$api.post("/certificate", body, opts);
         if (res.status !== 201) {
