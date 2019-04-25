@@ -29,6 +29,7 @@ func (s *APIServer) handlers() {
 	r.GET("/nodes", s.handleListNodes())
 	r.GET("/routers", s.handleListRouters())
 	r.GET("/certificates", s.handleListCertificates())
+	r.GET("/namespaces", s.handleListNamespaces())
 
 	r.POST("/snapshot/*op", s.handleSnapshot())
 

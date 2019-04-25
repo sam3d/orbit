@@ -13,6 +13,7 @@ type Router struct {
 	ID            string `json:"id"`
 	Domain        string `json:"domain"`
 	CertificateID string `json:"certificate_id"`
+	NamespaceID   string `json:"namespace_id"`
 }
 
 // Routers is a group of domain names, ports, and paths, used for routing.
@@ -26,8 +27,8 @@ search:
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 
-		for _, user := range *r {
-			if user.ID == id {
+		for _, router := range *r {
+			if router.ID == id {
 				continue search
 			}
 		}

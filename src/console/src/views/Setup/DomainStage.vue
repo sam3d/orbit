@@ -210,8 +210,9 @@ export default {
           alert(res.data);
           return;
         }
-        console.log(res.data);
       }
+
+      // TODO: Wait for load balancer update and then continue on.
     },
 
     // Focus on the input element.

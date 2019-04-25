@@ -25,6 +25,7 @@ const (
 	opRemoveUser
 
 	opNewNode
+	opNewNamespace
 
 	opNewRouter
 	opUpdateRouter
@@ -38,6 +39,7 @@ type command struct {
 	Node        Node        `json:"node,omitempty"`
 	Router      Router      `json:"router,omitempty"`
 	Certificate Certificate `json:"certificate,omitempty"`
+	Namespace   Namespace   `json:"namespace,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -107,6 +109,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	// Node operations.
 	case opNewNode:
 		return f.applyNewNode(c.Node)
+	case opNewNamespace:
+		return f.applyNewNamespace(c.Namespace)
 
 	// Router and certificate operations.
 	case opNewRouter:
@@ -138,6 +142,13 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Nodes = append(f.state.Nodes, n)
+	return nil
+}
+
+func (f *fsm) applyNewNamespace(n Namespace) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Namespaces = append(f.state.Namespaces, n)
 	return nil
 }
 
@@ -177,6 +188,9 @@ func (f *fsm) applyUpdateRouter(r Router) interface{} {
 	}
 	if r.Domain != "" {
 		currentRouter.Domain = r.Domain
+	}
+	if r.NamespaceID != "" {
+		currentRouter.NamespaceID = r.NamespaceID
 	}
 
 	// Re-create the router object.

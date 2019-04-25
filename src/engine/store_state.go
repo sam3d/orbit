@@ -1,5 +1,10 @@
 package engine
 
+import (
+	"encoding/hex"
+	"math/rand"
+)
+
 // StoreState is the all-encompassing state of the cluster. The operations are
 // performed to this after being cast to a finite state machine, and otherwise
 // won't be able to make any changes.
@@ -24,3 +29,21 @@ type Namespace struct {
 
 // Namespaces is a list of namespaces.
 type Namespaces []Namespace
+
+// GenerateID will generate a unique ID for a namespace.
+func (n *Namespaces) GenerateID() string {
+search:
+	for {
+		b := make([]byte, 32)
+		rand.Read(b)
+		id := hex.EncodeToString(b)
+
+		for _, namespace := range *n {
+			if namespace.ID == id {
+				continue search
+			}
+		}
+
+		return id
+	}
+}

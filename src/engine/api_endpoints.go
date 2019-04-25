@@ -174,7 +174,30 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Prepare command to create the orbit system namespace.
+		cmd = command{
+			Op: opNewNamespace,
+			Namespace: Namespace{
+				ID:   store.state.Namespaces.GenerateID(),
+				Name: "orbit-system",
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not add the 'orbit-system' namespace.")
+			return
+		}
+
 		c.JSON(http.StatusOK, engine.marshalConfig())
+	}
+}
+
+func (s *APIServer) handleListNamespaces() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, store.state.Namespaces)
 	}
 }
 
@@ -549,7 +572,8 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		Domain string `form:"domain" json:"domain"`
+		Domain      string `form:"domain" json:"domain"`
+		NamespaceID string `form:"namespace_id" json:"namespace_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -563,8 +587,9 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		cmd := command{
 			Op: opNewRouter,
 			Router: Router{
-				ID:     id,
-				Domain: body.Domain,
+				ID:          id,
+				Domain:      body.Domain,
+				NamespaceID: body.NamespaceID,
 			},
 		}
 
@@ -585,6 +610,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 
 	type body struct {
 		CertificateID string `form:"certificate_id" json:"certificate_id"`
+		NamespaceID   string `form:"namespace_id" json:"namespace_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -598,6 +624,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 			Router: Router{
 				ID:            id,
 				CertificateID: body.CertificateID,
+				NamespaceID:   body.NamespaceID,
 			},
 		}
 
@@ -631,8 +658,9 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew bool   `form:"auto_renew" json:"auto_renew"`
-		RawCert   []byte `form:"raw_cert" json:"raw_cert"`
+		AutoRenew   bool   `form:"auto_renew" json:"auto_renew"`
+		RawCert     []byte `form:"raw_cert" json:"raw_cert"`
+		NamespaceID string `form:"namespace_id" json:"namespace_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -646,9 +674,10 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 		cmd := command{
 			Op: opNewCertificate,
 			Certificate: Certificate{
-				ID:        id,
-				AutoRenew: body.AutoRenew,
-				Data:      body.RawCert,
+				ID:          id,
+				AutoRenew:   body.AutoRenew,
+				Data:        body.RawCert,
+				NamespaceID: body.NamespaceID,
 			},
 		}
 
