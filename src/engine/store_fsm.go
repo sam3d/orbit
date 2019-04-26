@@ -25,13 +25,21 @@ const (
 	opRemoveUser
 
 	opNewNode
+	opNewNamespace
+
+	opNewRouter
+	opUpdateRouter
+	opNewCertificate
 )
 
 type command struct {
 	Op op `json:"op"`
 
-	User User `json:"user,omitempty"`
-	Node Node `json:"node,omitempty"`
+	User        User        `json:"user,omitempty"`
+	Node        Node        `json:"node,omitempty"`
+	Router      Router      `json:"router,omitempty"`
+	Certificate Certificate `json:"certificate,omitempty"`
+	Namespace   Namespace   `json:"namespace,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -92,15 +100,25 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	}
 
 	switch c.Op {
-	// User operations
+	// User operations.
 	case opNewUser:
 		return f.applyNewUser(c.User)
 	case opRemoveUser:
 		return f.applyRemoveUser(c.User.ID)
 
-		// Node operations
+	// Node operations.
 	case opNewNode:
 		return f.applyNewNode(c.Node)
+	case opNewNamespace:
+		return f.applyNewNamespace(c.Namespace)
+
+	// Router and certificate operations.
+	case opNewRouter:
+		return f.applyNewRouter(c.Router)
+	case opUpdateRouter:
+		return f.applyUpdateRouter(c.Router)
+	case opNewCertificate:
+		return f.applyNewCertificate(c.Certificate)
 	}
 
 	return nil
@@ -124,6 +142,59 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Nodes = append(f.state.Nodes, n)
+	return nil
+}
+
+func (f *fsm) applyNewNamespace(n Namespace) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Namespaces = append(f.state.Namespaces, n)
+	return nil
+}
+
+func (f *fsm) applyNewRouter(r Router) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Routers = append(f.state.Routers, r)
+	return nil
+}
+
+func (f *fsm) applyNewCertificate(c Certificate) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Certificates = append(f.state.Certificates, c)
+	return nil
+}
+
+func (f *fsm) applyUpdateRouter(r Router) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the existing router so we can keep the details from it, and then
+	// remove it from the store so that we can add it again.
+	currentRouter := func() *Router {
+		for i, router := range f.state.Routers {
+			if router.ID == r.ID {
+				f.state.Routers = append(f.state.Routers[:i], f.state.Routers[i+1:]...)
+				return &router
+			}
+		}
+		return nil
+	}()
+
+	// Update the router object if the properties have been specified.
+	if r.CertificateID != "" {
+		currentRouter.CertificateID = r.CertificateID
+	}
+	if r.Domain != "" {
+		currentRouter.Domain = r.Domain
+	}
+	if r.NamespaceID != "" {
+		currentRouter.NamespaceID = r.NamespaceID
+	}
+
+	// Re-create the router object.
+	f.state.Routers = append(f.state.Routers, *currentRouter)
 	return nil
 }
 

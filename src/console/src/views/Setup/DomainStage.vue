@@ -20,6 +20,7 @@
         ref="input"
         size="30"
         :disabled="busy"
+        @keyup.enter="addDomain"
       />
     </div>
 
@@ -111,7 +112,7 @@ export default {
 
   data() {
     return {
-      domain: "",
+      domain: "orbit.samholmes.net",
       busy: false,
 
       certMethod: "letsencrypt",
@@ -120,7 +121,7 @@ export default {
   },
 
   mounted() {
-    this.$refs.input.focus(); // Focus the domain input on page entry
+    this.focus();
   },
 
   computed: {
@@ -143,9 +144,95 @@ export default {
   },
 
   methods: {
-    addDomain() {
+    // Add the domain name to the store.
+    async addDomain() {
+      if (!this.validCert || !this.validDomain || this.busy) return;
       this.busy = true;
-      setTimeout(() => (this.busy = false), 2000);
+
+      // Globally scoped variables that we retrieve over the course of the API
+      // access.
+      let routerID, certificateID, namespaceID;
+
+      /**
+       * Retrieve the orbit-system namespace ID.
+       */
+      {
+        const res = await this.$api.get("/namespaces", { redirect: false });
+        if (res.status !== 200) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        namespaceID = res.data.find(ns => ns.name === "orbit-system").id;
+      }
+
+      /**
+       * Create the router.
+       */
+      {
+        const body = { domain: this.domain, namespace_id: namespaceID };
+        const opts = { redirect: false };
+        const res = await this.$api.post("/router", body, opts);
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        routerID = res.data;
+        console.log(`Created router with ID ${routerID}`);
+      }
+
+      // If we are not adding a certificate, we don't need to do anything
+      // further.
+      if (this.certMethod === "none") {
+        this.busy === false;
+        return;
+      }
+
+      /**
+       * Create the certificate.
+       */
+      {
+        const body =
+          this.certMethod === "letsencrypt"
+            ? { auto_renew: true }
+            : this.certMethod === "upload"
+            ? { raw_cert: this.certFile }
+            : {};
+        body.namespace_id = namespaceID; // Ensure we set the correct namespace.
+        const opts = { redirect: false };
+        const res = await this.$api.post("/certificate", body, opts);
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        certificateID = res.data;
+        console.log(`Created certificate with ID ${certificateID}`);
+      }
+
+      /**
+       * Add the certificate ID to the existing router object.
+       */
+      {
+        const path = `/router/${routerID}`;
+        const body = { certificate_id: certificateID };
+        const opts = { redirect: false };
+        const res = await this.$api.put(path, body, opts);
+        if (res.status !== 200) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+      }
+
+      // TODO: Wait for load balancer update and then continue on.
+    },
+
+    // Focus on the input element.
+    async focus() {
+      await this.$nextTick();
+      this.$refs.input.focus();
     }
   }
 };

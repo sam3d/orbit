@@ -23,8 +23,13 @@ func (s *APIServer) handlers() {
 
 	r.GET("/state", s.handleState())
 	r.GET("/ip", s.handleIP())
+
+	// Group list gets.
 	r.GET("/users", s.handleListUsers())
 	r.GET("/nodes", s.handleListNodes())
+	r.GET("/routers", s.handleListRouters())
+	r.GET("/certificates", s.handleListCertificates())
+	r.GET("/namespaces", s.handleListNamespaces())
 
 	r.POST("/snapshot/*op", s.handleSnapshot())
 
@@ -38,6 +43,17 @@ func (s *APIServer) handlers() {
 		r := r.Group("/user")
 		r.POST("", s.handleUserSignup())
 		r.DELETE("/:id", s.handleUserRemove())
+	}
+
+	{
+		r := r.Group("/router")
+		r.POST("", s.handleRouterAdd())
+		r.PUT("/:id", s.handleRouterUpdate())
+	}
+
+	{
+		r := r.Group("/certificate")
+		r.POST("", s.handleCertificateAdd())
 	}
 }
 
