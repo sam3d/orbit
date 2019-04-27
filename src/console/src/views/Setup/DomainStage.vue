@@ -170,7 +170,11 @@ export default {
        * Create the router.
        */
       {
-        const body = { domain: this.domain, namespace_id: namespaceID };
+        const body = {
+          domain: this.domain,
+          namespace_id: namespaceID,
+          app_id: "orbit-console"
+        };
         const opts = { redirect: false };
         const res = await this.$api.post("/router", body, opts);
         if (res.status !== 201) {

@@ -574,6 +574,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 	type body struct {
 		Domain      string `form:"domain" json:"domain"`
 		NamespaceID string `form:"namespace_id" json:"namespace_id"`
+		AppID       string `form:"app_id" json:"app_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -590,6 +591,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 				ID:          id,
 				Domain:      body.Domain,
 				NamespaceID: body.NamespaceID,
+				AppID:       body.AppID,
 			},
 		}
 
@@ -611,6 +613,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 	type body struct {
 		CertificateID string `form:"certificate_id" json:"certificate_id"`
 		NamespaceID   string `form:"namespace_id" json:"namespace_id"`
+		AppID         string `form:"app_id" json:"app_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -625,6 +628,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 				ID:            id,
 				CertificateID: body.CertificateID,
 				NamespaceID:   body.NamespaceID,
+				AppID:         body.AppID,
 			},
 		}
 

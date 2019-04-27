@@ -12,8 +12,10 @@ import (
 type Router struct {
 	ID            string `json:"id"`
 	Domain        string `json:"domain"`
+	AppID         string `json:"app_id"`
 	CertificateID string `json:"certificate_id"`
-	NamespaceID   string `json:"namespace_id"`
+
+	NamespaceID string `json:"namespace_id"`
 }
 
 // Routers is a group of domain names, ports, and paths, used for routing.
