@@ -1,7 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"orbit.sh/edge/nginx"
+)
 
 func main() {
-	fmt.Println("Hello, world!")
+	a := nginx.App{
+		Domain:             "orbit.samholmes.net",
+		ProxyTo:            "app",
+		HTTPS:              true,
+		CertificateFile:    "/etc/test",
+		CertificateKeyFile: "/etc/test.key",
+	}
+
+	fmt.Println(a)
 }
