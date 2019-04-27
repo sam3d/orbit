@@ -24,7 +24,10 @@ type App struct {
 // configuration.
 func (a App) Marshal() string {
 	b := ""
-	b += a.httpsRedirect() + "\n\n"
+
+	if a.HTTPS {
+		b += a.httpsRedirect() + "\n\n"
+	}
 
 	if a.WWWRedirect {
 		b += a.wwwRedirect() + "\n\n"
