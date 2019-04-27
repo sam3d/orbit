@@ -120,7 +120,7 @@ func (a App) proxyPass() string {
 	// Add the location block.
 	b += fmt.Sprintf(`
   location / {
-    proxy_pass http://%s;
+    proxy_pass http://%s:5000;
 
     proxy_redirect     off;
     proxy_set_header   Host $host;
