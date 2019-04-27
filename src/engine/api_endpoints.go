@@ -663,7 +663,8 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 
 	type body struct {
 		AutoRenew   bool   `form:"auto_renew" json:"auto_renew"`
-		RawCert     []byte `form:"raw_cert" json:"raw_cert"`
+		FullChain   []byte `form:"full_chain" json:"full_chain"`
+		PrivateKey  []byte `form:"private_key" json:"private_key"`
 		NamespaceID string `form:"namespace_id" json:"namespace_id"`
 	}
 
@@ -680,13 +681,14 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 			Certificate: Certificate{
 				ID:          id,
 				AutoRenew:   body.AutoRenew,
-				Data:        body.RawCert,
+				FullChain:   body.FullChain,
+				PrivateKey:  body.PrivateKey,
 				NamespaceID: body.NamespaceID,
 			},
 		}
 
 		// Ensure that the data is correct.
-		if !cmd.Certificate.AutoRenew && len(cmd.Certificate.Data) == 0 {
+		if !cmd.Certificate.AutoRenew && (len(cmd.Certificate.FullChain) == 0 || len(cmd.Certificate.PrivateKey) == 0) {
 			log.Printf("[INFO] api: Neither auto renew or certificate supplied")
 			c.String(http.StatusBadRequest, "You must supply either auto renew or certificate data.")
 			return

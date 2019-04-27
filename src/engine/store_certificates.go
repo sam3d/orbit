@@ -8,9 +8,11 @@ import (
 // Certificate is a TLS certificate.
 type Certificate struct {
 	ID          string `json:"id"`
-	Data        []byte `json:"data"`         // The raw certificate data
 	AutoRenew   bool   `json:"auto_renew"`   // Whether or not to auto renew cert
 	NamespaceID string `json:"namespace_id"` // The ID of the namespace
+
+	FullChain  []byte `json:"full_chain"`  // The full chain certificate data
+	PrivateKey []byte `json:"private_key"` // The private key of the certificate
 }
 
 // Certificates is a group of TLS certificates.

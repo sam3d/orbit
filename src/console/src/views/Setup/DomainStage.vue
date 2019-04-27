@@ -116,7 +116,8 @@ export default {
       busy: false,
 
       certMethod: "letsencrypt",
-      certFile: null // The certificate file if method is "upload"
+      certificateFile: null, // The certificate file if method is "upload"
+      privateKeyFile: null // The private key file if the method is "upload"
     };
   },
 
@@ -201,7 +202,10 @@ export default {
           this.certMethod === "letsencrypt"
             ? { auto_renew: true }
             : this.certMethod === "upload"
-            ? { raw_cert: this.certFile }
+            ? {
+                full_chain: this.certificateFile,
+                private_key: this.privateKeyFile
+              }
             : {};
         body.namespace_id = namespaceID; // Ensure we set the correct namespace.
         const opts = { redirect: false };
