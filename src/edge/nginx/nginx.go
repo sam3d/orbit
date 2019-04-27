@@ -20,15 +20,22 @@ type App struct {
 	WWWRedirect bool
 }
 
+// String generates a complete set of server blocks for the specified app
+// configuration.
 func (a App) String() string {
 	b := ""
-	b += a.httpsRedirect()
-	b += a.wwwRedirect()
+	b += a.httpsRedirect() + "\n\n"
+
+	if a.WWWRedirect {
+		b += a.wwwRedirect() + "\n\n"
+	}
+
 	b += a.proxyPass()
 
 	return b
 }
 
+// httpsRedirect will create a block that redirects to HTTPS.
 func (a App) httpsRedirect() string {
 	return fmt.Sprintf(`server {
   listen 80;
@@ -36,11 +43,11 @@ func (a App) httpsRedirect() string {
   server_name %s;
 
   return 301 https://$host$request_uri;
+}`, a.Domain)
 }
 
-`, a.Domain)
-}
-
+/// wwwRedirect will create a block that redirects to the www or non-www version
+//of a domain name.
 func (a App) wwwRedirect() string {
 	// If the main domain starts with www, we want to redirect from the non "www"
 	// version to the one that has it. However, if the main domain does not start
@@ -83,7 +90,7 @@ func (a App) wwwRedirect() string {
 	b += fmt.Sprintf("  return 301 %s%s$request_uri;\n", protocol, a.Domain)
 
 	// Close the server block and return.
-	b += "}\n\n"
+	b += "}"
 	return b
 }
 
@@ -121,6 +128,6 @@ func (a App) proxyPass() string {
 `, a.ProxyTo)
 
 	// Close the server block and return.
-	b += "}\n\n"
+	b += "}"
 	return b
 }

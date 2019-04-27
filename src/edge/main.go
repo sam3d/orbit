@@ -11,6 +11,7 @@ func main() {
 		Domain:             "orbit.samholmes.net",
 		ProxyTo:            "app",
 		HTTPS:              true,
+		WWWRedirect:        true,
 		CertificateFile:    "/etc/test",
 		CertificateKeyFile: "/etc/test.key",
 	}
