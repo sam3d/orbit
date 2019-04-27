@@ -7,6 +7,10 @@ import (
 )
 
 func main() {
+	example()
+}
+
+func example() {
 	a := nginx.App{
 		Domain:             "orbit.samholmes.net",
 		ProxyTo:            "app",
@@ -16,5 +20,5 @@ func main() {
 		CertificateKeyFile: "/etc/test.key",
 	}
 
-	fmt.Println(a)
+	fmt.Println(a.Marshal())
 }

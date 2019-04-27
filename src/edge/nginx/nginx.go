@@ -20,9 +20,9 @@ type App struct {
 	WWWRedirect bool
 }
 
-// String generates a complete set of server blocks for the specified app
+// Marshal generates a complete set of server blocks for the specified app
 // configuration.
-func (a App) String() string {
+func (a App) Marshal() string {
 	b := ""
 	b += a.httpsRedirect() + "\n\n"
 
