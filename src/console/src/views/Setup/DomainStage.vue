@@ -174,7 +174,7 @@ export default {
         const body = {
           domain: this.domain,
           namespace_id: namespaceID,
-          app_id: "orbit-console"
+          app_id: "console"
         };
         const opts = { redirect: false };
         const res = await this.$api.post("/router", body, opts);

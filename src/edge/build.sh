@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t edge -f ./Dockerfile ..
+docker build -t orbit.sh/edge -f ./Dockerfile ..
