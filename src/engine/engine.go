@@ -95,7 +95,13 @@ func (e *Engine) SetupStatus() (mode, stage string) {
 		return "join", "node"
 	}
 
-	return "bootstrap", "domain"
+	// If there are no routers, that means that we must need to set up the domain
+	// that is used for routing all Orbit traffic.
+	if len(e.Store.state.Routers) == 0 {
+		return "bootstrap", "domain"
+	}
+
+	return "bootstrap", "user"
 }
 
 // Start starts the engine and all of its subcomponents. This is dependent on

@@ -662,10 +662,11 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool   `form:"auto_renew" json:"auto_renew"`
-		FullChain   []byte `form:"full_chain" json:"full_chain"`
-		PrivateKey  []byte `form:"private_key" json:"private_key"`
-		NamespaceID string `form:"namespace_id" json:"namespace_id"`
+		AutoRenew   bool     `form:"auto_renew" json:"auto_renew"`
+		FullChain   []byte   `form:"full_chain" json:"full_chain"`
+		PrivateKey  []byte   `form:"private_key" json:"private_key"`
+		NamespaceID string   `form:"namespace_id" json:"namespace_id"`
+		Domains     []string `form:"domains" json:"domains"`
 	}
 
 	return func(c *gin.Context) {
@@ -684,6 +685,7 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 				FullChain:   body.FullChain,
 				PrivateKey:  body.PrivateKey,
 				NamespaceID: body.NamespaceID,
+				Domains:     body.Domains,
 			},
 		}
 
@@ -692,6 +694,11 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 			log.Printf("[INFO] api: Neither auto renew or certificate supplied")
 			c.String(http.StatusBadRequest, "You must supply either auto renew or certificate data.")
 			return
+		}
+
+		// Attempt to renew if the certificate has that property set.
+		if cmd.Certificate.AutoRenew {
+			Renew(cmd.Certificate)
 		}
 
 		// Apply the certificate to the store.

@@ -200,7 +200,7 @@ export default {
       {
         const body =
           this.certMethod === "letsencrypt"
-            ? { auto_renew: true }
+            ? { auto_renew: true, domains: [this.domain] }
             : this.certMethod === "upload"
             ? {
                 full_chain: this.certificateFile,

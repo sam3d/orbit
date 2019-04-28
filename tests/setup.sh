@@ -2,7 +2,6 @@
 main() {
   ensure-environment
   install-deps
-  configure
   cleanup
 }
 
@@ -24,10 +23,6 @@ install-deps() {
   add-apt-repository --yes ppa:longsleep/golang-backports
   apt-get update
   apt-get install --yes golang-go
-}
-
-configure() {
-  docker network create -d overlay orbit # Create the primary routing mesh
 }
 
 cleanup() {
