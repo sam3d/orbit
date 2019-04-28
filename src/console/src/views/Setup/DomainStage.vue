@@ -80,6 +80,17 @@
           username and password.
         </p>
       </div>
+
+      <div class="upload" v-if="certMethod === 'upload'">
+        <input
+          type="file"
+          @change="e => (this.certificateFile = e.target.files[0])"
+        />
+        <input
+          type="file"
+          @change="e => (this.privateKeyFile = e.target.files[0])"
+        />
+      </div>
     </div>
 
     <div class="button-group">
@@ -112,7 +123,7 @@ export default {
 
   data() {
     return {
-      domain: "orbit.samholmes.net",
+      domain: "dev.local",
       busy: false,
 
       certMethod: "letsencrypt",
@@ -194,21 +205,15 @@ export default {
         return;
       }
 
-      /**
-       * Create the certificate.
-       */
-      {
-        const body =
-          this.certMethod === "letsencrypt"
-            ? { auto_renew: true, domains: [this.domain] }
-            : this.certMethod === "upload"
-            ? {
-                full_chain: this.certificateFile,
-                private_key: this.privateKeyFile
-              }
-            : {};
-        body.namespace_id = namespaceID; // Ensure we set the correct namespace.
+      // If we are using letsencrypt, we can just set the auto_renew property
+      // and the server will take care of the rest.
+      if (this.certMethod === "letsencrypt") {
         const opts = { redirect: false };
+        const body = {
+          auto_renew: true,
+          domains: [this.domain],
+          namespace_id: namespaceID
+        };
         const res = await this.$api.post("/certificate", body, opts);
         if (res.status !== 201) {
           this.busy = false;
@@ -216,7 +221,30 @@ export default {
           return;
         }
         certificateID = res.data;
-        console.log(`Created certificate with ID ${certificateID}`);
+      }
+
+      if (this.certMethod === "upload") {
+        // Create the multipart form data and append the cert files.
+        const body = new FormData();
+        body.append("full_chain", this.certificateFile);
+        body.append("private_key", this.privateKeyFile);
+
+        // Attach the other body properties to identify this certificate.
+        body.append("domains", [this.domain]);
+        body.append("namespace_id", namespaceID);
+
+        // Construct and submit the request.
+        const headers = { "Content-Type": "multipart/form-data" };
+        const opts = { redirect: false, headers };
+        const res = await this.$api.post("/certificate", body, opts);
+
+        // If there is an error from the request, log it out.
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        certificateID = res.data;
       }
 
       /**

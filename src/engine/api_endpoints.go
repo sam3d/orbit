@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"strings"
@@ -662,16 +664,29 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool     `form:"auto_renew" json:"auto_renew"`
-		FullChain   []byte   `form:"full_chain" json:"full_chain"`
-		PrivateKey  []byte   `form:"private_key" json:"private_key"`
-		NamespaceID string   `form:"namespace_id" json:"namespace_id"`
-		Domains     []string `form:"domains" json:"domains"`
+		AutoRenew   bool                  `form:"auto_renew" json:"auto_renew"`
+		FullChain   *multipart.FileHeader `form:"full_chain" json:"full_chain"`
+		PrivateKey  *multipart.FileHeader `form:"private_key" json:"private_key"`
+		NamespaceID string                `form:"namespace_id" json:"namespace_id"`
+		Domains     []string              `form:"domains" json:"domains"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
 		c.Bind(&body)
+
+		// Read and parse the full chain and private key.
+		var fullChain, privateKey []byte
+		if body.FullChain != nil {
+			file, _ := body.FullChain.Open()
+			data, _ := ioutil.ReadAll(file)
+			fullChain = data
+		}
+		if body.PrivateKey != nil {
+			file, _ := body.PrivateKey.Open()
+			data, _ := ioutil.ReadAll(file)
+			privateKey = data
+		}
 
 		// Generate the certificate ID.
 		id := store.state.Certificates.GenerateID()
@@ -682,8 +697,8 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 			Certificate: Certificate{
 				ID:          id,
 				AutoRenew:   body.AutoRenew,
-				FullChain:   body.FullChain,
-				PrivateKey:  body.PrivateKey,
+				FullChain:   fullChain,
+				PrivateKey:  privateKey,
 				NamespaceID: body.NamespaceID,
 				Domains:     body.Domains,
 			},
@@ -694,11 +709,6 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 			log.Printf("[INFO] api: Neither auto renew or certificate supplied")
 			c.String(http.StatusBadRequest, "You must supply either auto renew or certificate data.")
 			return
-		}
-
-		// Attempt to renew if the certificate has that property set.
-		if cmd.Certificate.AutoRenew {
-			Renew(cmd.Certificate)
 		}
 
 		// Apply the certificate to the store.
