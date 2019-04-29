@@ -120,7 +120,7 @@ export default {
   margin-top: 34px;
 }
 
-input {
+input:not([type="file"]) {
   margin-top: 34px;
   font-size: 20px;
   font-family: "Source Code Pro", sans-serif;
