@@ -733,6 +733,6 @@ func (s *APIServer) handleRestartService() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Could not force update the %s service.", id)
 			return
 		}
-		c.String(http.StatusOK, "Force updated the %s service", id)
+		c.String(http.StatusOK, "Force updated the %s service.", id)
 	}
 }
