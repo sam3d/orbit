@@ -217,7 +217,7 @@ export default {
       // If we are not adding a certificate, we don't need to do anything
       // further.
       if (this.certMethod === "none") {
-        this.busy === false;
+        this.edgeReloadRedirect();
         return;
       }
 
@@ -278,13 +278,29 @@ export default {
         }
       }
 
-      // TODO: Wait for load balancer update and then continue on.
+      this.edgeReloadRedirect();
     },
 
     // Focus on the input element.
     async focus() {
       await this.$nextTick();
       this.$refs.input.focus();
+    },
+
+    // Reload the edge router and redirect to the correct domain.
+    async edgeReloadRedirect() {
+      // Perform the restart.
+      const { status } = await this.$api.post("/service/restart/edge");
+      if (status !== 200) {
+        this.busy = false;
+        alert("Could not reload the edge router.");
+        return;
+      }
+
+      // Redirect.
+      console.log(this.certMethod);
+      const protocol = this.certMethod === "none" ? "http://" : "https://";
+      window.location.href = `${protocol}${this.domain}/setup`;
     }
   }
 };
