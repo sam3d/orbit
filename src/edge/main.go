@@ -38,8 +38,9 @@ func main() {
 	for _, r := range routers {
 		// Create the standard app.
 		app := nginx.App{
-			Domain:  r.Domain,
-			ProxyTo: r.AppID,
+			Domain:      r.Domain,
+			ProxyTo:     r.AppID,
+			WWWRedirect: r.WWWRedirect,
 		}
 
 		// If it uses HTTPS, add the certificate details.
@@ -48,9 +49,6 @@ func main() {
 			app.CertificateFile = filepath.Join(CertsPath, r.CertificateID+".crt")
 			app.CertificateKeyFile = filepath.Join(CertsPath, r.CertificateID+".key")
 		}
-
-		// TODO: Set this to use an actual router value.
-		app.WWWRedirect = true
 
 		// Actually add the app to the apps list.
 		apps = append(apps, app)

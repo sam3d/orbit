@@ -50,6 +50,7 @@ type Router struct {
 	Domain        string `json:"domain"`
 	AppID         string `json:"app_id"`
 	CertificateID string `json:"certificate_id"`
+	WWWRedirect   bool   `json:"www_redirect"`
 }
 
 // Certificate is a logical certificate

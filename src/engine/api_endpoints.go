@@ -579,6 +579,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		Domain      string `form:"domain" json:"domain"`
 		NamespaceID string `form:"namespace_id" json:"namespace_id"`
 		AppID       string `form:"app_id" json:"app_id"`
+		WWWRedirect bool   `form:"www_redirect" json:"www_redirect"`
 	}
 
 	return func(c *gin.Context) {
@@ -596,6 +597,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 				Domain:      body.Domain,
 				NamespaceID: body.NamespaceID,
 				AppID:       body.AppID,
+				WWWRedirect: body.WWWRedirect,
 			},
 		}
 
