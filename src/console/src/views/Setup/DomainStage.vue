@@ -298,7 +298,6 @@ export default {
       }
 
       // Redirect.
-      console.log(this.certMethod);
       const protocol = this.certMethod === "none" ? "http://" : "https://";
       window.location.href = `${protocol}${this.domain}/setup`;
     }
