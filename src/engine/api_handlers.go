@@ -31,7 +31,8 @@ func (s *APIServer) handlers() {
 	r.GET("/certificates", s.handleListCertificates())
 	r.GET("/namespaces", s.handleListNamespaces())
 
-	r.POST("/snapshot/*op", s.handleSnapshot())
+	r.POST("/snapshot/:op", s.handleSnapshot())
+	r.POST("/service/restart/:id", s.handleRestartService())
 
 	{
 		r := r.Group("/cluster")

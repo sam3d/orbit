@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"orbit.sh/engine/docker"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
@@ -720,5 +722,17 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 
 		// Otherwise, return the ID of the generated certificate.
 		c.String(http.StatusCreated, id)
+	}
+}
+
+func (s *APIServer) handleRestartService() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if err := docker.ForceUpdateService(id); err != nil {
+			log.Printf("[ERR] api: Could not force update service: %s", err)
+			c.String(http.StatusInternalServerError, "Could not force update the %s service.", id)
+			return
+		}
+		c.String(http.StatusOK, "Force updated the %s service", id)
 	}
 }
