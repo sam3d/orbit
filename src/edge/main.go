@@ -43,8 +43,12 @@ func main() {
 			WWWRedirect: r.WWWRedirect,
 		}
 
-		// If it uses HTTPS, add the certificate details.
-		if r.CertificateID != "" {
+		// If it uses HTTPS, add the certificate details. We need to perform the
+		// check to ensure that we have every bit of detail required before we can
+		// go adding HTTPS. This is primarily to ensure that we don't try to enable
+		// HTTPS and then have nginx throw a fit because it can't find or verify the
+		// SSL certificates.
+		if r.CertificateID != "" && app.CertificateFile != "" && app.CertificateKeyFile != "" {
 			app.HTTPS = true
 			app.CertificateFile = filepath.Join(CertsPath, r.CertificateID+".crt")
 			app.CertificateKeyFile = filepath.Join(CertsPath, r.CertificateID+".key")
