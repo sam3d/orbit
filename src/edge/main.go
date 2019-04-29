@@ -74,11 +74,12 @@ func main() {
 		config += fmt.Sprintf(`server {
   listen 80;
   listen [::]:80;
+  server_name %s;
 
   location %s {
     return 200 "%s";
   }
-}`, c.Path, c.Token)
+}`, c.Domain, c.Path, c.Token)
 	}
 
 	// Write the config.

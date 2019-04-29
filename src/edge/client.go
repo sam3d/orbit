@@ -56,8 +56,9 @@ type Router struct {
 // Challenge is a LetsEncrypt challenge path. We must serve the "token" string
 // at the "path" URL.
 type Challenge struct {
-	Path  string `json:"path"`
-	Token string `json:"token"`
+	Path   string `json:"path"`
+	Token  string `json:"token"`
+	Domain string `json:"domain"`
 }
 
 // Certificate is a logical certificate
