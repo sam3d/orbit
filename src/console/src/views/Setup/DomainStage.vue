@@ -82,14 +82,24 @@
       </div>
 
       <div class="upload" v-if="certMethod === 'upload'">
-        <input
-          type="file"
-          @change="e => (this.certificateFile = e.target.files[0])"
-        />
-        <input
-          type="file"
-          @change="e => (this.privateKeyFile = e.target.files[0])"
-        />
+        <div class="upload-group">
+          <h4>Certificate file</h4>
+          <input
+            ref="certificateFileInput"
+            type="file"
+            :disabled="busy"
+            @change="e => (this.certificateFile = e.target.files[0])"
+          />
+        </div>
+        <div class="upload-group">
+          <h4>Private key file</h4>
+          <input
+            type="file"
+            ref="privateKeyFileInput"
+            :disabled="busy"
+            @change="e => (this.privateKeyFile = e.target.files[0])"
+          />
+        </div>
       </div>
     </div>
 
@@ -149,9 +159,15 @@ export default {
       return validator.isFQDN(this.domain);
     },
 
-    // This checks whether the SSL certificate option is valid.
+    // This checks whether the SSL certificate option is valid. "None" or
+    // "LetsEncrypt" don't require field validation, and as such will always be
+    // valid options. It's only with the upload method we need to make sure that
+    // both of the fields are present.
     validCert() {
-      return true;
+      return (
+        this.certMethod !== "upload" ||
+        (this.certificateFile && this.privateKeyFile)
+      );
     }
   },
 
@@ -416,6 +432,34 @@ export default {
       margin-top: 10px;
       line-height: 1.5rem;
       color: #ee5253;
+    }
+  }
+
+  .upload {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
+    margin-top: 20px;
+    text-align: left;
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr;
+    }
+
+    .upload-group {
+      border: solid 1px #ddd;
+      padding: 20px;
+      border-radius: 4px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+    }
+
+    h4 {
+      margin-bottom: 8px;
+      font-size: 16px;
     }
   }
 }
