@@ -727,6 +727,16 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleRenewCertificates() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := s.engine.Store.RenewCertificates(); err != nil {
+			log.Printf("[ERR] api: Could not renew certificates: %s", err)
+			c.String(http.StatusInternalServerError, "Could not renew certificates")
+			return
+		}
+	}
+}
+
 func (s *APIServer) handleRestartService() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")

@@ -8,9 +8,34 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme"
 )
+
+// Certificate is a TLS certificate.
+type Certificate struct {
+	ID          string   `json:"id"`
+	Domains     []string `json:"domains"`      // The domain names for which the certificate is valid
+	NamespaceID string   `json:"namespace_id"` // The ID of the namespace
+
+	FullChain  []byte `json:"full_chain"`  // The full chain certificate data
+	PrivateKey []byte `json:"private_key"` // The private key of the certificate
+
+	AutoRenew  bool           `json:"auto_renew"` // Whether or not to auto renew cert
+	Challenges []Challenge    `json:"challenges"` // Pending challenges for this certificate
+	Errors     []RenewalError `json:"errors"`     // Any errors that occurred during renewal
+}
+
+// Certificates is a group of TLS certificates.
+type Certificates []Certificate
+
+// RenewalError is an error renewing a certificate.
+type RenewalError struct {
+	Time    time.Time `json:"time"`
+	Message string    `json:"message"`
+}
 
 // Challenge is a HTTP-01 letsencrypt challenge. It contains the path, token,
 // and domain required for successfully serving the challenge response.
@@ -20,20 +45,88 @@ type Challenge struct {
 	Domain string `json:"domain"`
 }
 
-// Certificate is a TLS certificate.
-type Certificate struct {
-	ID          string      `json:"id"`
-	AutoRenew   bool        `json:"auto_renew"`   // Whether or not to auto renew cert
-	Domains     []string    `json:"domains"`      // The domain names for which the certificate is valid
-	Challenges  []Challenge `json:"challenges"`   // Pending challenges for this certificate
-	NamespaceID string      `json:"namespace_id"` // The ID of the namespace
-
-	FullChain  []byte `json:"full_chain"`  // The full chain certificate data
-	PrivateKey []byte `json:"private_key"` // The private key of the certificate
+func (re RenewalError) String() string {
+	return fmt.Sprintf("%s: %s", re.Time, re.Message)
 }
 
-// Certificates is a group of TLS certificates.
-type Certificates []Certificate
+// RenewCertificates will undergo the issuance and distributed of the
+// certificate challenges, and then update the certificates should that be
+// required.
+func (s *Store) RenewCertificates() error {
+	// Create the ACME client.
+	client, err := newACMEClient()
+	if err != nil {
+		return errors.Wrap(err, "could not create ACME client")
+	}
+
+	// Retrieve the challenges for the certificates.
+	for _, cert := range s.state.Certificates {
+		// Skip the auto-renewal for this certificate if it is not enabled. This
+		// means that no LetsEncrypt operations will take place unless this has been
+		// specified.
+		if !cert.AutoRenew {
+			continue
+		}
+
+		// Keep track of a list of challenges for the domains in this certificate.
+		var challenges []Challenge
+
+		// Loop over all of the domains in this certificate and prepare challenges
+		// for each of them.
+		for _, domain := range cert.Domains {
+			auth, err := client.Authorize(context.Background(), domain)
+			if err != nil {
+				return errors.Wrap(err, "could not authorize the domain")
+			}
+
+			// Ensure that the challenge exists and is valid.
+			var challenge *acme.Challenge
+			for _, c := range auth.Challenges {
+				if c.Type == "http-01" {
+					challenge = c
+					break
+				}
+			}
+			if challenge == nil {
+				return errors.Wrap(err, "no http-01 challenge present")
+			}
+
+			// Retrieve the challenge properties.
+			path := client.HTTP01ChallengePath(challenge.Token)
+			res, err := client.HTTP01ChallengeResponse(challenge.Token)
+			if err != nil {
+				return errors.Wrap(err, "could not retrieve challenge token")
+			}
+
+			// Construct the challenge type and append it to the list of challenges.
+			challenges = append(challenges, Challenge{
+				Path:   path,
+				Token:  res,
+				Domain: domain,
+			})
+		}
+
+		// Now we have the challenges for this certificate, let's create and apply
+		// the challenges to the certificate object in the store.
+		cmd := command{
+			Op: opUpdateCertificate,
+			Certificate: Certificate{
+				ID:         cert.ID,
+				Challenges: challenges,
+			},
+		}
+
+		if err := cmd.Apply(s); err != nil {
+			return errors.Wrap(err, "could not add challenges to certificate")
+		}
+	}
+
+	// All of the certificates now have challenges on them, update the load
+	// balancers to perform the update.
+	// TODO: Implement this.
+
+	return nil
+}
 
 func newACMEClient() (*acme.Client, error) {
 	acctKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -54,46 +147,6 @@ func newACMEClient() (*acme.Client, error) {
 	}
 
 	return client, nil
-}
-
-func Renew(cert Certificate) {
-	// Create ACME client.
-	client, err := newACMEClient()
-	if err != nil {
-		return
-	}
-
-	// Keep track of the authorizations.
-
-	for _, domain := range cert.Domains {
-		// Create the authorization for this domain.
-		auth, err := client.Authorize(context.Background(), domain)
-		if err != nil {
-			log.Printf("[ERR] renew: Could not authorize: %s", err)
-			return
-		}
-
-		// Ensure that the challenge exists and is valid.
-		var challenge *acme.Challenge
-		for _, c := range auth.Challenges {
-			if c.Type == "http-01" {
-				challenge = c
-				break
-			}
-		}
-		if challenge == nil {
-			log.Print("[ERR] renew: No HTTP-01 challenge present")
-			return
-		}
-
-		// Retrieve the challenge properties.
-		path := client.HTTP01ChallengePath(challenge.Token)
-		res, err := client.HTTP01ChallengeResponse(challenge.Token)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(path, "\n\n", res, "\n\n\n")
-	}
 }
 
 // GenerateID will create a new certificate ID based on the existing
