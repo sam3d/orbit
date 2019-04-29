@@ -8,6 +8,10 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gin-gonic/gin v1.3.1-0.20190424122141-202f8fc58af4
 	github.com/gliderlabs/ssh v0.1.3 // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
@@ -32,6 +36,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/openzipkin/zipkin-go v0.1.5 // indirect
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/pkg/errors v0.8.1
