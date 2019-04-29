@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"orbit.sh/engine/docker"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/raft"
@@ -574,6 +578,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 	type body struct {
 		Domain      string `form:"domain" json:"domain"`
 		NamespaceID string `form:"namespace_id" json:"namespace_id"`
+		AppID       string `form:"app_id" json:"app_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -590,6 +595,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 				ID:          id,
 				Domain:      body.Domain,
 				NamespaceID: body.NamespaceID,
+				AppID:       body.AppID,
 			},
 		}
 
@@ -611,6 +617,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 	type body struct {
 		CertificateID string `form:"certificate_id" json:"certificate_id"`
 		NamespaceID   string `form:"namespace_id" json:"namespace_id"`
+		AppID         string `form:"app_id" json:"app_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -625,6 +632,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 				ID:            id,
 				CertificateID: body.CertificateID,
 				NamespaceID:   body.NamespaceID,
+				AppID:         body.AppID,
 			},
 		}
 
@@ -658,14 +666,29 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool   `form:"auto_renew" json:"auto_renew"`
-		RawCert     []byte `form:"raw_cert" json:"raw_cert"`
-		NamespaceID string `form:"namespace_id" json:"namespace_id"`
+		AutoRenew   bool                  `form:"auto_renew" json:"auto_renew"`
+		FullChain   *multipart.FileHeader `form:"full_chain" json:"full_chain"`
+		PrivateKey  *multipart.FileHeader `form:"private_key" json:"private_key"`
+		NamespaceID string                `form:"namespace_id" json:"namespace_id"`
+		Domains     []string              `form:"domains" json:"domains"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
 		c.Bind(&body)
+
+		// Read and parse the full chain and private key.
+		var fullChain, privateKey []byte
+		if body.FullChain != nil {
+			file, _ := body.FullChain.Open()
+			data, _ := ioutil.ReadAll(file)
+			fullChain = data
+		}
+		if body.PrivateKey != nil {
+			file, _ := body.PrivateKey.Open()
+			data, _ := ioutil.ReadAll(file)
+			privateKey = data
+		}
 
 		// Generate the certificate ID.
 		id := store.state.Certificates.GenerateID()
@@ -676,13 +699,15 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 			Certificate: Certificate{
 				ID:          id,
 				AutoRenew:   body.AutoRenew,
-				Data:        body.RawCert,
+				FullChain:   fullChain,
+				PrivateKey:  privateKey,
 				NamespaceID: body.NamespaceID,
+				Domains:     body.Domains,
 			},
 		}
 
 		// Ensure that the data is correct.
-		if !cmd.Certificate.AutoRenew && len(cmd.Certificate.Data) == 0 {
+		if !cmd.Certificate.AutoRenew && (len(cmd.Certificate.FullChain) == 0 || len(cmd.Certificate.PrivateKey) == 0) {
 			log.Printf("[INFO] api: Neither auto renew or certificate supplied")
 			c.String(http.StatusBadRequest, "You must supply either auto renew or certificate data.")
 			return
@@ -697,5 +722,17 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 
 		// Otherwise, return the ID of the generated certificate.
 		c.String(http.StatusCreated, id)
+	}
+}
+
+func (s *APIServer) handleRestartService() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if err := docker.ForceUpdateService(id); err != nil {
+			log.Printf("[ERR] api: Could not force update service: %s", err)
+			c.String(http.StatusInternalServerError, "Could not force update the %s service.", id)
+			return
+		}
+		c.String(http.StatusOK, "Force updated the %s service.", id)
 	}
 }

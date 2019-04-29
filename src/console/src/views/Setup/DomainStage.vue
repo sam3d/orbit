@@ -80,6 +80,27 @@
           username and password.
         </p>
       </div>
+
+      <div class="upload" v-if="certMethod === 'upload'">
+        <div class="upload-group">
+          <h4>Certificate file</h4>
+          <input
+            ref="certificateFileInput"
+            type="file"
+            :disabled="busy"
+            @change="e => (this.certificateFile = e.target.files[0])"
+          />
+        </div>
+        <div class="upload-group">
+          <h4>Private key file</h4>
+          <input
+            type="file"
+            ref="privateKeyFileInput"
+            :disabled="busy"
+            @change="e => (this.privateKeyFile = e.target.files[0])"
+          />
+        </div>
+      </div>
     </div>
 
     <div class="button-group">
@@ -112,11 +133,12 @@ export default {
 
   data() {
     return {
-      domain: "orbit.samholmes.net",
+      domain: "dev.local",
       busy: false,
 
       certMethod: "letsencrypt",
-      certFile: null // The certificate file if method is "upload"
+      certificateFile: null, // The certificate file if method is "upload"
+      privateKeyFile: null // The private key file if the method is "upload"
     };
   },
 
@@ -137,9 +159,15 @@ export default {
       return validator.isFQDN(this.domain);
     },
 
-    // This checks whether the SSL certificate option is valid.
+    // This checks whether the SSL certificate option is valid. "None" or
+    // "LetsEncrypt" don't require field validation, and as such will always be
+    // valid options. It's only with the upload method we need to make sure that
+    // both of the fields are present.
     validCert() {
-      return true;
+      return (
+        this.certMethod !== "upload" ||
+        (this.certificateFile && this.privateKeyFile)
+      );
     }
   },
 
@@ -170,7 +198,11 @@ export default {
        * Create the router.
        */
       {
-        const body = { domain: this.domain, namespace_id: namespaceID };
+        const body = {
+          domain: this.domain,
+          namespace_id: namespaceID,
+          app_id: "console"
+        };
         const opts = { redirect: false };
         const res = await this.$api.post("/router", body, opts);
         if (res.status !== 201) {
@@ -185,22 +217,19 @@ export default {
       // If we are not adding a certificate, we don't need to do anything
       // further.
       if (this.certMethod === "none") {
-        this.busy === false;
+        this.edgeReloadRedirect();
         return;
       }
 
-      /**
-       * Create the certificate.
-       */
-      {
-        const body =
-          this.certMethod === "letsencrypt"
-            ? { auto_renew: true }
-            : this.certMethod === "upload"
-            ? { raw_cert: this.certFile }
-            : {};
-        body.namespace_id = namespaceID; // Ensure we set the correct namespace.
+      // If we are using letsencrypt, we can just set the auto_renew property
+      // and the server will take care of the rest.
+      if (this.certMethod === "letsencrypt") {
         const opts = { redirect: false };
+        const body = {
+          auto_renew: true,
+          domains: [this.domain],
+          namespace_id: namespaceID
+        };
         const res = await this.$api.post("/certificate", body, opts);
         if (res.status !== 201) {
           this.busy = false;
@@ -208,7 +237,30 @@ export default {
           return;
         }
         certificateID = res.data;
-        console.log(`Created certificate with ID ${certificateID}`);
+      }
+
+      if (this.certMethod === "upload") {
+        // Create the multipart form data and append the cert files.
+        const body = new FormData();
+        body.append("full_chain", this.certificateFile);
+        body.append("private_key", this.privateKeyFile);
+
+        // Attach the other body properties to identify this certificate.
+        body.append("domains", [this.domain]);
+        body.append("namespace_id", namespaceID);
+
+        // Construct and submit the request.
+        const headers = { "Content-Type": "multipart/form-data" };
+        const opts = { redirect: false, headers };
+        const res = await this.$api.post("/certificate", body, opts);
+
+        // If there is an error from the request, log it out.
+        if (res.status !== 201) {
+          this.busy = false;
+          alert(res.data);
+          return;
+        }
+        certificateID = res.data;
       }
 
       /**
@@ -226,13 +278,29 @@ export default {
         }
       }
 
-      // TODO: Wait for load balancer update and then continue on.
+      this.edgeReloadRedirect();
     },
 
     // Focus on the input element.
     async focus() {
       await this.$nextTick();
       this.$refs.input.focus();
+    },
+
+    // Reload the edge router and redirect to the correct domain.
+    async edgeReloadRedirect() {
+      // Perform the restart.
+      const { status } = await this.$api.post("/service/restart/edge");
+      if (status !== 200) {
+        this.busy = false;
+        alert("Could not reload the edge router.");
+        return;
+      }
+
+      // Redirect.
+      console.log(this.certMethod);
+      const protocol = this.certMethod === "none" ? "http://" : "https://";
+      window.location.href = `${protocol}${this.domain}/setup`;
     }
   }
 };
@@ -380,6 +448,34 @@ export default {
       margin-top: 10px;
       line-height: 1.5rem;
       color: #ee5253;
+    }
+  }
+
+  .upload {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
+    margin-top: 20px;
+    text-align: left;
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr;
+    }
+
+    .upload-group {
+      border: solid 1px #ddd;
+      padding: 20px;
+      border-radius: 4px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+    }
+
+    h4 {
+      margin-bottom: 8px;
+      font-size: 16px;
     }
   }
 }

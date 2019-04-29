@@ -192,6 +192,9 @@ func (f *fsm) applyUpdateRouter(r Router) interface{} {
 	if r.NamespaceID != "" {
 		currentRouter.NamespaceID = r.NamespaceID
 	}
+	if r.AppID != "" {
+		currentRouter.AppID = r.AppID
+	}
 
 	// Re-create the router object.
 	f.state.Routers = append(f.state.Routers, *currentRouter)
