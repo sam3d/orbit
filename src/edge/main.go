@@ -18,10 +18,12 @@ func main() {
 
 	routers := client.GetRouters()
 	certificates := client.GetCertificates()
+	var challenges []Challenge
 
-	// Write the certificates.
+	// Write the certificates and the challenges.
 	os.MkdirAll("/etc/nginx/certs", os.ModePerm)
 	for _, c := range certificates {
+		// Write the certificate and the private key.
 		certificatePath := filepath.Join(CertsPath, c.ID+".crt")
 		privateKeyPath := filepath.Join(CertsPath, c.ID+".key")
 
@@ -31,6 +33,9 @@ func main() {
 		if err := ioutil.WriteFile(privateKeyPath, c.PrivateKey, 0644); err != nil {
 			log.Fatalf("Could not write private key: %s", err)
 		}
+
+		// Add the challenges to the challenges variable.
+		challenges = append(challenges, c.Challenges...)
 	}
 
 	// Generate nginx app objects.
@@ -58,10 +63,22 @@ func main() {
 		apps = append(apps, app)
 	}
 
-	// Generate the config.
+	// Generate the config from the apps.
 	var config string
 	for _, a := range apps {
 		config += a.Marshal() + "\n\n"
+	}
+
+	// Append the challenges to the config.
+	for _, c := range challenges {
+		config += fmt.Sprintf(`server {
+  listen 80;
+  listen [::]:80;
+
+  location %s {
+    return 200 "%s";
+  }
+}`, c.Path, c.Token)
 	}
 
 	// Write the config.
