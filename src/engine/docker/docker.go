@@ -24,6 +24,7 @@ func ForceUpdateService(id string) error {
 		log.Printf("[ERR] docker: Could not access raw service inspection: %s", err)
 		return err
 	}
+	service.Spec.TaskTemplate.ForceUpdate = 1 // Force update
 	_, err = cli.ServiceUpdate(ctx, id, service.Meta.Version, service.Spec, types.ServiceUpdateOptions{})
 	if err != nil {
 		log.Printf("[ERR] docker: Could not update service: %s", err)
