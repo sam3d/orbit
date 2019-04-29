@@ -457,7 +457,6 @@ export default {
     grid-template-columns: repeat(2, 1fr);
     grid-gap: 20px;
     margin-top: 20px;
-    text-align: left;
 
     @media (max-width: 700px) {
       grid-template-columns: 1fr;
