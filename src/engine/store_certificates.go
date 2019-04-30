@@ -6,9 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme"
@@ -23,19 +21,12 @@ type Certificate struct {
 	FullChain  []byte `json:"full_chain"`  // The full chain certificate data
 	PrivateKey []byte `json:"private_key"` // The private key of the certificate
 
-	AutoRenew  bool           `json:"auto_renew"` // Whether or not to auto renew cert
-	Challenges []Challenge    `json:"challenges"` // Pending challenges for this certificate
-	Errors     []RenewalError `json:"errors"`     // Any errors that occurred during renewal
+	AutoRenew  bool        `json:"auto_renew"` // Whether or not to auto renew cert
+	Challenges []Challenge `json:"challenges"` // Pending challenges for this certificate
 }
 
 // Certificates is a group of TLS certificates.
 type Certificates []Certificate
-
-// RenewalError is an error renewing a certificate.
-type RenewalError struct {
-	Time    time.Time `json:"time"`
-	Message string    `json:"message"`
-}
 
 // Challenge is a HTTP-01 letsencrypt challenge. It contains the path, token,
 // and domain required for successfully serving the challenge response.
@@ -43,10 +34,6 @@ type Challenge struct {
 	Path   string `json:"path"`
 	Token  string `json:"token"`
 	Domain string `json:"domain"`
-}
-
-func (re RenewalError) String() string {
-	return fmt.Sprintf("%s: %s", re.Time, re.Message)
 }
 
 // RenewCertificates will undergo the issuance and distributed of the
