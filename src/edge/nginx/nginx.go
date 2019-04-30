@@ -34,6 +34,8 @@ func GenerateDefault() string {
 
 	server_name _;
 
+	include /etc/nginx/certs/challenges.conf;
+
  	location / {
 		return 404;
 	}
@@ -70,7 +72,11 @@ func (a App) httpsRedirect() string {
 	listen [::]:80;
 	server_name %s;
 
-	return 301 https://$host$request_uri;
+	include /etc/nginx/certs/challenges.conf;
+
+	location / {
+		return 301 https://$host$request_uri;
+	}
 }`, a.Domain)
 }
 
@@ -108,6 +114,9 @@ func (a App) wwwRedirect() string {
 		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
 
+	// Add the catch-all location handler.
+	b += "\tinclude /etc/nginx/certs/challenges.conf;\n\n"
+
 	// Add the redirect handler.
 	var protocol string
 	if a.HTTPS {
@@ -115,7 +124,9 @@ func (a App) wwwRedirect() string {
 	} else {
 		protocol = "http://"
 	}
-	b += fmt.Sprintf("\treturn 301 %s%s$request_uri;\n", protocol, a.Domain)
+	b += fmt.Sprintf(`location / {
+	return 301 %s%s$request_uri;
+}`, protocol, a.Domain)
 
 	// Close the server block and return.
 	b += "}"
@@ -141,6 +152,9 @@ func (a App) proxyPass() string {
 		b += "\tssl_certificate " + a.CertificateFile + ";\n"
 		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
+
+	// Add the catch all location handler.
+	b += "\tinclude /etc/nginx/certs/challenges.conf;\n\n"
 
 	// Add the location block.
 	b += fmt.Sprintf(`	location / {
