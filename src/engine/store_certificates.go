@@ -6,10 +6,12 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme"
+	"orbit.sh/engine/docker"
 )
 
 // Certificate is a TLS certificate.
@@ -46,6 +48,9 @@ func (s *Store) RenewCertificates() error {
 		return errors.Wrap(err, "could not create ACME client")
 	}
 
+	// Keep track of all of the ACME challenges for all certificates.
+	var acmeChallenges []*acme.Challenge
+
 	// Retrieve the challenges for the certificates.
 	for _, cert := range s.state.Certificates {
 		// Skip the auto-renewal for this certificate if it is not enabled. This
@@ -78,6 +83,9 @@ func (s *Store) RenewCertificates() error {
 				return errors.Wrap(err, "no http-01 challenge present")
 			}
 
+			// Keep track of the acme challenge so that they can be accepted.
+			acmeChallenges = append(acmeChallenges, challenge)
+
 			// Retrieve the challenge properties.
 			path := client.HTTP01ChallengePath(challenge.Token)
 			res, err := client.HTTP01ChallengeResponse(challenge.Token)
@@ -109,8 +117,33 @@ func (s *Store) RenewCertificates() error {
 	}
 
 	// All of the certificates now have challenges on them, update the load
-	// balancers to perform the update.
-	// TODO: Implement this.
+	// balancers to start serving the LetsEncrypt challenges.
+	if err := docker.ForceUpdateService("edge"); err != nil {
+		return errors.Wrap(err, "could not restart the edge routers")
+	}
+
+	// Now that the update is complete, we want to alert that we are ready to
+	// accept all of the challenges that we have been issued.
+	for _, c := range acmeChallenges {
+		if _, err := client.Accept(context.Background(), c); err != nil {
+			return errors.Wrap(err, "could not confirm acceptance of challenge")
+		}
+	}
+
+	// Next step, we need to wait for the authorizations from the challenges.
+	for _, c := range acmeChallenges {
+		auth, err := client.WaitAuthorization(context.Background(), c.URI)
+		if err != nil {
+			// If this doesn't work, we don't want to fail as there are other
+			// challenges that we need to run. Instead, let's just log the error with
+			// the respective URL and continue on.
+			log.Printf("[ERR] certs: Could not authorize certificate (%s)", c.URI)
+			continue
+		}
+
+		fmt.Println("\n\nWE ARE AUTHORIZED!!!")
+		fmt.Printf("%+v\n\n", auth)
+	}
 
 	return nil
 }
