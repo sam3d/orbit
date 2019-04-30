@@ -41,11 +41,11 @@ func (a App) Marshal() string {
 // httpsRedirect will create a block that redirects to HTTPS.
 func (a App) httpsRedirect() string {
 	return fmt.Sprintf(`server {
-  listen 80;
-  listen [::]:80;
-  server_name %s;
+	listen 80;
+	listen [::]:80;
+	server_name %s;
 
-  return 301 https://$host$request_uri;
+	return 301 https://$host$request_uri;
 }`, a.Domain)
 }
 
@@ -66,21 +66,21 @@ func (a App) wwwRedirect() string {
 	b := "server {\n"
 
 	// Add HTTP listener.
-	b += "  listen 80;\n  listen [::]:80;\n\n"
+	b += "\tlisten 80;\n  listen [::]:80;\n\n"
 
 	// If using HTTPS, add the HTTPS listener to redirect every request to the
 	// correct URL.
 	if a.HTTPS {
-		b += "  listen 443 ssl;\n  listen [::]:443 ssl;\n\n"
+		b += "\tlisten 443 ssl;\n  listen [::]:443 ssl;\n\n"
 	}
 
 	// Add the server name.
-	b += "  server_name " + src + ";\n\n"
+	b += "\tserver_name " + src + ";\n\n"
 
 	// Add the SSL certificate details if using HTTPS.
 	if a.HTTPS {
-		b += "  ssl_certificate " + a.CertificateFile + ";\n"
-		b += "  ssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
+		b += "\tssl_certificate " + a.CertificateFile + ";\n"
+		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
 
 	// Add the redirect handler.
@@ -90,7 +90,7 @@ func (a App) wwwRedirect() string {
 	} else {
 		protocol = "http://"
 	}
-	b += fmt.Sprintf("  return 301 %s%s$request_uri;\n", protocol, a.Domain)
+	b += fmt.Sprintf("\treturn 301 %s%s$request_uri;\n", protocol, a.Domain)
 
 	// Close the server block and return.
 	b += "}"
@@ -103,31 +103,30 @@ func (a App) proxyPass() string {
 
 	// Add the correct listener.
 	if !a.HTTPS {
-		b += "  listen 80;\n  listen [::]:80;\n"
+		b += "\tlisten 80;\n\tlisten [::]:80;\n"
 	} else {
-		b += "  listen 443 ssl;\n  listen [::]:443 ssl;\n"
+		b += "\tlisten 443 ssl;\n\tlisten [::]:443 ssl;\n"
 	}
 
 	// Add the server name.
-	b += "  server_name " + a.Domain + ";\n\n"
+	b += "\tserver_name " + a.Domain + ";\n\n"
 
 	// Add the SSL certificate details if using HTTPS.
 	if a.HTTPS {
-		b += "  ssl_certificate " + a.CertificateFile + ";\n"
-		b += "  ssl_certificate_key " + a.CertificateKeyFile + ";\n"
+		b += "\tssl_certificate " + a.CertificateFile + ";\n"
+		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
 
 	// Add the location block.
-	b += fmt.Sprintf(`
-  location / {
-    proxy_pass http://%s:5000;
+	b += fmt.Sprintf(`	location / {
+		proxy_pass http://%s:5000;
 
-    proxy_redirect     off;
-    proxy_set_header   Host $host;
-    proxy_set_header   X-Real-IP $remote_addr;
-    proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header   X-Forwarded-Host $server_name;
-  }
+		proxy_redirect     off;
+		proxy_set_header   Host $host;
+		proxy_set_header   X-Real-IP $remote_addr;
+		proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header   X-Forwarded-Host $server_name;
+	}
 `, a.ProxyTo)
 
 	// Close the server block and return.
