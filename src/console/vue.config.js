@@ -5,7 +5,7 @@ module.exports = {
     disableHostCheck: true,
     proxy: {
       "/api": {
-        target: process.env.ORBIT_API_URL || "http://localhost:6501",
+        target: process.env.ORBIT_API_URL || "http://localhost:6505",
         changeOrigin: false,
         pathRewrite: { "/api": "" }
       }
