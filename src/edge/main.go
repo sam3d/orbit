@@ -89,7 +89,7 @@ func main() {
 
 `
 	for _, c := range challenges {
-		config += fmt.Sprintf("  location %s { return 200 \"%s\"; }\n", c.Path, c.Token)
+		config += fmt.Sprintf("  location %s { add_header Content-Type text/plain; return 200 \"%s\"; }\n", c.Path, c.Token)
 	}
 
 	config += "}"
