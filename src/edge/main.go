@@ -69,17 +69,30 @@ func main() {
 		config += a.Marshal() + "\n\n"
 	}
 
-	// Append the challenges to the config.
-	for _, c := range challenges {
-		config += fmt.Sprintf(`server {
-  listen 80;
-  listen [::]:80;
+	// Append the challenges to the config. This also includes the default server
+	// for handling any 404 requests. They must go in the same server block so
+	// that it serves them as a catch-all route handler.
+	config += `server {
+  listen 80 default_server;
+  listen [::]:80 default_server;
 
-  location %s {
-    return 200 "%s";
+  listen 443 default_server ssl;
+  listen [::]:443 default_server ssl;
+  ssl_certificate /etc/nginx/certs/dummy/cert.pem;
+  ssl_certificate_key /etc/nginx/certs/dummy/key.pem;
+
+  server_name _;
+
+  location / {
+    return 404;
   }
-}`, c.Path, c.Token)
+
+`
+	for _, c := range challenges {
+		config += fmt.Sprintf("  location %s { return 200 \"%s\"; }\n", c.Path, c.Token)
 	}
+
+	config += "}"
 
 	// Write the config.
 	os.MkdirAll("/etc/nginx/conf.d", os.ModePerm)
