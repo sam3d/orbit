@@ -20,6 +20,31 @@ type App struct {
 	WWWRedirect bool
 }
 
+// GenerateDefault will return the default page that routes requests.
+func GenerateDefault() string {
+	return `server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	listen 443 default_server ssl;
+	listen [::]:443 default_server ssl;
+
+	ssl_certificate /etc/nginx/certs/dummy/cert.pem;
+	ssl_certificate_key /etc/nginx/certs/dummy/key.pem;
+
+	server_name _;
+
+ 	location / {
+		return 404;
+	}
+}`
+}
+
+// GenerateLocation will create an unindented nginx location block.
+func GenerateLocation(path, data string) string {
+	return fmt.Sprintf("location %s { add_header Content-Type text/plain; return 200 \"%s\"; }\n", path, data)
+}
+
 // Marshal generates a complete set of server blocks for the specified app
 // configuration.
 func (a App) Marshal() string {

@@ -10,8 +10,15 @@ import (
 	"orbit.sh/edge/nginx"
 )
 
-// CertsPath is the directory where the SSL certificates are kept.
-const CertsPath = "/etc/nginx/certs"
+const (
+	// CertsPath is the directory where the SSL certificates are kept.
+	CertsPath = "/etc/nginx/certs"
+
+	// ChallengeFile is the file where the challenges (as "location" directives)
+	// are kept. This must be included only in "server" blocks, as location blocks
+	// cannot exist outside of that context.
+	ChallengeFile = "challenges.conf"
+)
 
 func main() {
 	client := NewClient()
@@ -38,8 +45,24 @@ func main() {
 		challenges = append(challenges, c.Challenges...)
 	}
 
-	// Generate nginx app objects.
-	var apps []nginx.App
+	// Now write the challenges into their own file to be included in every app.
+	var challengeConfig string
+	for _, c := range challenges {
+		challengeConfig += nginx.GenerateLocation(c.Path, c.Token)
+	}
+	if err := ioutil.WriteFile(filepath.Join(CertsPath, ChallengeFile), []byte(challengeConfig), 0644); err != nil {
+		log.Fatalf("Could not write challenge file: %s", err)
+	}
+
+	// Prepare the config string. This will be the final configuration string that
+	// gets written to the configuration file, so any and all nginx configuration
+	// needs to go in here.
+	var config string
+
+	// Add the default 404 catch-all handler.
+	config += nginx.GenerateDefault() + "\n\n"
+
+	// Loop over all of the router objects and create their properties.
 	for _, r := range routers {
 		// Create the standard app.
 		app := nginx.App{
@@ -59,40 +82,9 @@ func main() {
 			app.CertificateKeyFile = filepath.Join(CertsPath, r.CertificateID+".key")
 		}
 
-		// Actually add the app to the apps list.
-		apps = append(apps, app)
+		// Actually add the app to the config.
+		config += app.Marshal() + "\n\n"
 	}
-
-	// Generate the config from the apps.
-	var config string
-	for _, a := range apps {
-		config += a.Marshal() + "\n\n"
-	}
-
-	// Append the challenges to the config. This also includes the default server
-	// for handling any 404 requests. They must go in the same server block so
-	// that it serves them as a catch-all route handler.
-	config += `server {
-  listen 80 default_server;
-  listen [::]:80 default_server;
-
-  listen 443 default_server ssl;
-  listen [::]:443 default_server ssl;
-  ssl_certificate /etc/nginx/certs/dummy/cert.pem;
-  ssl_certificate_key /etc/nginx/certs/dummy/key.pem;
-
-  server_name _;
-
-  location / {
-    return 404;
-  }
-
-`
-	for _, c := range challenges {
-		config += fmt.Sprintf("  location %s { add_header Content-Type text/plain; return 200 \"%s\"; }\n", c.Path, c.Token)
-	}
-
-	config += "}"
 
 	// Write the config.
 	os.MkdirAll("/etc/nginx/conf.d", os.ModePerm)
