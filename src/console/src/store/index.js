@@ -35,7 +35,7 @@ const store = new Vuex.Store({
      */
     async init({ commit }) {
       const res = await api.get("/state", { redirect: false });
-      if (res.status !== 200) return router.push("/error");
+      if (res.status !== 200) return alert(res.data);
 
       const path = window.location.pathname;
       const engineStatus = res.data.status_string;

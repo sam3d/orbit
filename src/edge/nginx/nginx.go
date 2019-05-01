@@ -20,6 +20,33 @@ type App struct {
 	WWWRedirect bool
 }
 
+// GenerateDefault will return the default page that routes requests.
+func GenerateDefault() string {
+	return `server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	listen 443 default_server ssl;
+	listen [::]:443 default_server ssl;
+
+	ssl_certificate /etc/nginx/certs/dummy/cert.pem;
+	ssl_certificate_key /etc/nginx/certs/dummy/key.pem;
+
+	server_name _;
+
+	include /etc/nginx/certs/challenges.conf;
+
+ 	location / {
+		return 404;
+	}
+}`
+}
+
+// GenerateLocation will create an unindented nginx location block.
+func GenerateLocation(path, data string) string {
+	return fmt.Sprintf("location %s { add_header Content-Type text/plain; return 200 \"%s\"; }\n", path, data)
+}
+
 // Marshal generates a complete set of server blocks for the specified app
 // configuration.
 func (a App) Marshal() string {
@@ -41,11 +68,15 @@ func (a App) Marshal() string {
 // httpsRedirect will create a block that redirects to HTTPS.
 func (a App) httpsRedirect() string {
 	return fmt.Sprintf(`server {
-  listen 80;
-  listen [::]:80;
-  server_name %s;
+	listen 80;
+	listen [::]:80;
+	server_name %s;
 
-  return 301 https://$host$request_uri;
+	include /etc/nginx/certs/challenges.conf;
+
+	location / {
+		return 301 https://$host$request_uri;
+	}
 }`, a.Domain)
 }
 
@@ -66,22 +97,25 @@ func (a App) wwwRedirect() string {
 	b := "server {\n"
 
 	// Add HTTP listener.
-	b += "  listen 80;\n  listen [::]:80;\n\n"
+	b += "\tlisten 80;\n  listen [::]:80;\n\n"
 
 	// If using HTTPS, add the HTTPS listener to redirect every request to the
 	// correct URL.
 	if a.HTTPS {
-		b += "  listen 443 ssl;\n  listen [::]:443 ssl;\n\n"
+		b += "\tlisten 443 ssl;\n  listen [::]:443 ssl;\n\n"
 	}
 
 	// Add the server name.
-	b += "  server_name " + src + ";\n\n"
+	b += "\tserver_name " + src + ";\n\n"
 
 	// Add the SSL certificate details if using HTTPS.
 	if a.HTTPS {
-		b += "  ssl_certificate " + a.CertificateFile + ";\n"
-		b += "  ssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
+		b += "\tssl_certificate " + a.CertificateFile + ";\n"
+		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
+
+	// Add the catch-all location handler.
+	b += "\tinclude /etc/nginx/certs/challenges.conf;\n\n"
 
 	// Add the redirect handler.
 	var protocol string
@@ -90,7 +124,9 @@ func (a App) wwwRedirect() string {
 	} else {
 		protocol = "http://"
 	}
-	b += fmt.Sprintf("  return 301 %s%s$request_uri;\n", protocol, a.Domain)
+	b += fmt.Sprintf(`location / {
+	return 301 %s%s$request_uri;
+}`, protocol, a.Domain)
 
 	// Close the server block and return.
 	b += "}"
@@ -103,31 +139,33 @@ func (a App) proxyPass() string {
 
 	// Add the correct listener.
 	if !a.HTTPS {
-		b += "  listen 80;\n  listen [::]:80;\n"
+		b += "\tlisten 80;\n\tlisten [::]:80;\n"
 	} else {
-		b += "  listen 443 ssl;\n  listen [::]:443 ssl;\n"
+		b += "\tlisten 443 ssl;\n\tlisten [::]:443 ssl;\n"
 	}
 
 	// Add the server name.
-	b += "  server_name " + a.Domain + ";\n\n"
+	b += "\tserver_name " + a.Domain + ";\n\n"
 
 	// Add the SSL certificate details if using HTTPS.
 	if a.HTTPS {
-		b += "  ssl_certificate " + a.CertificateFile + ";\n"
-		b += "  ssl_certificate_key " + a.CertificateKeyFile + ";\n"
+		b += "\tssl_certificate " + a.CertificateFile + ";\n"
+		b += "\tssl_certificate_key " + a.CertificateKeyFile + ";\n\n"
 	}
 
-	// Add the location block.
-	b += fmt.Sprintf(`
-  location / {
-    proxy_pass http://%s:5000;
+	// Add the catch all location handler.
+	b += "\tinclude /etc/nginx/certs/challenges.conf;\n\n"
 
-    proxy_redirect     off;
-    proxy_set_header   Host $host;
-    proxy_set_header   X-Real-IP $remote_addr;
-    proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header   X-Forwarded-Host $server_name;
-  }
+	// Add the location block.
+	b += fmt.Sprintf(`	location / {
+		proxy_pass http://%s:5000;
+
+		proxy_redirect     off;
+		proxy_set_header   Host $host;
+		proxy_set_header   X-Real-IP $remote_addr;
+		proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header   X-Forwarded-Host $server_name;
+	}
 `, a.ProxyTo)
 
 	// Close the server block and return.

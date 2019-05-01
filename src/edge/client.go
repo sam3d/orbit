@@ -50,13 +50,22 @@ type Router struct {
 	Domain        string `json:"domain"`
 	AppID         string `json:"app_id"`
 	CertificateID string `json:"certificate_id"`
+	WWWRedirect   bool   `json:"www_redirect"`
+}
+
+// Challenge is a LetsEncrypt challenge path. We must serve the "token" string
+// at the "path" URL.
+type Challenge struct {
+	Path  string `json:"path"`
+	Token string `json:"token"`
 }
 
 // Certificate is a logical certificate
 type Certificate struct {
-	ID         string `json:"id"`
-	FullChain  []byte `json:"full_chain"`
-	PrivateKey []byte `json:"private_key"`
+	ID         string      `json:"id"`
+	FullChain  []byte      `json:"full_chain"`
+	PrivateKey []byte      `json:"private_key"`
+	Challenges []Challenge `json:"challenges"`
 }
 
 // GetRouters retrieves all of the routers from the Orbit socket.

@@ -133,7 +133,7 @@ export default {
 
   data() {
     return {
-      domain: "dev.local",
+      domain: "",
       busy: false,
 
       certMethod: "letsencrypt",

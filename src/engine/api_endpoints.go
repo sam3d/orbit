@@ -579,6 +579,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		Domain      string `form:"domain" json:"domain"`
 		NamespaceID string `form:"namespace_id" json:"namespace_id"`
 		AppID       string `form:"app_id" json:"app_id"`
+		WWWRedirect bool   `form:"www_redirect" json:"www_redirect"`
 	}
 
 	return func(c *gin.Context) {
@@ -596,6 +597,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 				Domain:      body.Domain,
 				NamespaceID: body.NamespaceID,
 				AppID:       body.AppID,
+				WWWRedirect: body.WWWRedirect,
 			},
 		}
 
@@ -722,6 +724,16 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 
 		// Otherwise, return the ID of the generated certificate.
 		c.String(http.StatusCreated, id)
+	}
+}
+
+func (s *APIServer) handleRenewCertificates() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := s.engine.Store.RenewCertificates(); err != nil {
+			log.Printf("[ERR] api: Could not renew certificates: %s", err)
+			c.String(http.StatusInternalServerError, "Could not renew certificates")
+			return
+		}
 	}
 }
 

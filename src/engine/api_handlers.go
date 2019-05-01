@@ -33,6 +33,7 @@ func (s *APIServer) handlers() {
 
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())
+	r.POST("/certificates/renew", s.handleRenewCertificates())
 
 	{
 		r := r.Group("/cluster")

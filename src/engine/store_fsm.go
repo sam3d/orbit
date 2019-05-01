@@ -29,7 +29,9 @@ const (
 
 	opNewRouter
 	opUpdateRouter
+
 	opNewCertificate
+	opUpdateCertificate
 )
 
 type command struct {
@@ -117,8 +119,11 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewRouter(c.Router)
 	case opUpdateRouter:
 		return f.applyUpdateRouter(c.Router)
+
 	case opNewCertificate:
 		return f.applyNewCertificate(c.Certificate)
+	case opUpdateCertificate:
+		return f.applyUpdateCertificate(c.Certificate)
 	}
 
 	return nil
@@ -163,6 +168,46 @@ func (f *fsm) applyNewCertificate(c Certificate) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Certificates = append(f.state.Certificates, c)
+	return nil
+}
+
+func (f *fsm) applyUpdateCertificate(c Certificate) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the existing certificate so we can keep the details from it, and then
+	// remove it from the store so that we can add it again.
+	var currentCertificate Certificate
+	var foundCertificate bool
+	for i, cert := range f.state.Certificates {
+		if cert.ID == c.ID {
+			f.state.Certificates = append(f.state.Certificates[:i], f.state.Certificates[i+1:]...)
+			currentCertificate = cert
+			foundCertificate = true
+			break
+		}
+	}
+	if !foundCertificate {
+		return nil
+	}
+
+	// We need to completely overwrite all of the challenges on a certificate no
+	// matter what happens when we update a certificate. This ensures that we can
+	// always clear out the pending challenges and add new ones when we perform
+	// the update.
+	currentCertificate.Challenges = c.Challenges
+
+	// Update other details normally (if they are not equal to their null
+	// counterparts).
+	if len(c.FullChain) > 0 {
+		currentCertificate.FullChain = c.FullChain
+	}
+	if len(c.PrivateKey) > 0 {
+		currentCertificate.PrivateKey = c.PrivateKey
+	}
+
+	// Apply the new certificate.
+	f.state.Certificates = append(f.state.Certificates, currentCertificate)
 	return nil
 }
 
