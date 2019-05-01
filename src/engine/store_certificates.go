@@ -255,7 +255,7 @@ func newACMEClient() (*acme.Client, error) {
 
 	client := &acme.Client{
 		Key:          acctKey,
-		DirectoryURL: "https://acme-staging.api.letsencrypt.org/directory",
+		DirectoryURL: "https://acme-v01.api.letsencrypt.org/directory",
 	}
 
 	_, err = client.Register(context.Background(), &acme.Account{}, func(tos string) bool { return true })
