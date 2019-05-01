@@ -226,7 +226,23 @@ func (s *Store) RenewCertificates() error {
 		})
 
 		// Update the certificate with the new LetsEncrypt certificate data.
+		cmd := command{
+			Op: opUpdateCertificate,
+			Certificate: Certificate{
+				ID:         r.Certificate.ID,
+				FullChain:  cert,
+				PrivateKey: pemCertKey,
+			},
+		}
+		if err := cmd.Apply(s); err != nil {
+			return errors.Wrap(err, "could not apply certificate update to store")
+		}
+	}
 
+	// All of the certificates have been updated, let's do one final reload of the
+	// load balancers to intake the updated certificates.
+	if err := docker.ForceUpdateService("edge"); err != nil {
+		return errors.Wrap(err, "could not update edge routers")
 	}
 
 	return nil

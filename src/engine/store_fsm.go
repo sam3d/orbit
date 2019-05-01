@@ -197,6 +197,15 @@ func (f *fsm) applyUpdateCertificate(c Certificate) interface{} {
 	// the update.
 	currentCertificate.Challenges = c.Challenges
 
+	// Update other details normally (if they are not equal to their null
+	// counterparts).
+	if len(c.FullChain) > 0 {
+		currentCertificate.FullChain = c.FullChain
+	}
+	if len(c.PrivateKey) > 0 {
+		currentCertificate.PrivateKey = c.PrivateKey
+	}
+
 	// Apply the new certificate.
 	f.state.Certificates = append(f.state.Certificates, currentCertificate)
 	return nil
