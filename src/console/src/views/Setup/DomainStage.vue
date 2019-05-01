@@ -217,7 +217,8 @@ export default {
       // If we are not adding a certificate, we don't need to do anything
       // further.
       if (this.certMethod === "none") {
-        this.edgeReloadRedirect();
+        await this.restartEdge(); // Restart the edge routers
+        this.redirect(); // Redirect to the new page
         return;
       }
 
@@ -278,7 +279,8 @@ export default {
         }
       }
 
-      this.edgeReloadRedirect();
+      await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
+      this.redirect(); // Redirect to the new page
     },
 
     // Focus on the input element.
@@ -287,17 +289,32 @@ export default {
       this.$refs.input.focus();
     },
 
-    // Reload the edge router and redirect to the correct domain.
-    async edgeReloadRedirect() {
-      // Perform the restart.
+    // Perform a renewal on all of the certificates in the store. This will only
+    // realistically perform a single certificate retrieval but it ensures that
+    // LetsEncrypt provides us with the correct certificate for that domain.
+    async renewCerts() {
+      const { status } = await this.$api.post("/certificates/renew");
+      if (status !== 200) {
+        this.busy = false;
+        alert("Could not renew certificates.");
+        return;
+      }
+    },
+
+    // Restart the edge routers.
+    async restartEdge() {
       const { status } = await this.$api.post("/service/restart/edge");
       if (status !== 200) {
         this.busy = false;
         alert("Could not reload the edge router.");
         return;
       }
+    },
 
-      // Redirect.
+    // Redirect the user to the domain and protocol they have specified. Ensure
+    // that this is only called when the next page is definitely ready to move
+    // on to.
+    redirect() {
       const protocol = this.certMethod === "none" ? "http://" : "https://";
       window.location.href = `${protocol}${this.domain}/setup`;
     }
