@@ -59,6 +59,9 @@ func main() {
 	// needs to go in here.
 	var config string
 
+	// Disable proxy buffering.
+	config += "proxy_request_buffering off;\n\n"
+
 	// Add the default 404 catch-all handler.
 	config += nginx.GenerateDefault() + "\n\n"
 
