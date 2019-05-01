@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
@@ -177,7 +178,7 @@ func (s *Store) RenewCertificates() error {
 		}
 
 		// Generate a private key for this certificate.
-		certKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		certKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			return errors.Wrap(err, "could not generate private key")
 		}
@@ -216,12 +217,9 @@ func (s *Store) RenewCertificates() error {
 		}
 
 		// Now we need to convert the private key to PEM format.
-		derCertKey, err := x509.MarshalECPrivateKey(certKey)
-		if err != nil {
-			return errors.Wrap(err, "could not marshal private key to DER")
-		}
+		derCertKey := x509.MarshalPKCS1PrivateKey(certKey)
 		pemCertKey := pem.EncodeToMemory(&pem.Block{
-			Type:  "PRIVATE KEY",
+			Type:  "RSA PRIVATE KEY",
 			Bytes: derCertKey,
 		})
 
