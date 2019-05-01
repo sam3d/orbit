@@ -76,7 +76,7 @@ func main() {
 		// go adding HTTPS. This is primarily to ensure that we don't try to enable
 		// HTTPS and then have nginx throw a fit because it can't find or verify the
 		// SSL certificates.
-		if r.CertificateID != "" && app.CertificateFile != "" && app.CertificateKeyFile != "" {
+		if ensureCertificate(r.CertificateID, certificates) {
 			app.HTTPS = true
 			app.CertificateFile = filepath.Join(CertsPath, r.CertificateID+".crt")
 			app.CertificateKeyFile = filepath.Join(CertsPath, r.CertificateID+".key")
@@ -91,6 +91,39 @@ func main() {
 	if err := ioutil.WriteFile("/etc/nginx/conf.d/orbit.conf", []byte(config), 0644); err != nil {
 		log.Fatalf("Could not write the config file: %s", err)
 	}
+}
+
+func ensureCertificate(certID string, certs []Certificate) bool {
+	// If there is no certificate ID, we know for sure that there isn't a
+	// certificate.
+	if certID == "" {
+		return false
+	}
+
+	// Find the respective certificate.
+	var cert Certificate
+	for _, c := range certs {
+		if c.ID == certID {
+			cert = c
+			break
+		}
+	}
+
+	// If the cert ID is an empty string, the respective certificate could not be
+	// found (so the ID refers to a certificate that doesn't exist). Weird
+	// edge-case I've never encountered, but it never hurts.
+	if cert.ID == "" {
+		return false
+	}
+
+	// If the certificate has neither a full chain or a private key, we can't add
+	// the certificate data (otherwise nginx will throw a fit).
+	if len(cert.FullChain) == 0 || len(cert.PrivateKey) == 0 {
+		return false
+	}
+
+	// The certificate must be present.
+	return true
 }
 
 func example() {
