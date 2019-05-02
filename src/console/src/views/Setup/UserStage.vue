@@ -61,7 +61,7 @@
       />
     </div>
 
-    <Button class="green" text="Sign up" />
+    <Button class="green" text="Continue" />
   </div>
 </template>
 
