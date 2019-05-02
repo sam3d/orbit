@@ -199,6 +199,12 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Create the overlay network for swarm communications.
+		if err := docker.CreateOverlayNetwork("orbit"); err != nil {
+			c.String(http.StatusInternalServerError, "Could not create orbit overlay network.")
+			return
+		}
+
 		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
 }

@@ -37,13 +37,31 @@ func SwarmToken(manager bool) string {
 	} else {
 		tokenType = "worker"
 	}
+
 	cmd := exec.Command("docker", "swarm", "join-token", tokenType, "-q")
 	if err := cmd.Run(); err != nil {
-		log.Printf("[ERR] docker: Could not retrieve %s token for swarm", tokenType)
+		log.Printf("[ERR] docker: Could not retrieve %s token for swarm: %s", tokenType, err)
 		return ""
 	}
-	output, _ := cmd.Output()
+	output, err := cmd.Output()
+	if err != nil {
+		log.Printf("[ERR] docker: Could not retrieve output for %s token for swarm: %s", tokenType, err)
+		return ""
+	}
+
 	return string(output)
+}
+
+// CreateOverlayNetwork will create a docker swarm network for overlay routing.
+// This should be done after the swarm has been initialised, and only needs to
+// be performed once per cluster.
+func CreateOverlayNetwork(name string) error {
+	cmd := exec.Command("docker", "network", "create", "-d", "overlay", name)
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] docker: Could not create overlay network with name %s: %s", name, err)
+		return err
+	}
+	return nil
 }
 
 // ForceUpdateService will use the docker CLI directly to forcefully update a
