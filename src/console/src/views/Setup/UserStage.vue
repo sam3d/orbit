@@ -11,9 +11,10 @@
       <div
         class="profile"
         :style="{ backgroundImage: `url('${userProfileSrc}')` }"
+        :class="{ disabled: busy }"
         @click="clickProfile()"
       >
-        <div class="overlay">
+        <div class="overlay" :class="{ disabled: busy }">
           <img v-if="user.profile" src="@/assets/icon/trash-white.svg" />
           <img v-else src="@/assets/icon/file-add-white.svg" />
         </div>
@@ -29,6 +30,7 @@
 
       <label>Username</label>
       <input
+        :disabled="busy"
         ref="usernameField"
         v-model="user.username"
         type="text"
@@ -38,6 +40,7 @@
 
       <label>Email address</label>
       <input
+        :disabled="busy"
         v-model="user.email"
         type="email"
         name="email"
@@ -46,6 +49,7 @@
 
       <label>Password</label>
       <input
+        :disabled="busy"
         v-model="user.password"
         type="password"
         name="password"
@@ -54,6 +58,7 @@
 
       <label>Confirm password</label>
       <input
+        :disabled="busy"
         v-model="user.confirmPassword"
         type="password"
         name="password"
@@ -61,7 +66,13 @@
       />
     </div>
 
-    <Button class="green" text="Continue" />
+    <Button
+      class="green"
+      text="Continue"
+      :disabled="!validUser"
+      :busy="busy"
+      @click="createUser"
+    />
   </div>
 </template>
 
@@ -80,7 +91,9 @@ export default {
         email: "",
         password: "",
         confirmPassword: ""
-      }
+      },
+
+      busy: false // Whether or not processing is taking place
     };
   },
 
@@ -101,6 +114,11 @@ export default {
     userProfileSrc() {
       const { profile } = this.user;
       return profile ? URL.createObjectURL(profile) : defaultProfileImage;
+    },
+
+    // Whether or not the user settings, as they are, are valid.
+    validUser() {
+      return true;
     }
   },
 
@@ -127,9 +145,16 @@ export default {
   methods: {
     // When the user profile is clicked on.
     clickProfile() {
+      if (this.busy) return;
+
       this.$refs.profileInput.value = ""; // Clear the file input first
       if (this.user.profile) this.user.profile = null;
       else this.$refs.profileInput.click();
+    },
+
+    // Perform the user creation operation and make the request to the API.
+    async createUser() {
+      this.busy = !this.busy;
     }
   }
 };
@@ -160,8 +185,10 @@ export default {
 
     transition: transform 0.2s;
 
-    &:active {
-      transform: scale(0.9);
+    &:not(.disabled) {
+      &:active {
+        transform: scale(0.9);
+      }
     }
 
     .overlay {
@@ -174,15 +201,17 @@ export default {
       align-items: center;
       justify-content: center;
 
-      transition: opacity 0.2s;
-      cursor: pointer;
-
       img {
         width: 30px;
       }
 
-      &:hover {
-        opacity: 1;
+      transition: opacity 0.2s;
+
+      &:not(.disabled) {
+        cursor: pointer;
+        &:hover {
+          opacity: 1;
+        }
       }
     }
   }
