@@ -8,10 +8,14 @@
     </p>
 
     <div class="form">
-      <div class="profile"></div>
+      <div
+        class="profile"
+        :style="{ backgroundImage: `url('${userProfileSrc}')` }"
+      ></div>
 
       <label>Username</label>
       <input
+        ref="usernameField"
         v-model="user.username"
         type="text"
         name="username"
@@ -27,7 +31,20 @@
       />
 
       <label>Password</label>
-      <input type="password" name="password" placeholder="Password" />
+      <input
+        v-model="user.password"
+        type="password"
+        name="password"
+        placeholder="Password"
+      />
+
+      <label>Confirm password</label>
+      <input
+        v-model="user.confirmPassword"
+        type="password"
+        name="password"
+        placeholder="Password"
+      />
     </div>
 
     <Button class="green" text="Sign up" />
@@ -36,6 +53,7 @@
 
 <script>
 import Button from "@/components/Button";
+import defaultProfileImage from "@/assets/icon/blank-profile.svg";
 
 export default {
   components: { Button },
@@ -45,9 +63,14 @@ export default {
       user: {
         username: "",
         email: "",
-        password: ""
+        password: "",
+        confirmPassword: ""
       }
     };
+  },
+
+  mounted() {
+    this.$refs.usernameField.focus(); // Focus the username field on start.
   },
 
   computed: {
@@ -57,6 +80,10 @@ export default {
       const { username } = this.user;
       const [domain] = document.location.host.split(":");
       return `${username ? username : "admin"}@${domain}`;
+    },
+
+    userProfileSrc() {
+      return defaultProfileImage;
     }
   },
 
@@ -101,11 +128,16 @@ export default {
     border-radius: 1000px;
     background-color: #000;
     margin: 0 auto;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   label {
     margin-top: 20px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    font-weight: bold;
   }
 }
 </style>
