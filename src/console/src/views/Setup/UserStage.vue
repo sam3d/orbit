@@ -35,7 +35,8 @@
         v-model="user.username"
         type="text"
         name="username"
-        placeholder="admin"
+        maxlength="20"
+        placeholder="Username"
       />
 
       <label>Email address</label>
@@ -44,7 +45,8 @@
         v-model="user.email"
         type="email"
         name="email"
-        :placeholder="placeholderEmail"
+        maxlength="80"
+        placeholder="Email address"
       />
 
       <label>Password</label>
@@ -102,14 +104,6 @@ export default {
   },
 
   computed: {
-    // Generate a placeholder email based on the domain name and the user name
-    // specified.
-    placeholderEmail() {
-      const { username } = this.user;
-      const [domain] = document.location.host.split(":");
-      return `${username ? username : "admin"}@${domain}`;
-    },
-
     // Return the source URL for the image.
     userProfileSrc() {
       const { profile } = this.user;
@@ -130,13 +124,15 @@ export default {
         const { username, email } = this.user;
 
         this.user.username = username
-          .toLowerCase()
-          .split(" ")
+          .toLowerCase() // Convert completely to lowercase
+          .split(" ") // Remove all spaces
+          .join("")
+          .split(/[^a-zA-Z0-9]/) // Only allow alphanumeric characters
           .join("");
 
         this.user.email = email
-          .toLowerCase()
-          .split(" ")
+          .toLowerCase() // Convert completely to lowercase
+          .split(" ") // Remove all spaces
           .join("");
       }
     }
