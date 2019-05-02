@@ -193,6 +193,12 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Initialise Docker Swarm with the required parameters.
+		if err := docker.SwarmInit(advertiseAddr); err != nil {
+			c.String(http.StatusInternalServerError, "Could not initialise docker swarm.")
+			return
+		}
+
 		c.JSON(http.StatusOK, engine.marshalConfig())
 	}
 }
