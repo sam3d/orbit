@@ -7,26 +7,30 @@
       cluster, so please ensure it is as secure as possible.
     </p>
 
-    <label>Username</label>
-    <input
-      v-model="user.username"
-      type="text"
-      name="username"
-      placeholder="admin"
-    />
+    <div class="form">
+      <div class="profile"></div>
 
-    <label>Email address</label>
-    <input
-      v-model="user.email"
-      type="email"
-      name="email"
-      :placeholder="placeholderEmail"
-    />
+      <label>Username</label>
+      <input
+        v-model="user.username"
+        type="text"
+        name="username"
+        placeholder="admin"
+      />
 
-    <label>Password</label>
-    <input type="password" name="password" placeholder="Password" />
+      <label>Email address</label>
+      <input
+        v-model="user.email"
+        type="email"
+        name="email"
+        :placeholder="placeholderEmail"
+      />
 
-    <Button text="Continue" />
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Password" />
+    </div>
+
+    <Button class="green" text="Sign up" />
   </div>
 </template>
 
@@ -80,4 +84,28 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+  margin: 30px auto;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  padding: 40px;
+  text-align: left;
+
+  .profile {
+    width: 90px;
+    height: 90px;
+    border-radius: 1000px;
+    background-color: #000;
+    margin: 0 auto;
+  }
+
+  label {
+    margin-top: 20px;
+    margin-bottom: 5px;
+  }
+}
+</style>
