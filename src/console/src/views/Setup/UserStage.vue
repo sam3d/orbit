@@ -161,7 +161,7 @@ export default {
     transition: transform 0.2s;
 
     &:active {
-      transform: scale(0.95);
+      transform: scale(0.9);
     }
 
     .overlay {
