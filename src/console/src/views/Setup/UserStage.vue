@@ -11,7 +11,21 @@
       <div
         class="profile"
         :style="{ backgroundImage: `url('${userProfileSrc}')` }"
-      ></div>
+        @click="clickProfile()"
+      >
+        <div class="overlay">
+          <img v-if="user.profile" src="@/assets/icon/trash-white.svg" />
+          <img v-else src="@/assets/icon/file-add-white.svg" />
+        </div>
+      </div>
+
+      <input
+        :style="{ display: 'none' }"
+        type="file"
+        accept="image/*"
+        ref="profileInput"
+        @change="e => (user.profile = e.target.files[0])"
+      />
 
       <label>Username</label>
       <input
@@ -61,6 +75,7 @@ export default {
   data() {
     return {
       user: {
+        profile: null, // An image
         username: "",
         email: "",
         password: "",
@@ -82,8 +97,10 @@ export default {
       return `${username ? username : "admin"}@${domain}`;
     },
 
+    // Return the source URL for the image.
     userProfileSrc() {
-      return defaultProfileImage;
+      const { profile } = this.user;
+      return profile ? URL.createObjectURL(profile) : defaultProfileImage;
     }
   },
 
@@ -107,7 +124,14 @@ export default {
     }
   },
 
-  methods: {}
+  methods: {
+    // When the user profile is clicked on.
+    clickProfile() {
+      this.$refs.profileInput.value = ""; // Clear the file input first
+      if (this.user.profile) this.user.profile = null;
+      else this.$refs.profileInput.click();
+    }
+  }
 };
 </script>
 
@@ -126,12 +150,41 @@ export default {
     width: 90px;
     height: 90px;
     border-radius: 1000px;
-    background-color: #000;
+    background-color: #c8d6e5;
     margin: 0 auto;
 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    overflow: hidden;
+
+    transition: transform 0.2s;
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    .overlay {
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      opacity: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      transition: opacity 0.2s;
+      cursor: pointer;
+
+      img {
+        width: 30px;
+      }
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 
   label {
