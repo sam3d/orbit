@@ -344,7 +344,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			Node: *store.CurrentNode(),
 		}
 		if err := cmd.Apply(store); err != nil {
-			log.Printf("[ERR] store: could not apply new user: %s", err)
+			log.Printf("[ERR] store: Could not apply node: %s", err)
 			c.String(http.StatusInternalServerError, "Could not add this node to the store state list.")
 			return
 		}
@@ -692,11 +692,12 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool                  `form:"auto_renew" json:"auto_renew"`
-		FullChain   *multipart.FileHeader `form:"full_chain" json:"full_chain"`
-		PrivateKey  *multipart.FileHeader `form:"private_key" json:"private_key"`
-		NamespaceID string                `form:"namespace_id" json:"namespace_id"`
-		Domains     []string              `form:"domains" json:"domains"`
+		AutoRenew   bool     `form:"auto_renew" json:"auto_renew"`
+		NamespaceID string   `form:"namespace_id" json:"namespace_id"`
+		Domains     []string `form:"domains" json:"domains"`
+
+		PrivateKey *multipart.FileHeader `form:"private_key" json:"private_key"`
+		FullChain  *multipart.FileHeader `form:"full_chain" json:"full_chain"`
 	}
 
 	return func(c *gin.Context) {
