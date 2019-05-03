@@ -408,6 +408,7 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		}
 
 		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not perform apply: %s", err)
 			c.String(http.StatusInternalServerError, "Could not create the new user. Ensure that all of the manager nodes are connected correctly.")
 			return
 		}
