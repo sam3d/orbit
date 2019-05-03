@@ -364,17 +364,29 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		Password string `form:"password" json:"password"`
 		Username string `form:"username" json:"username"`
 		Email    string `form:"email" json:"email"`
+
+		Profile *multipart.FileHeader `form:"profile" json:"profile"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
 		c.Bind(&body)
 
+		// Read and input the profile file.
+		var profile []byte
+		if body.Profile != nil {
+			file, _ := body.Profile.Open()
+			data, _ := ioutil.ReadAll(file)
+			profile = data
+		}
+
+		// Construct the user.
 		newUser, err := store.state.Users.Generate(UserConfig{
 			Name:     body.Name,
 			Password: body.Password,
 			Username: body.Username,
 			Email:    body.Email,
+			Profile:  profile,
 		})
 		if err != nil {
 			switch err {
