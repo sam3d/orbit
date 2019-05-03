@@ -370,7 +370,7 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var body body
-		c.Bind(&body)
+		c.ShouldBind(&body)
 
 		// Read and input the profile file.
 		var profile []byte
@@ -703,7 +703,7 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var body body
-		c.Bind(&body)
+		c.ShouldBind(&body)
 
 		// Read and parse the full chain and private key.
 		var fullChain, privateKey []byte
