@@ -133,6 +133,8 @@ export default {
       if (this.busy) return;
       this.busy = true;
 
+      this.error = ""; // Clear error on resubmit
+
       // Construct the request.
       const body = new FormData();
       body.append("name", this.user.name);
