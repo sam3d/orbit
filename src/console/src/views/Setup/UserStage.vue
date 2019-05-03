@@ -139,7 +139,8 @@ export default {
       body.append("username", this.user.username);
       body.append("password", this.user.password);
       body.append("email", this.user.email);
-      body.append("profile", this.user.profile);
+
+      if (this.user.profile) body.append("profile", this.user.profile);
 
       // Construct and submit the request.
       const headers = { "Content-Type": "multipart/form-data" };
