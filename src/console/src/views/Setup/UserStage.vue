@@ -7,7 +7,7 @@
       cluster, so please ensure it is as secure as possible.
     </p>
 
-    <div class="form">
+    <form class="form" @submit.prevent="createUser" method="POST" action="#">
       <div
         class="profile"
         :style="{ backgroundImage: `url('${userProfileSrc}')` }"
@@ -21,17 +21,26 @@
       </div>
 
       <input
-        :style="{ display: 'none' }"
+        style="display: none"
         type="file"
         accept="image/*"
         ref="profileInput"
         @change="e => (user.profile = e.target.files[0])"
       />
 
+      <label>Name</label>
+      <input
+        :disabled="busy"
+        ref="nameField"
+        v-model="user.name"
+        type="text"
+        name="name"
+        placeholder="Name"
+      />
+
       <label>Username</label>
       <input
         :disabled="busy"
-        ref="usernameField"
         v-model="user.username"
         type="text"
         name="username"
@@ -66,8 +75,12 @@
         name="password"
         placeholder="Password"
       />
-    </div>
 
+      <input type="submit" style="display: none;" />
+    </form>
+
+    <div class="error" v-if="error">{{ error }}</div>
+    <br />
     <Button
       class="green"
       text="Continue"
@@ -89,18 +102,60 @@ export default {
     return {
       user: {
         profile: null, // An image
+        name: "",
         username: "",
         email: "",
         password: "",
         confirmPassword: ""
       },
 
+      error: "", // If there was an error processing
       busy: false // Whether or not processing is taking place
     };
   },
 
   mounted() {
-    this.$refs.usernameField.focus(); // Focus the username field on start.
+    this.$refs.nameField.focus(); // Focus the name field on start.
+  },
+
+  methods: {
+    // When the user profile is clicked on.
+    clickProfile() {
+      if (this.busy) return;
+
+      this.$refs.profileInput.value = ""; // Clear the file input first
+      if (this.user.profile) this.user.profile = null;
+      else this.$refs.profileInput.click();
+    },
+
+    // Perform the user creation operation and make the request to the API.
+    async createUser() {
+      if (this.busy) return;
+      this.busy = true;
+
+      // Construct the request.
+      const body = new FormData();
+      body.append("name", this.user.name);
+      body.append("username", this.user.username);
+      body.append("password", this.user.password);
+      body.append("email", this.user.email);
+      body.append("profile", this.user.profile);
+
+      // Construct and submit the request.
+      const headers = { "Content-Type": "multipart/form-data" };
+      const opts = { redirect: false, headers };
+      const res = await this.$api.post("/user", body, opts);
+
+      // If there is an error, handle it.
+      if (res.status !== 201) {
+        this.busy = false;
+        this.error = res.data;
+        return;
+      }
+
+      // Otherwise, emit the completion of this stage.
+      this.$emit("complete");
+    }
   },
 
   computed: {
@@ -110,9 +165,18 @@ export default {
       return profile ? URL.createObjectURL(profile) : defaultProfileImage;
     },
 
-    // Whether or not the user settings, as they are, are valid.
     validUser() {
-      return true;
+      const { user } = this;
+
+      // Return the overall error.
+      return (
+        user.name &&
+        user.username &&
+        user.email &&
+        user.password &&
+        user.confirmPassword &&
+        user.password === user.confirmPassword
+      );
     }
   },
 
@@ -135,22 +199,6 @@ export default {
           .split(" ") // Remove all spaces
           .join("");
       }
-    }
-  },
-
-  methods: {
-    // When the user profile is clicked on.
-    clickProfile() {
-      if (this.busy) return;
-
-      this.$refs.profileInput.value = ""; // Clear the file input first
-      if (this.user.profile) this.user.profile = null;
-      else this.$refs.profileInput.click();
-    },
-
-    // Perform the user creation operation and make the request to the API.
-    async createUser() {
-      this.busy = !this.busy;
     }
   }
 };
@@ -217,5 +265,10 @@ export default {
     margin-bottom: 8px;
     font-weight: bold;
   }
+}
+
+.error {
+  display: inline-block;
+  margin-bottom: 30px;
 }
 </style>

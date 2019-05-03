@@ -19,7 +19,7 @@
           <DomainStage v-if="stage === 'domain'" />
 
           <!-- Create the administrator user account -->
-          <UserStage v-if="stage === 'user'" />
+          <UserStage v-if="stage === 'user'" @complete="nextStage" />
         </transition>
       </div>
     </div>
