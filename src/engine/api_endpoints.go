@@ -344,7 +344,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			Node: *store.CurrentNode(),
 		}
 		if err := cmd.Apply(store); err != nil {
-			log.Printf("[ERR] store: could not apply new user: %s", err)
+			log.Printf("[ERR] store: Could not apply node: %s", err)
 			c.String(http.StatusInternalServerError, "Could not add this node to the store state list.")
 			return
 		}
@@ -364,17 +364,29 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		Password string `form:"password" json:"password"`
 		Username string `form:"username" json:"username"`
 		Email    string `form:"email" json:"email"`
+
+		Profile *multipart.FileHeader `form:"profile" json:"profile"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
-		c.Bind(&body)
+		c.ShouldBind(&body)
 
+		// Read and input the profile file.
+		var profile []byte
+		if body.Profile != nil {
+			file, _ := body.Profile.Open()
+			data, _ := ioutil.ReadAll(file)
+			profile = data
+		}
+
+		// Construct the user.
 		newUser, err := store.state.Users.Generate(UserConfig{
 			Name:     body.Name,
 			Password: body.Password,
 			Username: body.Username,
 			Email:    body.Email,
+			Profile:  profile,
 		})
 		if err != nil {
 			switch err {
@@ -396,6 +408,7 @@ func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 		}
 
 		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not perform apply: %s", err)
 			c.String(http.StatusInternalServerError, "Could not create the new user. Ensure that all of the manager nodes are connected correctly.")
 			return
 		}
@@ -430,6 +443,33 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, &users)
+	}
+}
+
+// Deliver the user profile as an image.
+func (s *APIServer) handleUserProfile() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Search for the user with that ID.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.ID == id {
+				user = &u
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "A user with the id '%s' could not be found.", id)
+			return
+		}
+
+		// Send the profile image data. This will also take in the MIME type of the
+		// byte slice and automatically decode it to the correct one.
+		profile := user.Profile
+		ct := http.DetectContentType(profile)
+		c.Data(http.StatusOK, ct, profile)
 	}
 }
 
@@ -680,16 +720,17 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool                  `form:"auto_renew" json:"auto_renew"`
-		FullChain   *multipart.FileHeader `form:"full_chain" json:"full_chain"`
-		PrivateKey  *multipart.FileHeader `form:"private_key" json:"private_key"`
-		NamespaceID string                `form:"namespace_id" json:"namespace_id"`
-		Domains     []string              `form:"domains" json:"domains"`
+		AutoRenew   bool     `form:"auto_renew" json:"auto_renew"`
+		NamespaceID string   `form:"namespace_id" json:"namespace_id"`
+		Domains     []string `form:"domains" json:"domains"`
+
+		PrivateKey *multipart.FileHeader `form:"private_key" json:"private_key"`
+		FullChain  *multipart.FileHeader `form:"full_chain" json:"full_chain"`
 	}
 
 	return func(c *gin.Context) {
 		var body body
-		c.Bind(&body)
+		c.ShouldBind(&body)
 
 		// Read and parse the full chain and private key.
 		var fullChain, privateKey []byte

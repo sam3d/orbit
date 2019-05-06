@@ -14,8 +14,12 @@
           <!-- Choose the address that this node operates on -->
           <AddressStage v-if="stage === 'address'" @complete="nextStage" />
 
-          <!-- Choose a domain and certificate -->
+          <!-- Choose a domain and certificate. This doesn't need a listener as
+          this stage completely reloads the page when it is complete -->
           <DomainStage v-if="stage === 'domain'" />
+
+          <!-- Create the administrator user account -->
+          <UserStage v-if="stage === 'user'" @complete="nextStage" />
         </transition>
       </div>
     </div>
@@ -36,6 +40,7 @@ import WelcomeStage from "./WelcomeStage";
 import ModeStage from "./ModeStage";
 import AddressStage from "./AddressStage";
 import DomainStage from "./DomainStage";
+import UserStage from "./UserStage";
 
 export default {
   meta: { title: "Setup" },
@@ -46,7 +51,8 @@ export default {
     WelcomeStage,
     ModeStage,
     AddressStage,
-    DomainStage
+    DomainStage,
+    UserStage
   },
 
   data() {

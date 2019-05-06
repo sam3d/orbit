@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="512px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/blank-profile</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icon/blank-profile" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#C8D6E5" x="0" y="0" width="512" height="512"></rect>
+        <g id="person" transform="translate(51.000000, 90.000000)" fill="#8395A7">
+            <circle id="Oval" cx="205" cy="422" r="205"></circle>
+            <circle id="Oval-Copy" cx="205" cy="112" r="112"></circle>
+        </g>
+    </g>
+</svg>

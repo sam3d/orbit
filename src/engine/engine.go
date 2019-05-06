@@ -101,7 +101,11 @@ func (e *Engine) SetupStatus() (mode, stage string) {
 		return "bootstrap", "domain"
 	}
 
-	return "bootstrap", "user"
+	if len(e.Store.state.Users) == 0 {
+		return "bootstrap", "user"
+	}
+
+	return "bootstrap", "node"
 }
 
 // Start starts the engine and all of its subcomponents. This is dependent on

@@ -15,6 +15,7 @@ type User struct {
 	Username string   `json:"username"`
 	Password [60]byte `json:"password"` // Bcrypt hashed field
 	Email    string   `json:"email"`
+	Profile  []byte   `json:"profile"` // Image data in a byte slice
 }
 
 // Users is a list of users.
@@ -26,6 +27,7 @@ type UserConfig struct {
 	Username string
 	Password string
 	Email    string
+	Profile  []byte
 }
 
 // Generate creates a unique user that can be added to the store.
@@ -63,6 +65,7 @@ func (u *Users) Generate(config UserConfig) (*User, error) {
 		Username: config.Username,
 		Password: hashed,
 		Email:    config.Email,
+		Profile:  config.Profile,
 	}
 
 	return &newUser, nil
