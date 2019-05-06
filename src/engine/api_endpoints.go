@@ -446,6 +446,33 @@ func (s *APIServer) handleListUsers() gin.HandlerFunc {
 	}
 }
 
+// Deliver the user profile as an image.
+func (s *APIServer) handleUserProfile() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Search for the user with that ID.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.ID == id {
+				user = &u
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "A user with the id '%s' could not be found.", id)
+			return
+		}
+
+		// Send the profile image data. This will also take in the MIME type of the
+		// byte slice and automatically decode it to the correct one.
+		profile := user.Profile
+		ct := http.DetectContentType(profile)
+		c.Data(http.StatusOK, ct, profile)
+	}
+}
+
 func (s *APIServer) handleListNodes() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
