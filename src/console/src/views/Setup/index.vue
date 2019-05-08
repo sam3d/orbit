@@ -20,6 +20,9 @@
 
           <!-- Create the administrator user account -->
           <UserStage v-if="stage === 'user'" @complete="nextStage" />
+
+          <!-- Configure the node that is being set up -->
+          <NodeStage v-if="stage === 'node'" @complete="nextStage" />
         </transition>
       </div>
     </div>
@@ -41,6 +44,7 @@ import ModeStage from "./ModeStage";
 import AddressStage from "./AddressStage";
 import DomainStage from "./DomainStage";
 import UserStage from "./UserStage";
+import NodeStage from "./NodeStage";
 
 export default {
   meta: { title: "Setup" },
@@ -52,7 +56,8 @@ export default {
     ModeStage,
     AddressStage,
     DomainStage,
-    UserStage
+    UserStage,
+    NodeStage
   },
 
   data() {
