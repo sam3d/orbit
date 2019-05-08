@@ -37,7 +37,7 @@ type Node struct {
 	SerfPort    int `json:"serf_port"`
 	WANSerfPort int `json:"wan_serf_port"`
 
-	Roles      []NodeRole `json:"node_role"`  // What roles this node serves
+	Roles      []NodeRole `json:"node_roles"` // What roles this node serves
 	SwapSize   uint       `json:"swap_size"`  // The size of the swap in MB
 	Swappiness uint       `json:"swappiness"` // Likelihood of swapping (0 - 100)
 }
