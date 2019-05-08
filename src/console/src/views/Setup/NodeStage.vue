@@ -1,6 +1,9 @@
 <template>
   <div>
-    <h2>The node stage</h2>
-    <p class="subheader">This is a short description of the node stage.</p>
+    <h2>Configure this node</h2>
+    <p class="subheader">
+      Decide what purpose this node serves in the cluster, and also configure
+      its swap space and swappiness.
+    </p>
   </div>
 </template>
