@@ -92,26 +92,55 @@
     </div>
 
     <h3>How much swap space should this node have?</h3>
-    <p class="info">
-      This node has a built-in amount of hardware
-      <a
-        href="https://en.wikipedia.org/wiki/Random-access_memory"
-        target="_blank"
-        >RAM</a
-      >. Adding swap increases the
-      <a href="https://en.wikipedia.org/wiki/Virtual_memory" target="_blank"
-        >virtual memory</a
-      >
-      of this node. A swappiness setting of zero means that it will only ever be
-      used if it is <i>absolutely</i> necessary, where 100 will swap programs to
-      the virtual memory almost instantly. Both of these values are already set
-      to the recommended values based on the size and type of your disk.
-    </p>
+    <div class="notice" v-if="swapSize === 0">
+      You have disabled swap completely. This is not recommended, but can be
+      changed later.
+    </div>
+    <div class="slider">
+      <h4>Swap size</h4>
+      <p>
+        This is how much virtual memory to allocate for this node (in
+        megabytes). Based on the node storage size and class, the recommended is
+        512 MB.
+      </p>
+      <Slider
+        v-model="swapSize"
+        tooltip="always"
+        :max="4096"
+        :interval="128"
+        tooltip-formatter="{value} MB"
+        included
+        lazy
+        :disabled="busy"
+      />
+    </div>
+
+    <div class="slider">
+      <h4>Swappiness</h4>
+      <p>
+        This is how likely the system is to use the swap space. A value of 0
+        means that it will only ever use the swap space if its absolutely
+        required. A value of 100 means that it will use the swap all the time. A
+        value of 60 is recommended.
+      </p>
+      <Slider
+        v-model="swappiness"
+        tooltip="always"
+        lazy
+        :interval="10"
+        :disabled="busy || swapSize === 0"
+      />
+    </div>
   </div>
 </template>
 
 <script>
+import "vue-slider-component/theme/default.css";
+import Slider from "vue-slider-component";
+
 export default {
+  components: { Slider },
+
   props: [
     "mode" // bootstrap / join. If bootstrap, all options are mandatory.
   ],
@@ -120,6 +149,9 @@ export default {
     return {
       type: this.mode === "bootstrap" ? "manager" : "worker",
       roles: ["LOAD_BALANCER", "STORAGE", "BUILDER"],
+      swappiness: 60, // Value between 0 and 100
+      swapSize: 512, // The swap size in MB
+
       busy: false // Whether a process is taking place
     };
   },
@@ -166,15 +198,6 @@ h3 {
   cursor: default;
 }
 
-.info {
-  margin: 0 auto;
-  max-width: 800px;
-  font-size: 16px;
-  line-height: 1.4rem;
-  opacity: 1;
-  cursor: default;
-}
-
 .options {
   display: grid;
   grid-gap: 30px;
@@ -218,6 +241,28 @@ h3 {
       cursor: not-allowed;
       opacity: 0.5;
     }
+  }
+}
+
+.slider {
+  margin: 0 auto;
+  margin-bottom: 20px;
+
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 4px;
+  max-width: 650px;
+
+  h4 {
+    font-weight: bold;
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+
+  p {
+    margin-bottom: 34px;
+    font-size: 16px;
+    line-height: 1.4rem;
   }
 }
 </style>
