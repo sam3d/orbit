@@ -116,7 +116,7 @@
       <a
         href="#"
         v-if="swapSize !== defaultSwapSize"
-        @click="swapSize = defaultSwapSize"
+        @click.prevent="swapSize = defaultSwapSize"
       >
         Use recommended size of {{ defaultSwapSize }} MB
       </a>
@@ -140,7 +140,7 @@
       <a
         href="#"
         v-if="swappiness !== defaultSwappiness"
-        @click="swappiness = defaultSwappiness"
+        @click.prevent="swappiness = defaultSwappiness"
       >
         Use recommended swappiness of {{ defaultSwappiness }}
       </a>
