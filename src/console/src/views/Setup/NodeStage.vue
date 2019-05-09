@@ -90,6 +90,23 @@
         </p>
       </div>
     </div>
+
+    <h3>How much swap space should this node have?</h3>
+    <p class="info">
+      This node has a built-in amount of hardware
+      <a
+        href="https://en.wikipedia.org/wiki/Random-access_memory"
+        target="_blank"
+        >RAM</a
+      >. Adding swap increases the
+      <a href="https://en.wikipedia.org/wiki/Virtual_memory" target="_blank"
+        >virtual memory</a
+      >
+      of this node. A swappiness setting of zero means that it will only ever be
+      used if it is <i>absolutely</i> necessary, where 100 will swap programs to
+      the virtual memory almost instantly. Both of these values are already set
+      to the recommended values based on the size and type of your disk.
+    </p>
   </div>
 </template>
 
@@ -146,6 +163,15 @@ h3 {
   border-radius: 4px;
   max-width: 500px;
   line-height: 1.6rem;
+  cursor: default;
+}
+
+.info {
+  margin: 0 auto;
+  max-width: 800px;
+  font-size: 16px;
+  line-height: 1.4rem;
+  opacity: 1;
   cursor: default;
 }
 
