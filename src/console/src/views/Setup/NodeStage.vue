@@ -18,8 +18,8 @@
       >
         <h4>Manager</h4>
         <p>
-          Those node is responsible for maintaining the state of the cluster and
-          performing operations on it.
+          This node would be responsible for maintaining the state of the
+          cluster and performing operations on it.
         </p>
       </div>
 
