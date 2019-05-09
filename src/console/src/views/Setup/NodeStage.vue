@@ -101,7 +101,7 @@
       <p>
         This is how much virtual memory to allocate for this node (in
         megabytes). Based on the node storage size and class, the recommended is
-        512 MB.
+        {{ defaultSwapSize }} MB.
       </p>
       <Slider
         v-model="swapSize"
@@ -113,6 +113,13 @@
         lazy
         :disabled="busy"
       />
+      <a
+        href="#"
+        v-if="swapSize !== defaultSwapSize"
+        @click="swapSize = defaultSwapSize"
+      >
+        Use recommended size of {{ defaultSwapSize }} MB
+      </a>
     </div>
 
     <div class="slider">
@@ -121,7 +128,7 @@
         This is how likely the system is to use the swap space. A value of 0
         means that it will only ever use the swap space if its absolutely
         required. A value of 100 means that it will use the swap all the time. A
-        value of 60 is recommended.
+        value of {{ defaultSwappiness }} is recommended.
       </p>
       <Slider
         v-model="swappiness"
@@ -130,6 +137,13 @@
         :interval="10"
         :disabled="busy || swapSize === 0"
       />
+      <a
+        href="#"
+        v-if="swappiness !== defaultSwappiness"
+        @click="swappiness = defaultSwappiness"
+      >
+        Use recommended swappiness of {{ defaultSwappiness }}
+      </a>
     </div>
   </div>
 </template>
@@ -149,11 +163,19 @@ export default {
     return {
       type: this.mode === "bootstrap" ? "manager" : "worker",
       roles: ["LOAD_BALANCER", "STORAGE", "BUILDER"],
-      swappiness: 60, // Value between 0 and 100
-      swapSize: 512, // The swap size in MB
+      swappiness: 0, // Value between 0 and 100
+      swapSize: 0, // The swap size in MB
+
+      defaultSwapSize: 512, // The starting swap size
+      defaultSwappiness: 60, // The starting swappiness
 
       busy: false // Whether a process is taking place
     };
+  },
+
+  mounted() {
+    this.swapSize = this.defaultSwapSize;
+    this.swappiness = this.defaultSwappiness;
   },
 
   methods: {
@@ -263,6 +285,11 @@ h3 {
     margin-bottom: 34px;
     font-size: 16px;
     line-height: 1.4rem;
+  }
+
+  a {
+    display: block;
+    margin-top: 14px;
   }
 }
 </style>
