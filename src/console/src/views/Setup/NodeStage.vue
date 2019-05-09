@@ -8,12 +8,13 @@
 
     <h3>What kind of node should this be?</h3>
     <div class="notice" v-if="mode === 'bootstrap'">
-      As this is the first node in the cluster, it must be a manager.
+      As this is the first node in the cluster, it must be a manager. This can
+      be changed later.
     </div>
     <div class="options">
       <div
         class="option"
-        :class="{ selected: type === 'manager' }"
+        :class="{ selected: type === 'manager', disabled: busy }"
         @click="setType('manager')"
       >
         <h4>Manager</h4>
@@ -25,13 +26,67 @@
 
       <div
         class="option"
-        :class="{ selected: type === 'worker', disabled: mode === 'bootstrap' }"
+        :class="{
+          selected: type === 'worker',
+          disabled: mode === 'bootstrap' || busy
+        }"
         @click="setType('worker')"
       >
         <h4>Worker</h4>
         <p>
           This would allow the node to perform compute, storage and ingress
           operations without being able to make decisions.
+        </p>
+      </div>
+    </div>
+
+    <h3>What other functions should this node perform?</h3>
+    <div class="notice" v-if="mode === 'bootstrap'">
+      As this is the first node in the cluster, it must be able to perform all
+      three of operations listed below. These can be changed as more nodes are
+      added to the cluster.
+    </div>
+    <div class="options">
+      <div
+        class="option"
+        :class="{
+          selected: roles.includes('LOAD_BALANCER'),
+          disabled: busy || mode === 'bootstrap'
+        }"
+        @click="toggleRole('LOAD_BALANCER')"
+      >
+        <h4>Load balancer</h4>
+        <p>
+          This node would handle all web traffic that comes into the cluster.
+        </p>
+      </div>
+
+      <div
+        class="option"
+        :class="{
+          selected: roles.includes('STORAGE'),
+          disabled: busy || mode === 'bootstrap'
+        }"
+        @click="toggleRole('STORAGE')"
+      >
+        <h4>Storage</h4>
+        <p>
+          This node would be generally responsible for user and system storage.
+        </p>
+      </div>
+
+      <div
+        class="option"
+        :class="{
+          selected: roles.includes('BUILDER'),
+          disabled: busy || mode === 'bootstrap'
+        }"
+        @click="toggleRole('BUILDER')"
+      >
+        <h4>Builder</h4>
+        <p>
+          This node would be responsible for building the docker images for your
+          apps.
         </p>
       </div>
     </div>
@@ -46,16 +101,28 @@ export default {
 
   data() {
     return {
-      type: "manager",
+      type: this.mode === "bootstrap" ? "manager" : "worker",
+      roles: ["LOAD_BALANCER", "STORAGE", "BUILDER"],
       busy: false // Whether a process is taking place
     };
   },
 
   methods: {
     setType(type) {
-      if (this.busy || (type !== "manager" && this.mode === "bootstrap"))
-        return;
+      if (this.busy) return; // Don't change type if busy
+      if (this.mode === "bootstrap") return; // Must leave as manager
       this.type = type;
+    },
+
+    /**
+     * Toggle the role by adding it or removing it from the role array,
+     * depending on the desired action.
+     */
+    toggleRole(role) {
+      if (this.busy) return; // Don't allow for selections if busy
+      if (this.mode === "bootstrap") return; // Must leave all selections
+      if (!this.roles.includes(role)) this.roles.push(role);
+      else this.roles = this.roles.filter(r => r !== role);
     }
   }
 };
@@ -74,27 +141,29 @@ h3 {
   color: #ff9f43;
   background-color: transparentize(#ff9f43, 0.9);
   display: inline-block;
+  font-weight: bold;
   padding: 20px;
-  border: solid 1px #ff9f43;
   border-radius: 4px;
+  max-width: 500px;
+  line-height: 1.6rem;
   cursor: default;
 }
 
 .options {
   display: grid;
   grid-gap: 30px;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 
   .option {
     background-color: #fff;
     padding: 30px;
     border-radius: 4px;
-    max-width: 350px;
     cursor: pointer;
 
     h4 {
       font-size: 18px;
       font-weight: bold;
+      transition: color 0.2s;
     }
 
     p {
