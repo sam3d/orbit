@@ -145,15 +145,18 @@
         Use recommended swappiness of {{ defaultSwappiness }}
       </a>
     </div>
+
+    <Button class="green" text="Continue" :busy="busy" @click="updateNode" />
   </div>
 </template>
 
 <script>
 import "vue-slider-component/theme/default.css";
 import Slider from "vue-slider-component";
+import Button from "@/components/Button";
 
 export default {
-  components: { Slider },
+  components: { Slider, Button },
 
   props: [
     "mode" // bootstrap / join. If bootstrap, all options are mandatory.
@@ -194,6 +197,18 @@ export default {
       if (this.mode === "bootstrap") return; // Must leave all selections
       if (!this.roles.includes(role)) this.roles.push(role);
       else this.roles = this.roles.filter(r => r !== role);
+    },
+
+    /**
+     * This is the actual method that sends the node data to the server.
+     */
+    async updateNode() {
+      if (this.busy) return;
+      this.busy = true;
+
+      setTimeout(() => {
+        this.busy = false;
+      }, 2000);
     }
   }
 };
@@ -291,5 +306,9 @@ h3 {
     display: block;
     margin-top: 14px;
   }
+}
+
+.button {
+  margin-top: 20px;
 }
 </style>
