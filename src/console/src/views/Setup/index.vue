@@ -22,7 +22,11 @@
           <UserStage v-if="stage === 'user'" @complete="nextStage" />
 
           <!-- Configure the node that is being set up -->
-          <NodeStage v-if="stage === 'node'" @complete="nextStage" />
+          <NodeStage
+            v-if="stage === 'node'"
+            :mode="mode"
+            @complete="nextStage"
+          />
         </transition>
       </div>
     </div>
