@@ -27,6 +27,19 @@ func SwarmInit(ip net.IP) error {
 	return nil
 }
 
+// ForceLeaveSwarm will ensure that a node is not a member of a swarm before
+// starting another one.
+func ForceLeaveSwarm() error {
+	cmd := exec.Command("docker", "swarm", "leave", "--force")
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] docker: Could not run swarm leave with force: %s", err)
+		return err
+	}
+	log.Printf("[INFO] docker: Force left existing swarm")
+	return nil
+}
+
 // SwarmToken returns the specified token for connecting to this docker swarm
 // instance. If the manager parameter is false it will be a worker token, if it
 // is true it will be a manager token.

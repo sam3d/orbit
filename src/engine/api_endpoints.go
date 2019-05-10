@@ -193,6 +193,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Ensure the node is not currently a member of a swarm. If the node is not
+		// a member of the swarm, this command will fail. That is completely
+		// alright, as it means that we can just carry on anyway.
+		docker.ForceLeaveSwarm()
+
 		// Initialise Docker Swarm with the required parameters.
 		if err := docker.SwarmInit(advertiseAddr); err != nil {
 			c.String(http.StatusInternalServerError, "Could not initialise docker swarm.")
