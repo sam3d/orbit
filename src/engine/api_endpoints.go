@@ -819,7 +819,8 @@ func (s *APIServer) handleRestartService() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
-	store := s.engine.Store
+	engine := s.engine
+	store := engine.Store
 
 	type body struct {
 		NodeRoles  []NodeRole `form:"node_roles" json:"node_roles"`
@@ -859,6 +860,16 @@ func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
 			log.Printf("[ERR] api: Could not update store: %s", err)
 			c.String(http.StatusInternalServerError, "Could not update the store.")
 			return
+		}
+
+		// As this route can also be used as the last stage of the set up process,
+		// let's check if the node included a manager or worker role update status.
+		// If it did, we can successfully classify the engine as running (assuming
+		// that it isn't already).
+		if engine.Status != StatusRunning &&
+			(cmd.Node.HasRole(RoleManager) || cmd.Node.HasRole(RoleWorker)) {
+			engine.Status = StatusRunning
+			engine.writeConfig() // Update the config file with new status
 		}
 
 		c.String(http.StatusOK, "Successfully updated the node with id %s", id)
