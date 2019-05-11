@@ -169,7 +169,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		// Prepare command to add this node's details to the store.
 		cmd := command{
 			Op:   opNewNode,
-			Node: *store.CurrentNode(),
+			Node: *store.GenerateNodeDetails(),
 		}
 
 		if err := cmd.Apply(store); err != nil {
@@ -346,7 +346,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		// Add this node to the list of nodes.
 		cmd := command{
 			Op:   opNewNode,
-			Node: *store.CurrentNode(),
+			Node: *store.GenerateNodeDetails(),
 		}
 		if err := cmd.Apply(store); err != nil {
 			log.Printf("[ERR] store: Could not apply node: %s", err)
