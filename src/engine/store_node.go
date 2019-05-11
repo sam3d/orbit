@@ -6,6 +6,27 @@ import (
 	"net"
 )
 
+// NodeRole is a the type of role that the node can be.
+type NodeRole string
+
+const (
+	// RoleManager means that the role is a manager node for the cluster.
+	RoleManager NodeRole = "MANAGER"
+	// RoleWorker means that the node participates in the gossip of the cluster,
+	// but importantly not the operation and organisation of it.
+	RoleWorker = "WORKER"
+
+	// RoleLoadBalancer means that the node serves as an ingress point for the
+	// cluster.
+	RoleLoadBalancer = "LOAD_BALANCER"
+	// RoleStorage means that the node is responsible for the storage of the
+	// general contents of the cluster.
+	RoleStorage = "STORAGE"
+	// RoleBuilder designates a node as an image builder for the cluster. This is
+	// where the repo contents will end up for storage.
+	RoleBuilder = "BUILDER"
+)
+
 // Node is a server attached to the system in some capacity.
 type Node struct {
 	ID      string `json:"id"`      // The unique ID of the node
@@ -15,6 +36,20 @@ type Node struct {
 	RaftPort    int `json:"raft_port"`
 	SerfPort    int `json:"serf_port"`
 	WANSerfPort int `json:"wan_serf_port"`
+
+	Roles      []NodeRole `json:"node_roles"` // What roles this node serves
+	SwapSize   int        `json:"swap_size"`  // The size of the swap in MB
+	Swappiness int        `json:"swappiness"` // Likelihood of swapping (0 - 100)
+}
+
+// HasRole returns whether or not a node has a given role.
+func (n Node) HasRole(role NodeRole) bool {
+	for _, r := range n.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }
 
 // Nodes is a list of nodes.

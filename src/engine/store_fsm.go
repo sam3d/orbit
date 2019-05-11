@@ -25,6 +25,8 @@ const (
 	opRemoveUser
 
 	opNewNode
+	opUpdateNode
+
 	opNewNamespace
 
 	opNewRouter
@@ -111,6 +113,10 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	// Node operations.
 	case opNewNode:
 		return f.applyNewNode(c.Node)
+	case opUpdateNode:
+		return f.applyUpdateNode(c.Node)
+
+	// Namespace operations.
 	case opNewNamespace:
 		return f.applyNewNamespace(c.Namespace)
 
@@ -147,6 +153,41 @@ func (f *fsm) applyNewNode(n Node) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Nodes = append(f.state.Nodes, n)
+	return nil
+}
+
+func (f *fsm) applyUpdateNode(n Node) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the existing node so we can keep the details from it, and then remove
+	// it from the store so that we can add it again.
+	var currentNode Node
+	var foundNode bool
+	for i, node := range f.state.Nodes {
+		if node.ID == n.ID {
+			f.state.Nodes = append(f.state.Nodes[:i], f.state.Nodes[i+1:]...)
+			currentNode = node
+			foundNode = true
+			break
+		}
+	}
+	if !foundNode {
+		return nil
+	}
+
+	// Handle all of the properties that could get updated.
+	currentNode.Roles = n.Roles
+
+	if n.SwapSize != -1 {
+		currentNode.SwapSize = n.SwapSize
+	}
+	if n.Swappiness != -1 {
+		currentNode.Swappiness = n.Swappiness
+	}
+
+	// Re-create the node in the store.
+	f.state.Nodes = append(f.state.Nodes, currentNode)
 	return nil
 }
 

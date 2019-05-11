@@ -169,7 +169,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		// Prepare command to add this node's details to the store.
 		cmd := command{
 			Op:   opNewNode,
-			Node: *store.CurrentNode(),
+			Node: *store.GenerateNodeDetails(),
 		}
 
 		if err := cmd.Apply(store); err != nil {
@@ -192,6 +192,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Could not add the 'orbit-system' namespace.")
 			return
 		}
+
+		// Ensure the node is not currently a member of a swarm. If the node is not
+		// a member of the swarm, this command will fail. That is completely
+		// alright, as it means that we can just carry on anyway.
+		docker.ForceLeaveSwarm()
 
 		// Initialise Docker Swarm with the required parameters.
 		if err := docker.SwarmInit(advertiseAddr); err != nil {
@@ -341,7 +346,7 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		// Add this node to the list of nodes.
 		cmd := command{
 			Op:   opNewNode,
-			Node: *store.CurrentNode(),
+			Node: *store.GenerateNodeDetails(),
 		}
 		if err := cmd.Apply(store); err != nil {
 			log.Printf("[ERR] store: Could not apply node: %s", err)
@@ -495,6 +500,12 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 		SerfPort    int `json:"serf_port"`
 		WANSerfPort int `json:"wan_serf_port"`
 
+		// Add the node specific details.
+		Roles      []NodeRole `json:"node_roles"`
+		SwapSize   int        `json:"swap_size"`
+		Swappiness int        `json:"swappiness"`
+
+		// Add the raft state
 		State raftState `json:"state"`
 	}
 
@@ -537,7 +548,12 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 				RaftPort:    n.RaftPort,
 				SerfPort:    n.SerfPort,
 				WANSerfPort: n.WANSerfPort,
-				State:       state,
+
+				Roles:      n.Roles,
+				SwapSize:   n.SwapSize,
+				Swappiness: n.Swappiness,
+
+				State: state,
 			})
 		}
 
@@ -799,5 +815,63 @@ func (s *APIServer) handleRestartService() gin.HandlerFunc {
 			return
 		}
 		c.String(http.StatusOK, "Force updated the %s service.", id)
+	}
+}
+
+func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	type body struct {
+		NodeRoles  []NodeRole `form:"node_roles" json:"node_roles"`
+		SwapSize   int        `form:"swap_size" json:"swap_size"`
+		Swappiness int        `form:"swappiness" json:"swappiness"`
+	}
+
+	return func(c *gin.Context) {
+		// Retrieve the ID, and if the ID is "current", that acts a shorthand that
+		// refers to the node that the API server is running and receiving requests
+		// for (this instance, essentially).
+		id := c.Param("id")
+		if id == "current" {
+			id = store.ID
+		}
+
+		// Retrieve the body values (the actual update values).
+		var body body
+		if err := c.ShouldBind(&body); err != nil {
+			log.Printf("[ERR] api: Could not bind node update values: %s", err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		// Construct the store update expression.
+		cmd := command{
+			Op: opUpdateNode,
+			Node: Node{
+				ID:         id,
+				SwapSize:   body.SwapSize,
+				Swappiness: body.Swappiness,
+				Roles:      body.NodeRoles,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] api: Could not update store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not update the store.")
+			return
+		}
+
+		// As this route can also be used as the last stage of the set up process,
+		// let's check if the node included a manager or worker role update status.
+		// If it did, we can successfully classify the engine as running (assuming
+		// that it isn't already).
+		if engine.Status != StatusRunning &&
+			(cmd.Node.HasRole(RoleManager) || cmd.Node.HasRole(RoleWorker)) {
+			engine.Status = StatusRunning
+			engine.writeConfig() // Update the config file with new status
+		}
+
+		c.String(http.StatusOK, "Successfully updated the node with id %s", id)
 	}
 }
