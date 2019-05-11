@@ -27,6 +27,9 @@
             :mode="mode"
             @complete="nextStage"
           />
+
+          <!-- Show the finished setup page if node is configured -->
+          <CompleteStage v-if="stage === 'complete'" :mode="mode" />
         </transition>
       </div>
     </div>
@@ -43,12 +46,18 @@
 import ProgressView from "./Progress";
 import Navbar from "./Navbar";
 
+// Works in both mode configuration.
 import WelcomeStage from "./WelcomeStage";
+import NodeStage from "./NodeStage";
+import CompleteStage from "./CompleteStage";
+
+// Works in the bootstrap phase.
 import ModeStage from "./ModeStage";
 import AddressStage from "./AddressStage";
 import DomainStage from "./DomainStage";
 import UserStage from "./UserStage";
-import NodeStage from "./NodeStage";
+
+// Works only in the join stage.
 
 export default {
   meta: { title: "Setup" },
@@ -58,6 +67,8 @@ export default {
 
     WelcomeStage,
     ModeStage,
+    CompleteStage,
+
     AddressStage,
     DomainStage,
     UserStage,
