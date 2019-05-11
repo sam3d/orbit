@@ -99,8 +99,8 @@
     <div class="slider">
       <h4>Swap size</h4>
       <p>
-        This is how much virtual memory to allocate for this node (in
-        megabytes). Based on the node storage size and class, the recommended is
+        This is how much virtual memory to allocate for this node. Based on the
+        node storage size and class, the recommended is amount of swap space is
         {{ swapSizeLabel(defaultSwapSize) }}.
       </p>
       <Slider
