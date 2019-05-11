@@ -105,7 +105,15 @@ func (e *Engine) SetupStatus() (mode, stage string) {
 		return "bootstrap", "user"
 	}
 
-	return "bootstrap", "node"
+	// If the single node that is in the cluster does not have any roles, we can
+	// assume that this hasn't yet been configured and so this is the final stage
+	// of the system.
+	if !e.Store.state.Nodes[0].HasRole(RoleManager) {
+		return "bootstrap", "node"
+	}
+
+	// Otherwise, the store state must be complete.
+	return "bootstrap", "complete"
 }
 
 // Start starts the engine and all of its subcomponents. This is dependent on
