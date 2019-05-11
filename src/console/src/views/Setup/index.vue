@@ -11,6 +11,8 @@
           <!-- Choose whether to bootstrap a cluster or simply join one -->
           <ModeStage v-if="stage === 'mode'" @complete="changeMode" />
 
+          <ClusterStage v-if="stage === 'cluster'" @complete="nextStage" />
+
           <!-- Choose the address that this node operates on -->
           <AddressStage v-if="stage === 'address'" @complete="nextStage" />
 
@@ -58,6 +60,7 @@ import DomainStage from "./DomainStage";
 import UserStage from "./UserStage";
 
 // Works only in the join stage.
+import ClusterStage from "./ClusterStage";
 
 export default {
   meta: { title: "Setup" },
@@ -72,7 +75,9 @@ export default {
     AddressStage,
     DomainStage,
     UserStage,
-    NodeStage
+    NodeStage,
+
+    ClusterStage
   },
 
   data() {
