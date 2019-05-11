@@ -211,9 +211,24 @@ export default {
       if (this.busy) return;
       this.busy = true;
 
-      setTimeout(() => {
+      // Construct the request so that the API can handle the roles.
+      const body = {
+        node_roles: [...this.roles, this.type.toUpperCase()],
+        swappiness: this.swappiness,
+        swap_size: this.swapSize
+      };
+
+      // Make the request.
+      const opts = { redirect: false };
+      const res = await this.$api.put("/node/current", body, opts);
+      if (res.status !== 200) {
         this.busy = false;
-      }, 2000);
+        alert(res.data);
+        return;
+      }
+
+      // If succeeded, continue on to the last stage.
+      this.$emit("complete");
     }
   }
 };
