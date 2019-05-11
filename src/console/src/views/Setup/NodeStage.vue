@@ -101,14 +101,16 @@
       <p>
         This is how much virtual memory to allocate for this node (in
         megabytes). Based on the node storage size and class, the recommended is
-        {{ defaultSwapSize }} MB.
+        {{ swapSizeLabel(defaultSwapSize) }}.
       </p>
       <Slider
-        v-model="swapSize"
         tooltip="always"
-        :data="[0, 128, 256, 512, 1024, 2048, 4096, 8192]"
+        :data="swapSizes.map(item => item.label)"
+        :value="swapSizeLabel(swapSize)"
+        @change="
+          e => (swapSize = swapSizes.find(item => item.label === e).value)
+        "
         marks
-        tooltip-formatter="{value} MB"
         included
         lazy
         :disabled="busy"
@@ -121,7 +123,7 @@
         }"
         @click.prevent="swapSize = defaultSwapSize"
       >
-        Use recommended size of {{ defaultSwapSize }} MB
+        Use recommended size of {{ swapSizeLabel(defaultSwapSize) }}
       </a>
     </div>
 
@@ -176,10 +178,23 @@ export default {
       swappiness: 0, // Value between 0 and 100
       swapSize: 0, // The swap size in MB
 
-      defaultSwapSize: 512, // The starting swap size
+      defaultSwapSize: 2048, // The starting swap size
       defaultSwappiness: 60, // The starting swappiness
 
-      busy: false // Whether a process is taking place
+      busy: false, // Whether a process is taking place
+
+      swapSizes: [
+        { value: 0, label: "None" },
+        { value: 128, label: "128MB" },
+        { value: 256, label: "256MB" },
+        { value: 512, label: "512MB" },
+        { value: 1024, label: "1GB" },
+        { value: 2048, label: "2GB" },
+        { value: 4096, label: "4GB" },
+        { value: 8192, label: "8GB" },
+        { value: 12288, label: "12GB" },
+        { value: 16384, label: "16GB" }
+      ]
     };
   },
 
@@ -231,6 +246,10 @@ export default {
 
       // If succeeded, continue on to the last stage.
       this.$emit("complete");
+    },
+
+    swapSizeLabel(value) {
+      return this.swapSizes.find(item => item.value === value).label;
     }
   }
 };
