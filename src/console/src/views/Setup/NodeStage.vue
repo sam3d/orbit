@@ -116,7 +116,8 @@
       <a
         href="#"
         :style="{
-          visibility: swapSize !== defaultSwapSize ? 'visible' : 'hidden'
+          visibility:
+            swapSize !== defaultSwapSize && !busy ? 'visible' : 'hidden'
         }"
         @click.prevent="swapSize = defaultSwapSize"
       >
@@ -143,7 +144,8 @@
       <a
         href="#"
         :style="{
-          visibility: swappiness !== defaultSwappiness ? 'visible' : 'hidden'
+          visibility:
+            swappiness !== defaultSwappiness && !busy ? 'visible' : 'hidden'
         }"
         @click.prevent="swappiness = defaultSwappiness"
       >
