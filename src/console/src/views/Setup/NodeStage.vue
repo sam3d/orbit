@@ -106,8 +106,8 @@
       <Slider
         v-model="swapSize"
         tooltip="always"
-        :max="4096"
-        :interval="128"
+        :data="[0, 128, 256, 512, 1024, 2048, 4096, 8192]"
+        marks
         tooltip-formatter="{value} MB"
         included
         lazy
@@ -115,7 +115,9 @@
       />
       <a
         href="#"
-        v-if="swapSize !== defaultSwapSize"
+        :style="{
+          visibility: swapSize !== defaultSwapSize ? 'visible' : 'hidden'
+        }"
         @click.prevent="swapSize = defaultSwapSize"
       >
         Use recommended size of {{ defaultSwapSize }} MB
@@ -134,12 +136,15 @@
         v-model="swappiness"
         tooltip="always"
         lazy
+        marks
         :interval="10"
         :disabled="busy || swapSize === 0"
       />
       <a
         href="#"
-        v-if="swappiness !== defaultSwappiness"
+        :style="{
+          visibility: swappiness !== defaultSwappiness ? 'visible' : 'hidden'
+        }"
         @click.prevent="swappiness = defaultSwappiness"
       >
         Use recommended swappiness of {{ defaultSwappiness }}
@@ -286,7 +291,8 @@ h3 {
   margin-bottom: 20px;
 
   background-color: #fff;
-  padding: 30px;
+  padding: 40px;
+  padding-bottom: 15px;
   border-radius: 4px;
   max-width: 650px;
 
@@ -304,7 +310,7 @@ h3 {
 
   a {
     display: block;
-    margin-top: 14px;
+    margin-top: 35px;
   }
 }
 
