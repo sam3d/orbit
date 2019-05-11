@@ -500,6 +500,12 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 		SerfPort    int `json:"serf_port"`
 		WANSerfPort int `json:"wan_serf_port"`
 
+		// Add the node specific details.
+		Roles      []NodeRole `json:"node_roles"`
+		SwapSize   int        `json:"swap_size"`
+		Swappiness int        `json:"swappiness"`
+
+		// Add the raft state
 		State raftState `json:"state"`
 	}
 
@@ -542,7 +548,12 @@ func (s *APIServer) handleListNodes() gin.HandlerFunc {
 				RaftPort:    n.RaftPort,
 				SerfPort:    n.SerfPort,
 				WANSerfPort: n.WANSerfPort,
-				State:       state,
+
+				Roles:      n.Roles,
+				SwapSize:   n.SwapSize,
+				Swappiness: n.Swappiness,
+
+				State: state,
 			})
 		}
 
@@ -804,5 +815,52 @@ func (s *APIServer) handleRestartService() gin.HandlerFunc {
 			return
 		}
 		c.String(http.StatusOK, "Force updated the %s service.", id)
+	}
+}
+
+func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		NodeRoles  []NodeRole `form:"node_roles" json:"node_roles"`
+		SwapSize   int        `form:"swap_size" json:"swap_size"`
+		Swappiness int        `form:"swappiness" json:"swappiness"`
+	}
+
+	return func(c *gin.Context) {
+		// Retrieve the ID, and if the ID is "current", that acts a shorthand that
+		// refers to the node that the API server is running and receiving requests
+		// for (this instance, essentially).
+		id := c.Param("id")
+		if id == "current" {
+			id = store.ID
+		}
+
+		// Retrieve the body values (the actual update values).
+		var body body
+		if err := c.ShouldBind(&body); err != nil {
+			log.Printf("[ERR] api: Could not bind node update values: %s", err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		// Construct the store update expression.
+		cmd := command{
+			Op: opUpdateNode,
+			Node: Node{
+				ID:         id,
+				SwapSize:   body.SwapSize,
+				Swappiness: body.Swappiness,
+				Roles:      body.NodeRoles,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] api: Could not update store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not update the store.")
+			return
+		}
+
+		c.String(http.StatusOK, "Successfully updated the node with id %s", id)
 	}
 }

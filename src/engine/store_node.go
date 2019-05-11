@@ -38,8 +38,8 @@ type Node struct {
 	WANSerfPort int `json:"wan_serf_port"`
 
 	Roles      []NodeRole `json:"node_roles"` // What roles this node serves
-	SwapSize   uint       `json:"swap_size"`  // The size of the swap in MB
-	Swappiness uint       `json:"swappiness"` // Likelihood of swapping (0 - 100)
+	SwapSize   int        `json:"swap_size"`  // The size of the swap in MB
+	Swappiness int        `json:"swappiness"` // Likelihood of swapping (0 - 100)
 }
 
 // HasRole returns whether or not a node has a given role.

@@ -58,6 +58,11 @@ func (s *APIServer) handlers() {
 		r := r.Group("/certificate")
 		r.POST("", s.handleCertificateAdd())
 	}
+
+	{
+		r := r.Group("/node")
+		r.PUT("/:id", s.handleNodeUpdate())
+	}
 }
 
 func (s *APIServer) simpleLogger() gin.HandlerFunc {
