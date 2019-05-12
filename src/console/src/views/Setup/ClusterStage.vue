@@ -64,6 +64,22 @@ export default {
     async joinCluster() {
       if (this.busy || !this.valid) return;
       this.busy = true;
+
+      // Construct and then send the request.
+      const body = { join_token: this.token, target_address: this.address };
+      const opts = { redirect: false };
+      const res = await this.$api.post("/cluster/join", body, opts);
+
+      // Validate the response.
+      if (res.status !== 200) {
+        this.error = res.data;
+        this.busy = false;
+        return;
+      }
+
+      // Otherwise, we have successfully joined the cluster. Continue to the
+      // node configuration set up screen.
+      this.emit("complete");
     }
   },
 
