@@ -24,7 +24,8 @@
       <Button
         class="purple"
         text="Return to cluster"
-        @click="alert('need to retrieve the main orbit url from the api')"
+        :busy="busy"
+        @click="navigateToCluster"
       />
     </template>
   </div>
@@ -35,8 +36,60 @@ import Button from "@/components/Button";
 
 export default {
   props: ["mode"],
+  components: { Button },
+  data() {
+    return {
+      busy: false
+    };
+  },
 
-  components: { Button }
+  methods: {
+    // This method will retrieve the orbit domain name from the API and navigate
+    // to the correct URL for this node that has just been created.
+    async navigateToCluster() {
+      this.busy = true;
+
+      try {
+        const url = await this.getConsoleURL();
+        const id = await this.getNodeID();
+        const target = `${url}/node/${id}`;
+
+        window.location.href = target;
+      } catch (err) {
+        this.busy = false;
+        console.log(err);
+      }
+    },
+
+    // Retrieve the orbit console URL from the API.
+    async getConsoleURL() {
+      // Retrieve the list of routers.
+      const res = await this.$api.get("/routers", { redirect: false });
+      if (res.status !== 200) throw "Could not retrieve routers.";
+
+      // Retrieve the correct router.
+      const router = res.data.find(router => router.app_id === "console");
+      if (!router) throw "No router for the orbit console exists.";
+
+      // Derive the protocol and domain into a URL.
+      const protocol = router.certificate_id ? "https" : "http";
+      const url = `${protocol}://${router.domain}`;
+
+      return url;
+    },
+
+    // Get the ID of the current node.
+    async getNodeID() {
+      // Get the current node details.
+      const res = await this.$api.get("/node/current", { redirect: false });
+      if (res.status !== 200)
+        throw "Could not retrieve current node information.";
+      const node = res.data;
+
+      // Return the ID.
+      return node.id;
+    }
+  }
 };
 </script>
 
