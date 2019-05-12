@@ -848,6 +848,38 @@ func (s *APIServer) handleGetNode() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleUserGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// This identifier will search for a user who has this kind of identifying
+		// information. This can be a username, email address, or ID.
+		id := c.Param("id")
+
+		// Find the user with that identifier.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.ID == id || u.Username == id || u.Email == id {
+				user = &u
+				break
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "A user with those details could not be found.")
+			return
+		}
+
+		// Sanitize and send the user object.
+		c.JSON(http.StatusOK, gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+			"name":     user.Name,
+		})
+
+	}
+}
+
 func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store

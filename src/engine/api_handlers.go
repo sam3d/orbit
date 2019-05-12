@@ -45,6 +45,7 @@ func (s *APIServer) handlers() {
 		r := r.Group("/user")
 		r.POST("", s.handleUserSignup())
 		r.GET("/:id/profile", s.handleUserProfile())
+		r.GET("/:id", s.handleUserGet())
 		r.DELETE("/:id", s.handleUserRemove())
 	}
 
