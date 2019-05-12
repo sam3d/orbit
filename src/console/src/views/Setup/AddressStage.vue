@@ -8,6 +8,8 @@
     </p>
 
     <input
+      name="address"
+      class="code"
       type="text"
       placeholder="0.0.0.0"
       v-model="address"
@@ -120,10 +122,8 @@ export default {
   margin-top: 34px;
 }
 
-input:not([type="file"]) {
+input[name="address"] {
   margin-top: 34px;
-  font-size: 20px;
-  font-family: "Source Code Pro", sans-serif;
 }
 
 a {
