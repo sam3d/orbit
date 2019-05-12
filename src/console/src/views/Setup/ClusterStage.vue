@@ -10,7 +10,7 @@
       name="address"
       class="code"
       type="text"
-      placeholder="0.0.0.0:6505"
+      placeholder="0.0.0.0:6501"
       v-model="address"
       ref="input"
       size="21"
@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import validator from "validator";
 import Button from "@/components/Button";
 
 export default {
@@ -69,7 +70,17 @@ export default {
   computed: {
     // Whether or not the input fields are valid.
     valid() {
-      return true;
+      try {
+        const [ip, port] = this.address.split(":");
+
+        const validIP = validator.isIP(ip);
+        const validPort = validator.isPort(port);
+        const validToken = this.token.length >= 3; // TODO: Improve this heuristic
+
+        return validIP && validPort && validToken;
+      } catch (e) {
+        return false;
+      }
     }
   }
 };
