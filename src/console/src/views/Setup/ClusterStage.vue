@@ -63,6 +63,7 @@ export default {
   methods: {
     async joinCluster() {
       if (this.busy || !this.valid) return;
+      this.error = null;
       this.busy = true;
 
       // Construct and then send the request.
