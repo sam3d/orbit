@@ -53,7 +53,7 @@ export default {
   data() {
     return {
       address: "", // The target address
-      token: "", // The join token for the target cluster
+      token: "jointoken", // The join token for the target cluster
       busy: false, // Whether there is any process taking place
       error: null // If there was an error with processing
     };
