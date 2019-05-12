@@ -61,6 +61,7 @@ func (s *APIServer) handlers() {
 
 	{
 		r := r.Group("/node")
+		r.GET("/:id", s.handleGetNode())
 		r.PUT("/:id", s.handleNodeUpdate())
 	}
 }

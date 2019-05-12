@@ -818,6 +818,36 @@ func (s *APIServer) handleRestartService() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleGetNode() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// Retrieve the ID, and if the ID is "current", that acts a shorthand that
+		// refers to the node that the API server is running and receiving requests
+		// for (this instance, essentially).
+		id := c.Param("id")
+		if id == "current" {
+			id = store.ID
+		}
+
+		// Retrieve the node with this ID.
+		var node *Node
+		for _, n := range store.state.Nodes {
+			if n.ID == id {
+				node = &n
+				break
+			}
+		}
+		if node == nil {
+			c.String(http.StatusNotFound, "Could not find a node with that ID.")
+			return
+		}
+
+		// Return the node details.
+		c.JSON(http.StatusOK, node)
+	}
+}
+
 func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
