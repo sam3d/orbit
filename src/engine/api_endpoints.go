@@ -853,15 +853,25 @@ func (s *APIServer) handleUserGet() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// This identifier will search for a user who has this kind of identifying
-		// information. This can be a username, email address, or ID.
+		// information. This can be a username, email address, ID, or session token.
 		id := c.Param("id")
 
 		// Find the user with that identifier.
 		var user *User
+	search:
 		for _, u := range store.state.Users {
+			// Search by that user's flat properties.
 			if u.ID == id || u.Username == id || u.Email == id {
 				user = &u
-				break
+				break search
+			}
+
+			// Search their session tokens.
+			for _, s := range u.Sessions {
+				if s.Token == id {
+					user = &u
+					break search
+				}
 			}
 		}
 		if user == nil {
@@ -876,7 +886,60 @@ func (s *APIServer) handleUserGet() gin.HandlerFunc {
 			"email":    user.Email,
 			"name":     user.Name,
 		})
+	}
+}
 
+func (s *APIServer) handleUserLogin() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Identifier string `form:"identifier" json:"identifier"`
+		Password   string `form:"password" json:"password"`
+	}
+
+	return func(c *gin.Context) {
+		// Bind the identifier and username details.
+		var body body
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "You must supply an identifier and a password.")
+			return
+		}
+
+		// Search for the credentials that match this user.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.Username == body.Identifier || u.Email == body.Identifier {
+				user = &u
+				break
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "A user those credentials doesn't exist.")
+			return
+		}
+
+		// Check if the user credentials match.
+		if !user.ValidatePassword(body.Password) {
+			c.String(http.StatusUnauthorized, "The password you provided is incorrect.")
+			return
+		}
+
+		// Otherwise, we can now log the user in by generating a session token.
+		cmd := command{
+			Op:      opNewSession,
+			User:    User{ID: user.ID},
+			Session: user.GenerateSession(),
+		}
+
+		// Apply the session to the store.
+		if err := cmd.Apply(store); err != nil {
+			log.Fatalf("[ERR] store: Could not apply new session to user: %s", err)
+			c.String(http.StatusInternalServerError, "Can't update store.")
+			return
+		}
+
+		// Return the session to the user.
+		c.JSON(http.StatusOK, cmd.Session)
 	}
 }
 
