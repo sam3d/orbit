@@ -90,7 +90,8 @@ func (e *Engine) SetupStatus() (mode, stage string) {
 	// If there is only one node that the cluster is aware of, it means that this
 	// node must be the one responsible for establishing the cluster. Otherwise,
 	// it means that this node must be joining the cluster, which means that
-	// because the engine is not running, they must be in the node configuration stage.
+	// because the engine is not running, they must be in the node configuration
+	// stage.
 	if len(e.Store.state.Nodes) > 1 {
 		return "join", "node"
 	}
