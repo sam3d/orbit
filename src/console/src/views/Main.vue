@@ -40,7 +40,7 @@
 
         <div class="category">Namespace</div>
 
-        <select class="namespace">
+        <select class="namespace" v-model="namespace">
           <option>default</option>
           <option>orbit-system</option>
         </select>
@@ -70,12 +70,14 @@ export default {
   data() {
     return {
       showSidebar: true,
-      hasProfile: false
+      hasProfile: false,
+      namespace: null // Keep track of the selected namespace.
     };
   },
 
   mounted() {
     this.checkProfile();
+    this.namespace = this.$route.query.namespace || "default";
   },
 
   methods: {
@@ -106,6 +108,21 @@ export default {
       const id = this.$store.state.user.id;
       const url = this.hasProfile ? `/api/user/${id}/profile` : defaultProfile;
       return { backgroundImage: `url("${url}")` };
+    }
+  },
+
+  watch: {
+    // Watch the namespace property and update the URL if it changes.
+    namespace(namespace) {
+      // Remove the query parameter completely if it is default.
+      if (namespace === "default") namespace = undefined;
+
+      this.$router.push({
+        query: {
+          ...this.$route.query,
+          namespace
+        }
+      });
     }
   }
 };
