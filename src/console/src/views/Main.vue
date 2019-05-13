@@ -291,12 +291,18 @@ $borderColor: darken($backgroundColor, 5%);
       -o-appearance: none;
       appearance: none;
 
+      background: none;
+
+      background-image: url("~@/assets/icon/dropdown.svg");
+      background-size: 10px;
+      background-position: center right 10px;
+      background-repeat: no-repeat;
+
       font-family: "Montserrat", sans-serif;
       font-size: 14px;
       font-weight: bold;
 
       padding: 10px 20px;
-      background: none;
       border: solid 1px #ddd;
       width: 100%;
 
