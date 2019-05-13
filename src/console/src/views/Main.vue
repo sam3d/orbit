@@ -27,7 +27,7 @@
           <div class="username">@{{ this.$store.state.user.username }}</div>
         </div>
 
-        <div class="profile"></div>
+        <div class="profile" :style="profileStyle"></div>
       </div>
     </div>
 
@@ -47,16 +47,41 @@
 <script>
 import hamburgerIcon from "@/assets/icon/hamburger.svg";
 import exitIcon from "@/assets/icon/exit.svg";
+import defaultProfile from "@/assets/icon/blank-profile.svg";
 
 export default {
   data() {
     return {
-      showSidebar: true
+      showSidebar: true,
+      hasProfile: false
     };
   },
+
+  mounted() {
+    this.checkProfile();
+  },
+
+  methods: {
+    /**
+     * This will update the use profile image to ensure that we have the latest
+     * version.
+     */
+    async checkProfile() {
+      const id = this.$store.state.user.id;
+      const res = await this.$api.get(`/user/${id}/profile`);
+      this.hasProfile = res.status === 200;
+    }
+  },
+
   computed: {
     sidebarToggleStyle() {
       const url = this.showSidebar ? exitIcon : hamburgerIcon;
+      return { backgroundImage: `url("${url}")` };
+    },
+
+    profileStyle() {
+      const id = this.$store.state.user.id;
+      const url = this.hasProfile ? `/api/user/${id}/profile` : defaultProfile;
       return { backgroundImage: `url("${url}")` };
     }
   }
@@ -171,6 +196,10 @@ $borderColor: darken($backgroundColor, 5%);
         border-radius: 34px;
         background-color: #ddd;
         margin-left: 10px;
+
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
       }
 
       .meta {
