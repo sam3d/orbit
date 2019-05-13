@@ -17,9 +17,7 @@
         placeholder="Search for apps, namespaces, volumes, and domains"
       />
 
-      <div class="actions">
-        Actions
-      </div>
+      <div class="actions"></div>
 
       <div class="user" @click="logout()">
         <div class="meta">
@@ -42,12 +40,12 @@
 
         <div class="category">Namespace</div>
 
-        <select>
+        <select class="namespace">
           <option>default</option>
           <option>orbit-system</option>
         </select>
 
-        <div class="item active">Overview</div>
+        <div class="item">Overview</div>
         <div class="item">Repositories</div>
         <div class="item">Deployments</div>
         <div class="item">Routers</div>
@@ -283,6 +281,29 @@ $borderColor: darken($backgroundColor, 5%);
 
       &:not(:first-of-type) {
         margin-top: 40px;
+      }
+    }
+
+    select.namespace {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      -ms-appearance: none;
+      -o-appearance: none;
+      appearance: none;
+
+      font-family: "Montserrat", sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+
+      padding: 10px 20px;
+      background: none;
+      border: solid 1px #ddd;
+      width: 100%;
+
+      margin-bottom: 10px;
+
+      &:focus {
+        outline: none;
       }
     }
 
