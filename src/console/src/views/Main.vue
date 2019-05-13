@@ -59,7 +59,18 @@
         <router-view></router-view>
       </div>
     </div>
-    <div class="footer">Orbit Version</div>
+
+    <div class="footer">
+      <div class="version-container">
+        <div class="version">Orbit v0.1.0</div>
+        <div class="date">Up to date</div>
+      </div>
+
+      <div class="status-container">
+        <div class="status">Cluster is healthy</div>
+        <div class="dot green"></div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -378,8 +389,40 @@ $borderColor: darken($backgroundColor, 5%);
     background-color: #fff;
     border-top: solid 1px $borderColor;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 10px 20px;
     flex-shrink: 0;
+    font-size: 14px;
+
+    & > * {
+      display: flex;
+      align-items: center;
+    }
+
+    .version-container {
+      .date {
+        margin-left: 10px;
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: bold;
+        opacity: 0.4;
+      }
+    }
+
+    .status-container {
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 8px;
+        background-color: #aaa;
+        margin-left: 8px;
+
+        &.green {
+          background-color: #1dd1a1;
+        }
+      }
+    }
   }
 }
 </style>
