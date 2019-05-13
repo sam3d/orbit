@@ -944,8 +944,58 @@ func (s *APIServer) handleUserLogin() gin.HandlerFunc {
 			return
 		}
 
-		// Return the session to the user.
-		c.JSON(http.StatusOK, cmd.Session)
+		// Return the session token to the user.
+		c.String(http.StatusOK, cmd.Session.Token)
+	}
+}
+
+func (s *APIServer) handleSessionRevoke() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		token := c.Param("token")
+
+		// Find the user for this request.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.Username == id || u.Email == id || u.ID == id {
+				user = &u
+				break
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "That user doesn't exist.")
+			return
+		}
+
+		// Revoke all sessions.
+		if token == "all" {
+			cmd := command{
+				Op:   opRevokeAllSessions,
+				User: User{ID: user.ID},
+			}
+
+			if err := cmd.Apply(store); err != nil {
+				log.Printf("[ERR] store: Could not revoke all sessions: %s", err)
+				c.String(http.StatusInternalServerError, "Could not revoke all sessions.")
+				return
+			}
+		} else {
+			// Revoke that individual session.
+			cmd := command{
+				Op:      opRevokeSession,
+				Session: Session{Token: token},
+			}
+
+			if err := cmd.Apply(store); err != nil {
+				log.Printf("[ERR] store: Could not revoke session: %s", err)
+				c.String(http.StatusInternalServerError, "Could not revoke that session.")
+				return
+			}
+		}
+
+		c.String(http.StatusOK, "Session(s) revoked.")
 	}
 }
 

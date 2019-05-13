@@ -25,6 +25,7 @@ const (
 	opRemoveUser
 	opNewSession
 	opRevokeSession
+	opRevokeAllSessions
 
 	opNewNode
 	opUpdateNode
@@ -116,6 +117,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewSession(c.User.ID, c.Session)
 	case opRevokeSession:
 		return f.applyRevokeSession(c.Session.Token)
+	case opRevokeAllSessions:
+		return f.applyRevokeAllSessions(c.User.ID)
 
 	// Node operations.
 	case opNewNode:
@@ -185,6 +188,21 @@ search:
 				f.state.Users[i].Sessions = append(u.Sessions[:j], u.Sessions[j+1:]...)
 				break search
 			}
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyRevokeAllSessions(userID string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the user in question and set the sessions to an empty slice.
+	for i, u := range f.state.Users {
+		if u.ID == userID {
+			f.state.Users[i].Sessions = []Session{}
+			break
 		}
 	}
 

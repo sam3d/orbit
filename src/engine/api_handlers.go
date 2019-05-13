@@ -48,6 +48,7 @@ func (s *APIServer) handlers() {
 		r.GET("/:id/profile", s.handleUserProfile())
 		r.GET("/:id", s.handleUserGet())
 		r.DELETE("/:id", s.handleUserRemove())
+		r.DELETE("/:id/session/:token", s.handleSessionRevoke())
 	}
 
 	{
