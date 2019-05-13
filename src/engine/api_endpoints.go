@@ -458,15 +458,15 @@ func (s *APIServer) handleUserProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		// Search for the user with that ID.
+		// Search for the user with that ID, username, or email address.
 		var user *User
 		for _, u := range store.state.Users {
-			if u.ID == id {
+			if u.ID == id || u.Email == id || u.Username == id {
 				user = &u
 			}
 		}
 		if user == nil {
-			c.String(http.StatusNotFound, "A user with the id '%s' could not be found.", id)
+			c.String(http.StatusNotFound, "A user with the identifier '%s' could not be found.", id)
 			return
 		}
 
