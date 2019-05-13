@@ -920,7 +920,7 @@ func (s *APIServer) handleUserLogin() gin.HandlerFunc {
 			}
 		}
 		if user == nil {
-			c.String(http.StatusNotFound, "A user those credentials doesn't exist.")
+			c.String(http.StatusNotFound, "That user doesn't exist.")
 			return
 		}
 

@@ -9,6 +9,7 @@
       <input
         type="text"
         name="username"
+        ref="usernameField"
         placeholder="Username or email address"
         v-model="user.identifier"
         :disabled="busy"
@@ -17,6 +18,7 @@
 
       <label>Password</label>
       <input
+        ref="passwordField"
         v-model="user.password"
         type="password"
         name="password"
@@ -62,6 +64,9 @@ export default {
   mounted() {
     // Don't show this page if the user is logged in.
     if (this.$store.state.token) this.$router.push("/");
+
+    // Focus the correct field.
+    this.$refs.usernameField.focus();
   },
 
   methods: {
@@ -86,8 +91,17 @@ export default {
       const opts = { redirect: false };
       const res = await this.$api.post("/user/login", this.user, opts);
       if (res.status !== 200) {
+        // Stop processing and show error.
         this.busy = false;
         alert(res.data);
+
+        // Focus on the correct field depending on the error.
+        await this.$nextTick();
+        const field = res.data.includes("password")
+          ? "passwordField"
+          : "usernameField";
+        this.$refs[field].focus();
+
         return;
       }
 
