@@ -86,6 +86,8 @@ $borderColor: darken($backgroundColor, 5%);
     border-bottom: solid 1px $borderColor;
     padding: 20px;
 
+    overflow-y: scroll;
+
     & > * {
       flex-shrink: 0;
       margin-left: 20px;
