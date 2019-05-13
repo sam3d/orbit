@@ -137,7 +137,13 @@ $borderColor: darken($backgroundColor, 5%);
       padding: 10px;
       font-size: 14px;
 
-      width: 400px;
+      background-image: url("~@/assets/icon/search.svg");
+      background-repeat: no-repeat;
+      background-size: 16px;
+      background-position: center left 10px;
+      padding-left: 36px;
+
+      width: 378px;
       flex-shrink: 1;
       margin: 0 auto;
       transition: background-color 0.2s;
