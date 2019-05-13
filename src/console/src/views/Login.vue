@@ -10,14 +10,14 @@
         type="text"
         name="username"
         placeholder="Username or email address"
-        v-model="identifier"
+        v-model="user.identifier"
         :disabled="busy"
         @change="updateProfile"
       />
 
       <label>Password</label>
       <input
-        v-model="password"
+        v-model="user.password"
         type="password"
         name="password"
         placeholder="Password"
@@ -48,16 +48,25 @@ export default {
   data() {
     return {
       profile: defaultProfile, // The profile image URL
-      identifier: "", // The current identifier for the user
-      password: "",
+
+      // The data to be submitted.
+      user: {
+        identifier: "", // The current identifier for the user
+        password: ""
+      },
 
       busy: false // Whether or not we're processing data
     };
   },
 
+  mounted() {
+    // Don't show this page if the user is logged in.
+    if (this.$store.state.token) this.$router.push("/");
+  },
+
   methods: {
     async updateProfile() {
-      const path = `/user/${this.identifier}/profile`;
+      const path = `/user/${this.user.identifier}/profile`;
       const res = await this.$api.get(path);
       if (res.status !== 200) {
         // No profile image or user not found, set it to the default.
@@ -73,7 +82,21 @@ export default {
       if (this.busy || !this.valid) return;
       this.busy = true;
 
-      setTimeout(() => (this.busy = false), 2000);
+      // Make the request.
+      const opts = { redirect: false };
+      const res = await this.$api.post("/user/login", this.user, opts);
+      if (res.status !== 200) {
+        this.busy = false;
+        alert(res.data);
+        return;
+      }
+
+      // Set the token data and retrieve the user data.
+      localStorage.setItem("token", res.data);
+      this.$store.dispatch("updateUser");
+
+      // Redirect to the dashboard.
+      this.$router.push("/");
     }
   },
 
@@ -84,16 +107,19 @@ export default {
 
     // Simply ensure each field has enough data in it.
     valid() {
-      return this.identifier && this.password.length >= 3;
+      return this.user.identifier && this.user.password.length >= 3;
     }
   },
 
   watch: {
-    identifier(val) {
-      this.identifier = val
-        .toLowerCase()
-        .split(" ")
-        .join("");
+    user: {
+      handler() {
+        this.user.identifier = this.user.identifier
+          .toLowerCase()
+          .split(" ")
+          .join("");
+      },
+      deep: true
     }
   }
 };

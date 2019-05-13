@@ -34,6 +34,22 @@ const store = new Vuex.Store({
 
     user(state, user) {
       state.user = user;
+    },
+
+    token(state, token) {
+      state.token = token;
+    },
+
+    clearUser(state) {
+      state.token = "";
+      state.user = {
+        user: {
+          id: null,
+          name: null,
+          username: null,
+          email: null
+        }
+      };
     }
   },
 
@@ -44,7 +60,7 @@ const store = new Vuex.Store({
      * information. During the setup phase, the user route won't get called as
      * there can't be any user information.
      */
-    async init({ commit }) {
+    async init({ commit, dispatch }) {
       var res = await api.get("/state", { redirect: false });
       if (res.status !== 200) return alert(res.data);
 
@@ -73,19 +89,31 @@ const store = new Vuex.Store({
       if (path === "/setup" && engineStatus === "running")
         return router.push("/");
 
-      /**
-       * Check the user login status. If the user is logged in then we can leave
-       * them exactly where they are, otherwise we need to push them to the log
-       * in screen.
-       */
+      // Check and update the user details.
+      await dispatch("updateUser");
+    },
+
+    /**
+     * Check the user login status. If the user is logged in then we can leave
+     * them exactly where they are, otherwise we need to push them to the log in
+     * screen. Also, if the token that they have is not valid, then revoke it
+     * and redirect them to the login screen.
+     */
+    async updateUser({ commit }) {
       const token = localStorage.getItem("token");
       if (!token) return router.push("/login");
 
-      // Check if the token is valid, and if it isn't, redirect to login.
+      // Check if the token is valid, and if it isn't, redirect to login and
+      // remove the token.
       var res = await api.get(`/user/${token}`);
-      if (res.status !== 200) return router.push("/login");
+      if (res.status !== 200) {
+        localStorage.removeItem("token");
+        commit("clearUser"); // Clear the token and user information
+        return router.push("/login");
+      }
 
       // Update the store with the user information.
+      commit("token", token);
       commit("user", res.data);
     }
   }
