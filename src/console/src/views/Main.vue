@@ -114,6 +114,9 @@ export default {
   watch: {
     // Watch the namespace property and update the URL if it changes.
     namespace(namespace) {
+      // Update the store with the selected namespace.
+      this.$store.commit("namespace", namespace);
+
       // Remove the query parameter completely if it is default.
       if (namespace === "default") namespace = undefined;
 

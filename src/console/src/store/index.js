@@ -20,7 +20,9 @@ const store = new Vuex.Store({
       email: null
     },
     token: null,
-    ip: null
+    ip: null,
+
+    namespace: null // The currently selected namespace
   },
 
   mutations: {
@@ -38,6 +40,10 @@ const store = new Vuex.Store({
 
     token(state, token) {
       state.token = token;
+    },
+
+    namespace(state, namespace) {
+      state.namespace = namespace;
     },
 
     clearUser(state) {
