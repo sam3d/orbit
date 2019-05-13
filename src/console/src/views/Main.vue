@@ -9,7 +9,7 @@
 
       <div class="logo" @click="$router.push('/')"></div>
 
-      <div class="page">Applications</div>
+      <div class="page">Overview</div>
 
       <input
         type="text"
@@ -33,7 +33,26 @@
 
     <div class="container">
       <div class="sidebar" v-if="showSidebar">
-        This is the sidebar.
+        <div class="category">Cluster</div>
+
+        <div class="item">Nodes</div>
+        <div class="item">Namespaces</div>
+        <div class="item">Users</div>
+        <div class="item">Security</div>
+
+        <div class="category">Namespace</div>
+
+        <select>
+          <option>default</option>
+          <option>orbit-system</option>
+        </select>
+
+        <div class="item active">Overview</div>
+        <div class="item">Repositories</div>
+        <div class="item">Deployments</div>
+        <div class="item">Routers</div>
+        <div class="item">Certificates</div>
+        <div class="item">Volumes</div>
       </div>
 
       <div class="content">
@@ -250,9 +269,38 @@ $borderColor: darken($backgroundColor, 5%);
   .sidebar {
     background-color: #fff;
     border-right: solid 1px $borderColor;
-    padding: 20px;
     flex-shrink: 0;
     overflow: scroll;
+    width: 250px;
+    padding: 20px;
+
+    .category {
+      font-size: 13px;
+      margin: 10px 0;
+      color: rgba(0, 0, 0, 0.5);
+      font-weight: bold;
+      text-transform: uppercase;
+
+      &:not(:first-of-type) {
+        margin-top: 40px;
+      }
+    }
+
+    .item {
+      padding: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $backgroundColor;
+      }
+
+      &:active {
+        background-color: $borderColor;
+      }
+    }
   }
 
   .content {
