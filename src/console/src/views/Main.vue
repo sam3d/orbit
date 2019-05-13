@@ -109,7 +109,7 @@ $borderColor: darken($backgroundColor, 5%);
 
     background-color: #fff;
     border-bottom: solid 1px $borderColor;
-    padding: 20px;
+    padding: 12px 20px;
 
     overflow-y: scroll;
 
@@ -189,6 +189,20 @@ $borderColor: darken($backgroundColor, 5%);
     .user {
       display: flex;
       align-items: center;
+      padding: 5px;
+      border-radius: 1000px;
+      padding-left: 15px;
+
+      cursor: pointer;
+
+      transition: border 0.2s, background-color 0.2s;
+      border: solid 1px transparent;
+      &:hover {
+        border: solid 1px $borderColor;
+      }
+      &:active {
+        background-color: transparentize($borderColor, 0.6);
+      }
 
       .profile {
         width: 38px;
