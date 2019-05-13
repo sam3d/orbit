@@ -11,13 +11,23 @@
 
       <div class="page">Applications</div>
 
-      <input type="text" class="search" placeholder="Search..." />
+      <input
+        type="text"
+        class="search"
+        placeholder="Search for apps, namespaces, volumes, and domains"
+      />
 
       <div class="actions">
-        The action icons
+        Actions
       </div>
+
       <div class="user">
-        The user data
+        <div class="meta">
+          <div class="name">{{ this.$store.state.user.name }}</div>
+          <div class="username">@{{ this.$store.state.user.username }}</div>
+        </div>
+
+        <div class="profile"></div>
       </div>
     </div>
 
@@ -113,10 +123,11 @@ $borderColor: darken($backgroundColor, 5%);
     }
 
     .page {
-      margin-left: 20px;
+      margin: 0 20px;
       font-size: 15px;
       font-weight: bold;
       opacity: 0.8;
+
       cursor: default;
     }
 
@@ -125,8 +136,10 @@ $borderColor: darken($backgroundColor, 5%);
       background-color: $backgroundColor;
       padding: 10px;
       font-size: 14px;
-      flex-grow: 1;
 
+      width: 400px;
+      flex-shrink: 1;
+      margin: 0 auto;
       transition: background-color 0.2s;
 
       &:focus {
@@ -135,9 +148,40 @@ $borderColor: darken($backgroundColor, 5%);
     }
 
     .actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
     }
 
     .user {
+      display: flex;
+      align-items: center;
+
+      .profile {
+        width: 38px;
+        height: 38px;
+        border-radius: 34px;
+        background-color: #ddd;
+        margin-left: 10px;
+      }
+
+      .meta {
+        display: flex;
+        flex-direction: column;
+        text-align: right;
+        justify-content: center;
+        align-items: flex-end;
+
+        .name {
+          font-size: 15px;
+        }
+
+        .username {
+          font-size: 13px;
+          font-weight: bold;
+          margin-top: 2px;
+        }
+      }
     }
   }
 
