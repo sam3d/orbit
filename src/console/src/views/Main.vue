@@ -354,6 +354,14 @@ $borderColor: darken($backgroundColor, 5%);
 
       margin-bottom: 10px;
 
+      transition: box-shadow 0.2s;
+      box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.2);
+      }
+
       &:focus {
         outline: none;
       }
