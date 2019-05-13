@@ -107,7 +107,7 @@ export default {
 
       // Set the token data and retrieve the user data.
       localStorage.setItem("token", res.data);
-      this.$store.dispatch("updateUser");
+      await this.$store.dispatch("updateUser");
 
       // Redirect to the dashboard.
       this.$router.push("/");

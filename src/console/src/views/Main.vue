@@ -21,7 +21,7 @@
         Actions
       </div>
 
-      <div class="user">
+      <div class="user" @click="logout()">
         <div class="meta">
           <div class="name">{{ this.$store.state.user.name }}</div>
           <div class="username">@{{ this.$store.state.user.username }}</div>
@@ -70,6 +70,12 @@ export default {
       const id = this.$store.state.user.id;
       const res = await this.$api.get(`/user/${id}/profile`);
       this.hasProfile = res.status === 200;
+    },
+
+    async logout() {
+      const { user, token } = this.$store.state;
+      await this.$api.delete(`/user/${user.id}/session/${token}`);
+      await this.$store.dispatch("updateUser");
     }
   },
 
