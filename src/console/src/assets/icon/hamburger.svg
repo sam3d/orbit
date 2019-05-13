@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="101px" height="100px" viewBox="0 0 101 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/hamburger</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icons-copy" transform="translate(-40.000000, -34.000000)" fill="#000000">
+            <path d="M50,34 L131,34 C136.522847,34 141,38.4771525 141,44 C141,49.5228475 136.522847,54 131,54 L50,54 C44.4771525,54 40,49.5228475 40,44 C40,38.4771525 44.4771525,34 50,34 Z M50,114 L131,114 C136.522847,114 141,118.477153 141,124 C141,129.522847 136.522847,134 131,134 L50,134 C44.4771525,134 40,129.522847 40,124 C40,118.477153 44.4771525,114 50,114 Z M50,74 L131,74 C136.522847,74 141,78.4771525 141,84 C141,89.5228475 136.522847,94 131,94 L50,94 C44.4771525,94 40,89.5228475 40,84 C40,78.4771525 44.4771525,74 50,74 Z" id="icon/hamburger"></path>
+        </g>
+    </g>
+</svg>

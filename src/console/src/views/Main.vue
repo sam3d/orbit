@@ -1,28 +1,30 @@
 <template>
   <div class="root">
     <div class="navbar">
+      <div
+        class="toggle"
+        :style="sidebarToggleStyle"
+        @click="showSidebar = !showSidebar"
+      ></div>
+
       <div class="logo"></div>
-
-      <div class="page">Dashboard</div>
-
+      <div class="page">Applications</div>
       <input type="text" class="search" placeholder="Search..." />
-
       <div class="actions">
         The action icons
       </div>
-
       <div class="user">
         The user data
       </div>
     </div>
 
     <div class="container">
-      <div class="sidebar">
-        <p v-for="n in 100">HEllo</p>
+      <div class="sidebar" v-if="showSidebar">
+        This is the sidebar.
       </div>
 
       <div class="content">
-        <p v-for="n in 100">HEllo</p>
+        This is the content.
       </div>
     </div>
     <div class="footer">Orbit Version</div>
@@ -30,7 +32,22 @@
 </template>
 
 <script>
-export default {};
+import hamburgerIcon from "@/assets/icon/hamburger.svg";
+import exitIcon from "@/assets/icon/exit.svg";
+
+export default {
+  data() {
+    return {
+      showSidebar: true
+    };
+  },
+  computed: {
+    sidebarToggleStyle() {
+      const url = this.showSidebar ? exitIcon : hamburgerIcon;
+      return { backgroundImage: `url("${url}")` };
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -61,9 +78,29 @@ $borderColor: darken($backgroundColor, 5%);
       margin-left: 20px;
     }
 
-    .logo {
+    .toggle {
       margin-left: 0;
+      width: 40px;
+      height: 40px;
+      opacity: 0.7;
+      background-size: 14px 14px;
+      background-position: center;
+      background-repeat: no-repeat;
+      cursor: pointer;
 
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.2);
+      }
+
+      &:active {
+        transform: scale(0.8);
+      }
+    }
+
+    .logo {
+      margin-left: 14px;
       width: 38px;
       height: 38px;
       background-size: cover;
@@ -73,6 +110,10 @@ $borderColor: darken($backgroundColor, 5%);
 
     .page {
       margin-left: 20px;
+      font-size: 15px;
+      font-weight: bold;
+      opacity: 0.8;
+      cursor: default;
     }
 
     .search {
