@@ -470,6 +470,12 @@ func (s *APIServer) handleUserProfile() gin.HandlerFunc {
 			return
 		}
 
+		// If there is no profile data, ensure we return a 404.
+		if len(user.Profile) == 0 {
+			c.String(http.StatusNoContent, "The user was found but they have no profile image.")
+			return
+		}
+
 		// Send the profile image data. This will also take in the MIME type of the
 		// byte slice and automatically decode it to the correct one.
 		profile := user.Profile

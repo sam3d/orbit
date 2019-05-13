@@ -13,6 +13,13 @@ const store = new Vuex.Store({
       stage: null,
       mode: null
     },
+    user: {
+      id: null,
+      name: null,
+      username: null,
+      email: null
+    },
+    token: null,
     ip: null
   },
 
@@ -23,6 +30,10 @@ const store = new Vuex.Store({
 
     ip(state, ip) {
       state.ip = ip;
+    },
+
+    user(state, user) {
+      state.user = user;
     }
   },
 
@@ -34,7 +45,7 @@ const store = new Vuex.Store({
      * there can't be any user information.
      */
     async init({ commit }) {
-      const res = await api.get("/state", { redirect: false });
+      var res = await api.get("/state", { redirect: false });
       if (res.status !== 200) return alert(res.data);
 
       const path = window.location.pathname;
@@ -45,7 +56,7 @@ const store = new Vuex.Store({
 
       // If we need to retrieve the IP address for the setup process, then do.
       if (engineStatus === "setup") {
-        let res = await api.get("/ip", { redirect: false });
+        var res = await api.get("/ip", { redirect: false });
         if (res.status === 200) {
           commit("ip", res.data.ip);
         }
@@ -61,7 +72,23 @@ const store = new Vuex.Store({
         return router.push("/setup");
       if (path === "/setup" && engineStatus === "running")
         return router.push("/");
+
+      /**
+       * Check the user login status. If the user is logged in then we can leave
+       * them exactly where they are, otherwise we need to push them to the log
+       * in screen.
+       */
+      const token = localStorage.getItem("token");
+      if (!token) return router.push("/login");
+
+      // Check if the token is valid, and if it isn't, redirect to login.
+      var res = await api.get(`/user/${token}`);
+      if (res.status !== 200) return router.push("/login");
+
+      // Update the store with the user information.
+      commit("user", res.data);
     }
   }
 });
+
 export default store;
