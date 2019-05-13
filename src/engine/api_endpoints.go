@@ -458,15 +458,21 @@ func (s *APIServer) handleUserProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		// Search for the user with that ID.
+		// Search for the user with that ID, username, or email address.
 		var user *User
 		for _, u := range store.state.Users {
-			if u.ID == id {
+			if u.ID == id || u.Email == id || u.Username == id {
 				user = &u
 			}
 		}
 		if user == nil {
-			c.String(http.StatusNotFound, "A user with the id '%s' could not be found.", id)
+			c.String(http.StatusNotFound, "A user with the identifier '%s' could not be found.", id)
+			return
+		}
+
+		// If there is no profile data, ensure we return a 404.
+		if len(user.Profile) == 0 {
+			c.String(http.StatusNoContent, "The user was found but they have no profile image.")
 			return
 		}
 
@@ -845,6 +851,151 @@ func (s *APIServer) handleGetNode() gin.HandlerFunc {
 
 		// Return the node details.
 		c.JSON(http.StatusOK, node)
+	}
+}
+
+func (s *APIServer) handleUserGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// This identifier will search for a user who has this kind of identifying
+		// information. This can be a username, email address, ID, or session token.
+		id := c.Param("id")
+
+		// Find the user with that identifier.
+		var user *User
+	search:
+		for _, u := range store.state.Users {
+			// Search by that user's flat properties.
+			if u.ID == id || u.Username == id || u.Email == id {
+				user = &u
+				break search
+			}
+
+			// Search their session tokens.
+			for _, s := range u.Sessions {
+				if s.Token == id {
+					user = &u
+					break search
+				}
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "A user with those details could not be found.")
+			return
+		}
+
+		// Sanitize and send the user object.
+		c.JSON(http.StatusOK, gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+			"name":     user.Name,
+		})
+	}
+}
+
+func (s *APIServer) handleUserLogin() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Identifier string `form:"identifier" json:"identifier"`
+		Password   string `form:"password" json:"password"`
+	}
+
+	return func(c *gin.Context) {
+		// Bind the identifier and username details.
+		var body body
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "You must supply an identifier and a password.")
+			return
+		}
+
+		// Search for the credentials that match this user.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.Username == body.Identifier || u.Email == body.Identifier {
+				user = &u
+				break
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "That user doesn't exist.")
+			return
+		}
+
+		// Check if the user credentials match.
+		if !user.ValidatePassword(body.Password) {
+			c.String(http.StatusUnauthorized, "The password you provided is incorrect.")
+			return
+		}
+
+		// Otherwise, we can now log the user in by generating a session token.
+		cmd := command{
+			Op:      opNewSession,
+			User:    User{ID: user.ID},
+			Session: user.GenerateSession(),
+		}
+
+		// Apply the session to the store.
+		if err := cmd.Apply(store); err != nil {
+			log.Fatalf("[ERR] store: Could not apply new session to user: %s", err)
+			c.String(http.StatusInternalServerError, "Can't update store.")
+			return
+		}
+
+		// Return the session token to the user.
+		c.String(http.StatusOK, cmd.Session.Token)
+	}
+}
+
+func (s *APIServer) handleSessionRevoke() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		token := c.Param("token")
+
+		// Find the user for this request.
+		var user *User
+		for _, u := range store.state.Users {
+			if u.Username == id || u.Email == id || u.ID == id {
+				user = &u
+				break
+			}
+		}
+		if user == nil {
+			c.String(http.StatusNotFound, "That user doesn't exist.")
+			return
+		}
+
+		// Revoke all sessions.
+		if token == "all" {
+			cmd := command{
+				Op:   opRevokeAllSessions,
+				User: User{ID: user.ID},
+			}
+
+			if err := cmd.Apply(store); err != nil {
+				log.Printf("[ERR] store: Could not revoke all sessions: %s", err)
+				c.String(http.StatusInternalServerError, "Could not revoke all sessions.")
+				return
+			}
+		} else {
+			// Revoke that individual session.
+			cmd := command{
+				Op:      opRevokeSession,
+				Session: Session{Token: token},
+			}
+
+			if err := cmd.Apply(store); err != nil {
+				log.Printf("[ERR] store: Could not revoke session: %s", err)
+				c.String(http.StatusInternalServerError, "Could not revoke that session.")
+				return
+			}
+		}
+
+		c.String(http.StatusOK, "Session(s) revoked.")
 	}
 }
 

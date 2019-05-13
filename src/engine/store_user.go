@@ -10,12 +10,19 @@ import (
 
 // User is any user who has access to a system.
 type User struct {
-	ID       string   `json:"id"` // Auto generated
-	Name     string   `json:"name"`
-	Username string   `json:"username"`
-	Password [60]byte `json:"password"` // Bcrypt hashed field
-	Email    string   `json:"email"`
-	Profile  []byte   `json:"profile"` // Image data in a byte slice
+	ID       string    `json:"id"` // Auto generated
+	Name     string    `json:"name"`
+	Username string    `json:"username"`
+	Password [60]byte  `json:"password"` // Bcrypt hashed field
+	Email    string    `json:"email"`
+	Profile  []byte    `json:"profile"`  // Image data in a byte slice
+	Sessions []Session `json:"sessions"` // The session array
+}
+
+// Session is a user session that has a unique token that identifies it for the
+// purpose of authenticating a user.
+type Session struct {
+	Token string `json:"token"`
 }
 
 // Users is a list of users.
@@ -89,6 +96,27 @@ search:
 
 		return id
 	}
+}
+
+// GenerateSession will create and return a user session based off of the user
+// provided.
+func (u User) GenerateSession() Session {
+	// Generate a random token.
+	b := make([]byte, 32)
+	rand.Read(b)
+	token := hex.EncodeToString(b)
+
+	// Create and return the session object.
+	return Session{
+		Token: token,
+	}
+}
+
+// ValidatePassword will take in a plaintext password and return whether or not
+// it is valid.
+func (u User) ValidatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword(u.Password[:], []byte(password))
+	return err == nil
 }
 
 // FindByID will search for the user in the given list of users. It returns the

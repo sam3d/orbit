@@ -13,6 +13,13 @@ const store = new Vuex.Store({
       stage: null,
       mode: null
     },
+    user: {
+      id: null,
+      name: null,
+      username: null,
+      email: null
+    },
+    token: null,
     ip: null
   },
 
@@ -23,6 +30,26 @@ const store = new Vuex.Store({
 
     ip(state, ip) {
       state.ip = ip;
+    },
+
+    user(state, user) {
+      state.user = user;
+    },
+
+    token(state, token) {
+      state.token = token;
+    },
+
+    clearUser(state) {
+      state.token = "";
+      state.user = {
+        user: {
+          id: null,
+          name: null,
+          username: null,
+          email: null
+        }
+      };
     }
   },
 
@@ -33,8 +60,8 @@ const store = new Vuex.Store({
      * information. During the setup phase, the user route won't get called as
      * there can't be any user information.
      */
-    async init({ commit }) {
-      const res = await api.get("/state", { redirect: false });
+    async init({ commit, dispatch }) {
+      var res = await api.get("/state", { redirect: false });
       if (res.status !== 200) return alert(res.data);
 
       const path = window.location.pathname;
@@ -45,7 +72,7 @@ const store = new Vuex.Store({
 
       // If we need to retrieve the IP address for the setup process, then do.
       if (engineStatus === "setup") {
-        let res = await api.get("/ip", { redirect: false });
+        var res = await api.get("/ip", { redirect: false });
         if (res.status === 200) {
           commit("ip", res.data.ip);
         }
@@ -61,7 +88,35 @@ const store = new Vuex.Store({
         return router.push("/setup");
       if (path === "/setup" && engineStatus === "running")
         return router.push("/");
+
+      // Check and update the user details.
+      await dispatch("updateUser");
+    },
+
+    /**
+     * Check the user login status. If the user is logged in then we can leave
+     * them exactly where they are, otherwise we need to push them to the log in
+     * screen. Also, if the token that they have is not valid, then revoke it
+     * and redirect them to the login screen.
+     */
+    async updateUser({ commit }) {
+      const token = localStorage.getItem("token");
+      if (!token) return router.push("/login");
+
+      // Check if the token is valid, and if it isn't, redirect to login and
+      // remove the token.
+      var res = await api.get(`/user/${token}`);
+      if (res.status !== 200) {
+        localStorage.removeItem("token");
+        commit("clearUser"); // Clear the token and user information
+        return router.push("/login");
+      }
+
+      // Update the store with the user information.
+      commit("token", token);
+      commit("user", res.data);
     }
   }
 });
+
 export default store;

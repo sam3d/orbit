@@ -23,6 +23,9 @@ const (
 
 	opNewUser
 	opRemoveUser
+	opNewSession
+	opRevokeSession
+	opRevokeAllSessions
 
 	opNewNode
 	opUpdateNode
@@ -40,6 +43,7 @@ type command struct {
 	Op op `json:"op"`
 
 	User        User        `json:"user,omitempty"`
+	Session     Session     `json:"session,omitempty"`
 	Node        Node        `json:"node,omitempty"`
 	Router      Router      `json:"router,omitempty"`
 	Certificate Certificate `json:"certificate,omitempty"`
@@ -109,6 +113,12 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewUser(c.User)
 	case opRemoveUser:
 		return f.applyRemoveUser(c.User.ID)
+	case opNewSession:
+		return f.applyNewSession(c.User.ID, c.Session)
+	case opRevokeSession:
+		return f.applyRevokeSession(c.Session.Token)
+	case opRevokeAllSessions:
+		return f.applyRevokeAllSessions(c.User.ID)
 
 	// Node operations.
 	case opNewNode:
@@ -146,6 +156,56 @@ func (f *fsm) applyRemoveUser(id string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Users.Remove(id)
+	return nil
+}
+
+func (f *fsm) applyNewSession(id string, session Session) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the user and add the session to their list of sessions.
+	for i, u := range f.state.Users {
+		if u.ID == id {
+			f.state.Users[i].Sessions = append(u.Sessions, session)
+			break
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyRevokeSession(token string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Search through the users and sessions for that token, and if found, delete
+	// it from that user.
+search:
+	for i, u := range f.state.Users {
+		for j, s := range u.Sessions {
+			if s.Token == token {
+				// It was found, remove it and stop the loops.
+				f.state.Users[i].Sessions = append(u.Sessions[:j], u.Sessions[j+1:]...)
+				break search
+			}
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyRevokeAllSessions(userID string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the user in question and set the sessions to an empty slice.
+	for i, u := range f.state.Users {
+		if u.ID == userID {
+			f.state.Users[i].Sessions = []Session{}
+			break
+		}
+	}
+
 	return nil
 }
 

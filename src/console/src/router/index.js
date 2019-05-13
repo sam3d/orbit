@@ -7,9 +7,11 @@ Vue.use(Meta, { keyName: "meta" });
 
 import MainView from "@/views/Main";
 import SetupView from "@/views/Setup";
+import LoginView from "@/views/Login";
 
 const routes = [
   { path: "/setup", component: SetupView },
+  { path: "/login", component: LoginView },
   { path: "/", component: MainView }
 ];
 
