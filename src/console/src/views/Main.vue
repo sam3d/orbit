@@ -1,11 +1,31 @@
 <template>
   <div class="root">
-    <div class="navbar">Navbar</div>
-    <div class="container">
-      <div class="sidebar">The sidebar</div>
-      <div class="content">The content</div>
+    <div class="navbar">
+      <div class="logo"></div>
+
+      <div class="page">Dashboard</div>
+
+      <input type="text" class="search" placeholder="Search..." />
+
+      <div class="actions">
+        The action icons
+      </div>
+
+      <div class="user">
+        The user data
+      </div>
     </div>
-    <div class="footer">The footer</div>
+
+    <div class="container">
+      <div class="sidebar">
+        <p v-for="n in 100">HEllo</p>
+      </div>
+
+      <div class="content">
+        <p v-for="n in 100">HEllo</p>
+      </div>
+    </div>
+    <div class="footer">Orbit Version</div>
   </div>
 </template>
 
@@ -14,7 +34,8 @@ export default {};
 </script>
 
 <style lang="scss" scoped>
-$borderColor: darken(#f5f6fa, 5%);
+$backgroundColor: #f5f6fa;
+$borderColor: darken($backgroundColor, 5%);
 
 .root {
   display: flex;
@@ -27,26 +48,72 @@ $borderColor: darken(#f5f6fa, 5%);
 
   .navbar {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+
     background-color: #fff;
     border-bottom: solid 1px $borderColor;
     padding: 20px;
+
+    & > * {
+      flex-shrink: 0;
+      margin-left: 20px;
+    }
+
+    .logo {
+      margin-left: 0;
+
+      width: 38px;
+      height: 38px;
+      background-size: cover;
+      background-position: center;
+      background-image: url("~@/assets/logo/gradient.svg");
+    }
+
+    .page {
+      margin-left: 20px;
+    }
+
+    .search {
+      border: solid 1px $borderColor;
+      background-color: $backgroundColor;
+      padding: 10px;
+      font-size: 14px;
+      flex-grow: 1;
+
+      transition: background-color 0.2s;
+
+      &:focus {
+        background-color: #fff;
+      }
+    }
+
+    .actions {
+    }
+
+    .user {
+    }
   }
 
   .container {
     display: flex;
-    flex-grow: 2;
+    flex-grow: 1;
   }
 
   .sidebar {
-    flex-shrink: 0;
     background-color: #fff;
     border-right: solid 1px $borderColor;
     padding: 20px;
+    flex-shrink: 0;
+    overflow: scroll;
   }
 
   .content {
     flex-grow: 2;
-    flex-shrink: 0;
+    padding: 20px;
+    overflow: scroll;
+    max-height: 100%;
   }
 
   .footer {
@@ -54,6 +121,7 @@ $borderColor: darken(#f5f6fa, 5%);
     border-top: solid 1px $borderColor;
     display: flex;
     padding: 10px 20px;
+    flex-shrink: 0;
   }
 }
 </style>
