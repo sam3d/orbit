@@ -43,12 +43,10 @@ const store = new Vuex.Store({
     clearUser(state) {
       state.token = "";
       state.user = {
-        user: {
-          id: null,
-          name: null,
-          username: null,
-          email: null
-        }
+        id: null,
+        name: null,
+        username: null,
+        email: null
       };
     }
   },
