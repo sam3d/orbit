@@ -17,7 +17,9 @@
         placeholder="Search for apps, namespaces, volumes, and domains"
       />
 
-      <div class="actions"></div>
+      <div class="actions">
+        (actions go here)
+      </div>
 
       <div class="user" @click="logout()">
         <div class="meta">
@@ -202,7 +204,7 @@ $borderColor: darken($backgroundColor, 5%);
       font-size: 15px;
       font-weight: bold;
       opacity: 0.8;
-      width: 120px;
+      min-width: 115px;
 
       cursor: default;
     }
