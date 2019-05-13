@@ -22,7 +22,8 @@ const store = new Vuex.Store({
     token: null,
     ip: null,
 
-    namespace: null // The currently selected namespace
+    namespace: null, // The currently selected namespace
+    title: null // The current page title
   },
 
   mutations: {
@@ -44,6 +45,10 @@ const store = new Vuex.Store({
 
     namespace(state, namespace) {
       state.namespace = namespace;
+    },
+
+    title(state, title) {
+      state.title = title;
     },
 
     clearUser(state) {

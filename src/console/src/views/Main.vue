@@ -9,7 +9,7 @@
 
       <div class="logo" @click="$router.push('/')"></div>
 
-      <div class="page">Overview</div>
+      <div class="page">{{ $store.state.title }}</div>
 
       <input
         type="text"
@@ -71,7 +71,7 @@ export default {
     return {
       showSidebar: true,
       hasProfile: false,
-      namespace: null // Keep track of the selected namespace.
+      namespace: null // Keep track of the selected namespace
     };
   },
 
@@ -202,6 +202,7 @@ $borderColor: darken($backgroundColor, 5%);
       font-size: 15px;
       font-weight: bold;
       opacity: 0.8;
+      width: 120px;
 
       cursor: default;
     }
