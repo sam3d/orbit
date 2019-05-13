@@ -2,7 +2,7 @@
   <div class="container">
     <img src="@/assets/logo/gradient.svg" class="logo" />
 
-    <form class="form" method="#" action="POST" @submit.prevent="login">
+    <form class="form" @submit.prevent="login">
       <div class="profile" :style="profileStyle"></div>
 
       <label>Username or email address</label>

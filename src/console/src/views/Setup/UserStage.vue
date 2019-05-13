@@ -7,7 +7,7 @@
       cluster, so please ensure it is as secure as possible.
     </p>
 
-    <form class="form" @submit.prevent="createUser" method="POST" action="#">
+    <form class="form" @submit.prevent="createUser">
       <div
         class="profile"
         :style="{ backgroundImage: `url('${userProfileSrc}')` }"
