@@ -33,10 +33,10 @@
       <div class="sidebar" v-if="showSidebar">
         <div class="category">Cluster</div>
 
-        <div class="item">Nodes</div>
-        <div class="item">Namespaces</div>
-        <div class="item">Users</div>
-        <div class="item">Security</div>
+        <div class="item" @click="push('/nodes')">Nodes</div>
+        <div class="item" @click="push('/namespaces')">Namespaces</div>
+        <div class="item" @click="push('/users')">Users</div>
+        <div class="item" @click="push('/security')">Security</div>
 
         <div class="category">Namespace</div>
 
@@ -45,16 +45,16 @@
           <option>orbit-system</option>
         </select>
 
-        <div class="item">Overview</div>
-        <div class="item">Repositories</div>
-        <div class="item">Deployments</div>
-        <div class="item">Routers</div>
-        <div class="item">Certificates</div>
-        <div class="item">Volumes</div>
+        <div class="item" @click="push('/')">Overview</div>
+        <div class="item" @click="push('/repositories')">Repositories</div>
+        <div class="item" @click="push('/deployments')">Deployments</div>
+        <div class="item" @click="push('/routers')">Routers</div>
+        <div class="item" @click="push('/certificates')">Certificates</div>
+        <div class="item" @click="push('/volumes')">Volumes</div>
       </div>
 
       <div class="content">
-        This is the content.
+        <router-view></router-view>
       </div>
     </div>
     <div class="footer">Orbit Version</div>
@@ -89,6 +89,11 @@ export default {
       const id = this.$store.state.user.id;
       const res = await this.$api.get(`/user/${id}/profile`);
       this.hasProfile = res.status === 200;
+    },
+
+    // Navigate to the correct path while keeping the namespace in the URL.
+    push(path) {
+      this.$router.push({ path, query: this.$route.query });
     },
 
     async logout() {
