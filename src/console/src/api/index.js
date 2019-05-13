@@ -1,5 +1,8 @@
 import axios from "axios";
 
+import router from "../router";
+import store from "../store";
+
 const instance = axios.create({
   baseURL: "/api",
   validateStatus: status => true, // Always succeed
@@ -14,6 +17,14 @@ const instance = axios.create({
 instance.interceptors.response.use(
   res => {
     if (!res.config.redirect) return res;
+
+    // The request was unauthorized, perform the redirect.
+    if (res.status === 401 || res.status === 403) {
+      store.commit("clearUser");
+      router.push("/login");
+      return Promise.reject("User is not authorized");
+    }
+
     return res;
   },
 
