@@ -7,9 +7,12 @@
         @click="showSidebar = !showSidebar"
       ></div>
 
-      <div class="logo"></div>
+      <div class="logo" @click="$router.push('/')"></div>
+
       <div class="page">Applications</div>
+
       <input type="text" class="search" placeholder="Search..." />
+
       <div class="actions">
         The action icons
       </div>
@@ -106,6 +109,7 @@ $borderColor: darken($backgroundColor, 5%);
       background-size: cover;
       background-position: center;
       background-image: url("~@/assets/logo/gradient.svg");
+      cursor: pointer;
     }
 
     .page {
