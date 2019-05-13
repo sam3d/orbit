@@ -17,9 +17,7 @@
         placeholder="Search for apps, namespaces, volumes, and domains"
       />
 
-      <div class="actions">
-        (actions go here)
-      </div>
+      <div class="actions"></div>
 
       <div class="user" @click="logout()">
         <div class="meta">
