@@ -44,7 +44,7 @@
 
         <select class="namespace" v-model="namespace">
           <option>default</option>
-          <option>orbit-system</option>
+          <option v-for="namespace in namespaces">{{ namespace.name }}</option>
         </select>
 
         <div class="item" @click="push('/')">Overview</div>
@@ -73,12 +73,15 @@ export default {
     return {
       showSidebar: true,
       hasProfile: false,
-      namespace: null // Keep track of the selected namespace
+      namespace: null, // Keep track of the selected namespace
+
+      namespaces: [] // Keep track of the current namespaces
     };
   },
 
   mounted() {
     this.checkProfile();
+    this.fetchNamespaces();
     this.namespace = this.$route.query.namespace || "default";
   },
 
@@ -91,6 +94,12 @@ export default {
       const id = this.$store.state.user.id;
       const res = await this.$api.get(`/user/${id}/profile`);
       this.hasProfile = res.status === 200;
+    },
+
+    // Get a list of the namespaces.
+    async fetchNamespaces() {
+      const res = await this.$api.get("/namespaces");
+      this.namespaces = res.data;
     },
 
     // Navigate to the correct path while keeping the namespace in the URL.
