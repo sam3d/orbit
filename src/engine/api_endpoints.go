@@ -368,6 +368,12 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
+		// Join the docker swarm by connecting with the join token.
+		if err := docker.JoinSwarm(targetAddr.IP.String(), store.state.ManagerJoinToken); err != nil {
+			c.String(http.StatusInternalServerError, "Could not join the docker swarm cluster.")
+			return
+		}
+
 		engine.Status = StatusReady
 		engine.writeConfig()
 
