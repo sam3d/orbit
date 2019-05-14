@@ -87,7 +87,7 @@ func (s *RPCServer) Join(ctx context.Context, in *proto.JoinRequest) (*proto.Joi
 	}
 
 	// Ensure that the join token is valid.
-	if in.JoinToken != "jointoken" {
+	if in.JoinToken != store.state.ManagerJoinToken {
 		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
@@ -123,7 +123,7 @@ func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinReques
 	}
 
 	// Ensure we have a valid join token.
-	if in.JoinToken != "jointoken" {
+	if in.JoinToken != store.state.ManagerJoinToken {
 		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
