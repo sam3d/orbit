@@ -39,28 +39,36 @@
     </div>
 
     <div class="container">
-      <div class="sidebar" v-if="showSidebar">
-        <div class="category">Cluster</div>
+      <transition name="slide">
+        <div class="sidebar" v-if="showSidebar">
+          <div class="category">Cluster</div>
 
-        <div class="item" @click="push('/nodes')">Nodes</div>
-        <div class="item" @click="push('/namespaces')">Namespaces</div>
-        <div class="item" @click="push('/users')">Users</div>
-        <div class="item" @click="push('/security')">Security</div>
+          <div class="item" @click="push('/nodes')">Nodes</div>
+          <div class="item" @click="push('/namespaces')">Namespaces</div>
+          <div class="item" @click="push('/users')">Users</div>
+          <div class="item" @click="push('/security')">Security</div>
 
-        <div class="category">Namespace</div>
+          <div class="category">Namespace</div>
 
-        <select class="namespace" v-model="namespace" @click="fetchNamespaces">
-          <option>default</option>
-          <option v-for="namespace in namespaces">{{ namespace.name }}</option>
-        </select>
+          <select
+            class="namespace"
+            v-model="namespace"
+            @click="fetchNamespaces"
+          >
+            <option>default</option>
+            <option v-for="namespace in namespaces">{{
+              namespace.name
+            }}</option>
+          </select>
 
-        <div class="item" @click="push('/')">Overview</div>
-        <div class="item" @click="push('/repositories')">Repositories</div>
-        <div class="item" @click="push('/deployments')">Deployments</div>
-        <div class="item" @click="push('/routers')">Routers</div>
-        <div class="item" @click="push('/certificates')">Certificates</div>
-        <div class="item" @click="push('/volumes')">Volumes</div>
-      </div>
+          <div class="item" @click="push('/')">Overview</div>
+          <div class="item" @click="push('/repositories')">Repositories</div>
+          <div class="item" @click="push('/deployments')">Deployments</div>
+          <div class="item" @click="push('/routers')">Routers</div>
+          <div class="item" @click="push('/certificates')">Certificates</div>
+          <div class="item" @click="push('/volumes')">Volumes</div>
+        </div>
+      </transition>
 
       <div class="content">
         <transition mode="out-in" name="fade">
