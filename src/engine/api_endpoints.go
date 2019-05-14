@@ -368,6 +368,11 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 			return
 		}
 
+		// Ensure the node is not currently a member of a swarm. If the node is not
+		// a member of the swarm, this command will fail. That is completely
+		// alright, as it means that we can just carry on anyway.
+		docker.ForceLeaveSwarm()
+
 		// Join the docker swarm by connecting with the join token.
 		if err := docker.JoinSwarm(targetAddr.IP.String(), store.state.ManagerJoinToken); err != nil {
 			c.String(http.StatusInternalServerError, "Could not join the docker swarm cluster.")
