@@ -37,7 +37,7 @@ type Namespaces []Namespace
 func (n *Namespaces) GenerateID() string {
 search:
 	for {
-		b := make([]byte, 32)
+		b := make([]byte, 8)
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 

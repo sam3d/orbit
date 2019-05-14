@@ -272,7 +272,7 @@ func newACMEClient() (*acme.Client, error) {
 func (c *Certificates) GenerateID() string {
 search:
 	for {
-		b := make([]byte, 32)
+		b := make([]byte, 8)
 		rand.Read(b)
 		id := hex.EncodeToString(b)
 
