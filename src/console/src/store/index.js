@@ -93,10 +93,13 @@ const store = new Vuex.Store({
        * on the setup page, the query parameter is lost as a result of the
        * "push".
        */
+
       if (path !== "/setup" && engineStatus !== "running")
         return router.push("/setup");
-      if (path === "/setup" && engineStatus === "running")
-        return router.push("/");
+      if (path === "/setup") {
+        if (engineStatus === "running") return router.push("/");
+        return; // No matter what, we don't want to continue
+      }
 
       // Check and update the user details.
       await dispatch("updateUser");
