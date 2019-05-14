@@ -389,6 +389,8 @@ $borderColor: darken($backgroundColor, 5%);
     padding: 20px;
     overflow: scroll;
     max-height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .footer {
