@@ -80,7 +80,7 @@ export default {
 
       // Otherwise, we have successfully joined the cluster. Continue to the
       // node configuration set up screen.
-      this.emit("complete");
+      this.$emit("complete");
     }
   },
 
