@@ -10,7 +10,7 @@
       name="address"
       class="code"
       type="text"
-      placeholder="0.0.0.0:6501"
+      placeholder="0.0.0.0"
       v-model="address"
       ref="input"
       size="21"
@@ -66,8 +66,15 @@ export default {
       this.error = null;
       this.busy = true;
 
+      // Use a default port if one isn't present.
+      let target_address = this.address;
+      if (!this.port) {
+        this.address = this.ip;
+        target_address = this.ip + ":6501";
+      }
+
       // Construct and then send the request.
-      const body = { join_token: this.token, target_address: this.address };
+      const body = { join_token: this.token, target_address };
       const opts = { redirect: false };
       const res = await this.$api.post("/cluster/join", body, opts);
 
@@ -87,16 +94,27 @@ export default {
   computed: {
     // Whether or not the input fields are valid.
     valid() {
+      const validToken = this.token.length >= 3; // TODO: Improve this heuristic
+      return this.ip && validToken;
+    },
+
+    ip() {
       try {
-        const [ip, port] = this.address.split(":");
+        const [ip] = this.address.split(":");
+        if (validator.isIP(ip)) return ip;
+        else return "";
+      } catch (err) {
+        return "";
+      }
+    },
 
-        const validIP = validator.isIP(ip);
-        const validPort = validator.isPort(port);
-        const validToken = this.token.length >= 3; // TODO: Improve this heuristic
-
-        return validIP && validPort && validToken;
-      } catch (e) {
-        return false;
+    port() {
+      try {
+        const [, port] = this.address.split(":");
+        if (validator.isPort(port)) return port;
+        else return "";
+      } catch (err) {
+        return "";
       }
     }
   }
