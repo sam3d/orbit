@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -52,17 +53,25 @@ func SwarmToken(manager bool) string {
 	}
 
 	cmd := exec.Command("docker", "swarm", "join-token", tokenType, "-q")
-	if err := cmd.Run(); err != nil {
-		log.Printf("[ERR] docker: Could not retrieve %s token for swarm: %s", tokenType, err)
-		return ""
-	}
 	output, err := cmd.Output()
 	if err != nil {
 		log.Printf("[ERR] docker: Could not retrieve output for %s token for swarm: %s", tokenType, err)
 		return ""
 	}
 
-	return string(output)
+	return strings.TrimSpace(string(output))
+}
+
+// JoinSwarm will attempt to join the swarm with the given IP address and token.
+func JoinSwarm(ip, token string) error {
+	cmd := exec.Command("docker", "swarm", "join", "--token", token, ip)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("{ERR] docker: Could not join swarm with token: %s", err)
+		return err
+	}
+	return nil
 }
 
 // CreateOverlayNetwork will create a docker swarm network for overlay routing.
