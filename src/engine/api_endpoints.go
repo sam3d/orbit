@@ -964,6 +964,19 @@ func (s *APIServer) handleUserLogin() gin.HandlerFunc {
 			return
 		}
 
+		// Wait for the application to take place.
+	search:
+		for {
+			for _, u := range store.state.Users {
+				for _, s := range u.Sessions {
+					if s.Token == cmd.Session.Token {
+						break search
+					}
+				}
+			}
+			time.Sleep(time.Millisecond * 200)
+		}
+
 		// Return the session token to the user.
 		c.String(http.StatusOK, cmd.Session.Token)
 	}
