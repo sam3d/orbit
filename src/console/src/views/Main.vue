@@ -23,13 +23,18 @@
 
       <div class="actions"></div>
 
-      <div class="user" @click="logout()">
+      <div
+        class="user"
+        @click="showUserMenu = !showUserMenu"
+        :class="{ open: showUserMenu }"
+      >
         <div class="meta">
           <div class="name">{{ this.$store.state.user.name }}</div>
           <div class="username">@{{ this.$store.state.user.username }}</div>
         </div>
 
         <div class="profile" :style="profileStyle"></div>
+        <div class="arrow" :class="{ rotate: showUserMenu }"></div>
       </div>
     </div>
 
@@ -87,6 +92,7 @@ export default {
   data() {
     return {
       showSidebar: true,
+      showUserMenu: false,
       hasProfile: false,
       namespace: "default", // Keep track of the selected namespace
 
@@ -183,7 +189,7 @@ $borderColor: darken($backgroundColor, 5%);
 
     background-color: #fff;
     border-bottom: solid 1px $borderColor;
-    padding: 12px 20px;
+    padding: 14px 20px;
 
     overflow-y: scroll;
 
@@ -263,19 +269,30 @@ $borderColor: darken($backgroundColor, 5%);
     .user {
       display: flex;
       align-items: center;
-      padding: 5px;
-      border-radius: 1000px;
-      padding-left: 15px;
 
       cursor: pointer;
 
-      transition: border 0.2s, background-color 0.2s;
-      border: solid 1px transparent;
+      transition: opacity 0.2s;
       &:hover {
-        border: solid 1px $borderColor;
+        opacity: 0.8;
       }
-      &:active {
-        background-color: transparentize($borderColor, 0.6);
+      &.open {
+        opacity: 0.6;
+      }
+
+      .arrow {
+        width: 10px;
+        height: 10px;
+        background-image: url("~@/assets/icon/dropdown.svg");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        margin-left: 10px;
+
+        transition: transform 0.3s;
+        &.rotate {
+          transform: rotate(180deg);
+        }
       }
 
       .profile {
@@ -304,7 +321,7 @@ $borderColor: darken($backgroundColor, 5%);
         .username {
           font-size: 13px;
           font-weight: bold;
-          margin-top: 2px;
+          margin-top: 5px;
         }
       }
     }
@@ -354,7 +371,7 @@ $borderColor: darken($backgroundColor, 5%);
       font-weight: bold;
 
       padding: 10px 20px;
-      border: solid 1px #ddd;
+      border: solid 1px $borderColor;
       width: 100%;
 
       margin-bottom: 10px;
