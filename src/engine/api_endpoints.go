@@ -330,8 +330,9 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 
 		// Let the primary server know that we're ready to be joined to it.
 		cRes, err := client.ConfirmJoin(context.Background(), &proto.ConfirmJoinRequest{
-			RaftAddr: fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
-			Id:       store.ID,
+			RaftAddr:  fmt.Sprintf("%s:%d", joinRes.AdvertiseAddr, store.RaftPort),
+			Id:        store.ID,
+			JoinToken: body.JoinToken,
 		})
 		if err != nil {
 			log.Printf("[ERR] api: %v", err)
