@@ -40,7 +40,7 @@
 
         <div class="category">Namespace</div>
 
-        <select class="namespace" v-model="namespace">
+        <select class="namespace" v-model="namespace" @click="fetchNamespaces">
           <option>default</option>
           <option v-for="namespace in namespaces">{{ namespace.name }}</option>
         </select>
