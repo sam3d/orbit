@@ -204,6 +204,20 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 			return
 		}
 
+		// Save the join tokens to the store state. This allows them to be used by
+		// the future nodes that join.
+		cmd = command{
+			Op:               opSetJoinTokens,
+			ManagerJoinToken: docker.SwarmToken(true),
+			WorkerJoinToken:  docker.SwarmToken(false),
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not set join tokens in store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not set the join tokens on the store.")
+			return
+		}
+
 		// Create the overlay network for swarm communications.
 		if err := docker.CreateOverlayNetwork("orbit"); err != nil {
 			c.String(http.StatusInternalServerError, "Could not create orbit overlay network.")

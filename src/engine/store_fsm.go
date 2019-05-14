@@ -27,6 +27,8 @@ const (
 	opRevokeSession
 	opRevokeAllSessions
 
+	opSetJoinTokens
+
 	opNewNode
 	opUpdateNode
 
@@ -42,12 +44,14 @@ const (
 type command struct {
 	Op op `json:"op"`
 
-	User        User        `json:"user,omitempty"`
-	Session     Session     `json:"session,omitempty"`
-	Node        Node        `json:"node,omitempty"`
-	Router      Router      `json:"router,omitempty"`
-	Certificate Certificate `json:"certificate,omitempty"`
-	Namespace   Namespace   `json:"namespace,omitempty"`
+	User             User        `json:"user,omitempty"`
+	Session          Session     `json:"session,omitempty"`
+	Node             Node        `json:"node,omitempty"`
+	Router           Router      `json:"router,omitempty"`
+	Certificate      Certificate `json:"certificate,omitempty"`
+	Namespace        Namespace   `json:"namespace,omitempty"`
+	ManagerJoinToken string      `json:"manager_join_token,omitempty"`
+	WorkerJoinToken  string      `json:"worker_join_token,omitempty"`
 }
 
 // Apply is a helper proxy method that will apply the command to a raft instance
@@ -120,6 +124,10 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case opRevokeAllSessions:
 		return f.applyRevokeAllSessions(c.User.ID)
 
+	// Token operations.
+	case opSetJoinTokens:
+		return f.applySetJoinTokens(c.ManagerJoinToken, c.WorkerJoinToken)
+
 	// Node operations.
 	case opNewNode:
 		return f.applyNewNode(c.Node)
@@ -156,6 +164,14 @@ func (f *fsm) applyRemoveUser(id string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Users.Remove(id)
+	return nil
+}
+
+func (f *fsm) applySetJoinTokens(manager, worker string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.ManagerJoinToken = manager
+	f.state.WorkerJoinToken = worker
 	return nil
 }
 

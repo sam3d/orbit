@@ -17,6 +17,9 @@ type StoreState struct {
 	Nodes        Nodes        `json:"nodes"`
 	Routers      Routers      `json:"routers"`
 	Certificates Certificates `json:"certificates"`
+
+	ManagerJoinToken string `json:"manager_join_token"`
+	WorkerJoinToken  string `json:"worker_join_token"`
 }
 
 // Namespace is a location where certain elements exist in. The elements in
