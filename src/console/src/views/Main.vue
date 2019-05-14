@@ -9,7 +9,11 @@
 
       <div class="logo" @click="$router.push('/')"></div>
 
-      <div class="page">{{ $store.state.title }}</div>
+      <transition name="slide" mode="out-in">
+        <div class="page" :key="$store.state.title">
+          {{ $store.state.title }}
+        </div>
+      </transition>
 
       <input
         type="text"
@@ -54,7 +58,9 @@
       </div>
 
       <div class="content">
-        <router-view :key="namespace"></router-view>
+        <transition mode="out-in" name="fade">
+          <router-view :key="namespace"></router-view>
+        </transition>
       </div>
     </div>
 
@@ -221,7 +227,6 @@ $borderColor: darken($backgroundColor, 5%);
       margin: 0 20px;
       font-size: 15px;
       font-weight: bold;
-      opacity: 0.8;
       min-width: 115px;
 
       cursor: default;
@@ -432,5 +437,27 @@ $borderColor: darken($backgroundColor, 5%);
       }
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.fade-enter,
+.fade-leave-active {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.slide-enter,
+.slide-leave-active {
+  opacity: 0;
+  transform: translateX(-5px);
 }
 </style>
