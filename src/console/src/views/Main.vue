@@ -54,7 +54,7 @@
       </div>
 
       <div class="content">
-        <router-view></router-view>
+        <router-view :key="namespace"></router-view>
       </div>
     </div>
 
@@ -82,7 +82,7 @@ export default {
     return {
       showSidebar: true,
       hasProfile: false,
-      namespace: null, // Keep track of the selected namespace
+      namespace: "default", // Keep track of the selected namespace
 
       namespaces: [] // Keep track of the current namespaces
     };
