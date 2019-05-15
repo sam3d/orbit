@@ -26,6 +26,8 @@ func NewWatcher(e *Engine) *Watcher {
 // required. This involves anything on a node that must match the state present
 // in the engine, such as the swap space data, or the gluster storage volumes.
 func (w *Watcher) Start() {
+	firstRun := true
+
 	for {
 		// This operation is performed continuously. That means checking every half
 		// a second will ensure a responsive state update in response to changes,
@@ -37,6 +39,13 @@ func (w *Watcher) Start() {
 		w.CreateBricks()
 		w.MountRaw()
 		w.MountVolumes()
+
+		// If this is the first run, then restart gluster after performing all of
+		// these operations so that the mount points work properly.
+		if firstRun {
+			firstRun = false
+			gluster.RestartGluster()
+		}
 	}
 }
 

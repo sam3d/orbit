@@ -181,6 +181,19 @@ func CreateVolume(id string, bricks []string, mode Mode) error {
 	return nil
 }
 
+// RestartGluster will restart the gluster daemon. This should be done
+// immediately after all of the mounts are created.
+func RestartGluster() error {
+	cmd := exec.Command("systemctl", "restart", "glusterd")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] gluster: Could not restart glusterd process")
+		return err
+	}
+	return nil
+}
+
 // StartVolume will start a glusterfs volume by ID.
 func StartVolume(id string) error {
 	cmd := exec.Command("gluster", "volume", "start", id)
