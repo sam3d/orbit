@@ -60,9 +60,77 @@ func Mount(from, to string) error {
 	return nil
 }
 
+// ExistingMount is a struct for when a mount is already present.
+type ExistingMount struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
+// ExistingMounts returns the mounts that are already present on the server.
+func ExistingMounts() ([]ExistingMount, error) {
+	// Retrieve the command output for the "mount" command.
+	cmd := exec.Command("mount")
+	cmd.Stderr = os.Stderr
+	output, err := cmd.Output()
+	if err != nil {
+		// There was an error running the command that retrieves the mounts. Return
+		// an empty slice.
+		return nil, err
+	}
+
+	var mounts []ExistingMount
+
+	// Tokenise the response so that we can figure out which mounts we need to
+	// use.
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if !strings.Contains(line, " on ") {
+			// Isn't a mount path we can check, so ignore it completely.
+			break
+		}
+
+		// Retrieve the correct components of the mount path and append it to the
+		// existing mount slice by creating the mount object.
+		tokens := strings.Split(line, " ")
+		mounts = append(mounts, ExistingMount{
+			From: tokens[0],
+			To:   tokens[2],
+		})
+	}
+
+	return mounts, nil
+}
+
+// AlreadyMounted returns if a volume has already been mounted.
+func AlreadyMounted(from, to string) bool {
+	// Retrieve the existing mounted directories.
+	mounts, err := ExistingMounts()
+	if err != nil {
+		log.Printf("[ERR] gluster: Can't retrieve the existing mounts: %s", err)
+		return false
+	}
+
+	// Check the provided mount against the existing mounts.
+	for _, m := range mounts {
+		if m.From == from && m.To == to {
+			// The mount does exist, so we can continue.
+			return true
+		}
+	}
+
+	// The mount must not exist.
+	return false
+}
+
 // MountGluster will mount a GlusterFS volume from a specified path.
 func MountGluster(ip, volume, to string) error {
 	from := fmt.Sprintf("%s:/%s", ip, volume)
+
+	// Check whether this volume is already mounted, and if so, do nothing.
+	if AlreadyMounted(from, to) {
+		return nil
+	}
+
 	cmd := exec.Command("mount", "-t", "glusterfs", from, to)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

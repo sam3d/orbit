@@ -35,8 +35,15 @@ func (w *Watcher) Start() {
 
 		// Perform the different checks.
 		w.CreateBricks()
+		w.MountBricks()
 		w.MountVolumes()
 	}
+}
+
+// MountBricks will ensure that if we're a node that houses a brick, that we
+// mount that brick correctly.
+func (w *Watcher) MountBricks() {
+
 }
 
 // MountVolumes will go through the state of the system and mount the bricks and
@@ -59,7 +66,7 @@ func (w *Watcher) MountVolumes() {
 			}
 		}
 
-		// Perform the mount.
+		// Perform the mount of the gluster volume if it's not already mounted.
 		gluster.MountGluster(ip, v.ID, paths.Data)
 	}
 }
