@@ -3,6 +3,7 @@ package engine
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"path/filepath"
 	"time"
 )
 
@@ -26,6 +27,43 @@ type Brick struct {
 
 // Volumes is a list of volumes in the store.
 type Volumes []Volume
+
+// VolumePaths returns the data about where the absolute (read: not relative)
+// paths for a given volume should be. This makes the handling of volume paths
+// more consistent.
+type VolumePaths struct {
+	// Container is the overall location for that volume data.
+	Container string `json:"container"`
+	// Data is where the started gluster volume should be mounted.
+	Data string `json:"data"`
+	// Raw is the raw block storage filesystem to be allocated.
+	Raw string `json:"raw"`
+	// Volume is where the raw block gets mounted. It isn't used by gluster
+	// directly (it's not recommended to use the root of a filesystem for a
+	// gluster mount). Instead the "brick" subdirectory gets used by gluster.
+	Volume string `json:"volume"`
+	// Brick is the directory inside of volume directory that gluster uses as its
+	// actual brick.
+	Brick string `json:"brick"`
+}
+
+// Paths returns the desired paths for a given volume.
+func (v Volume) Paths() VolumePaths {
+	container := filepath.Join("/var/orbit/volumes", v.ID)
+
+	raw := filepath.Join(container, "raw")
+	volume := filepath.Join(container, "volume")
+	data := filepath.Join(container, "data")
+	brick := filepath.Join(volume, "brick")
+
+	return VolumePaths{
+		Container: container,
+		Raw:       raw,
+		Volume:    volume,
+		Brick:     brick,
+		Data:      data,
+	}
+}
 
 // WaitForVolume will wait for the volume and all of its respective bricks to be
 // created. This does not perform the "gluster volume create" operation, as that

@@ -41,6 +41,7 @@ const (
 	opUpdateCertificate
 
 	opNewVolume
+	opUpdateVolumeBrick
 	opRemoveVolume
 )
 
@@ -49,6 +50,7 @@ type command struct {
 
 	User             User        `json:"user,omitempty"`
 	Session          Session     `json:"session,omitempty"`
+	Brick            Brick       `json:"brick,omitempty"`
 	Node             Node        `json:"node,omitempty"`
 	Router           Router      `json:"router,omitempty"`
 	Certificate      Certificate `json:"certificate,omitempty"`
@@ -156,6 +158,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		// Volume operations.
 	case opNewVolume:
 		return f.applyNewVolume(c.Volume)
+	case opUpdateVolumeBrick:
+		return f.applyUpdateVolumeBrick(c.Volume.ID, c.Brick)
 	case opRemoveVolume:
 		return f.applyRemoveVolume(c.Volume.ID)
 
@@ -389,6 +393,26 @@ func (f *fsm) applyRemoveVolume(id string) interface{} {
 		if v.ID == id {
 			f.state.Volumes = append(f.state.Volumes[:i], f.state.Volumes[i+1:]...)
 			break
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyUpdateVolumeBrick(volumeID string, brick Brick) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find and update the respective brick with the new brick.
+outer:
+	for i, v := range f.state.Volumes {
+		if v.ID == volumeID {
+			for j, b := range f.state.Volumes[i].Bricks {
+				if b.NodeID == brick.NodeID {
+					f.state.Volumes[i].Bricks[j] = brick
+					break outer
+				}
+			}
 		}
 	}
 

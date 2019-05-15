@@ -1,6 +1,12 @@
 package engine
 
-import "time"
+import (
+	"log"
+	"os"
+	"time"
+
+	"orbit.sh/engine/gluster"
+)
 
 // Watcher is a process responsible for watching the processes taking place in
 // the engine. it also keeps track of the engine so it can perform operations on
@@ -28,12 +34,12 @@ func (w *Watcher) Start() {
 		time.Sleep(time.Millisecond * 500)
 
 		// Perform the different checks.
-		w.volumes()
+		w.createBricks()
 	}
 }
 
-// volumes handles checking of the volume state.
-func (w *Watcher) volumes() {
+// createBricks handles checking of the volume state.
+func (w *Watcher) createBricks() {
 	// Check if we need to create a brick.
 	for _, v := range w.engine.Store.state.Volumes {
 		for _, b := range v.Bricks {
@@ -42,7 +48,56 @@ func (w *Watcher) volumes() {
 			// then update the store with the created state after this has taken
 			// place.
 			if !b.Created && b.NodeID == w.engine.Store.ID {
-				// TODO: Perform the creation.
+				paths := v.Paths()
+
+				// Create the container directory.
+				if err := os.MkdirAll(paths.Container, 0644); err != nil {
+					log.Printf("[ERR] watcher: Could not create volume container directory %s: %s", paths.Container, err)
+				}
+
+				// Create the raw storage brick.
+				if err := gluster.Fallocate(paths.Raw, v.Size); err != nil {
+					log.Printf("[ERR] watcher: Could not create raw file %s: %s", paths.Raw, err)
+				}
+
+				// Make the raw storage brick into a filesystem.
+				if err := gluster.MakeFS("xfs", paths.Raw); err != nil {
+					log.Printf("[ERR] watcher: Could not convert %s to xfs filesystem: %s", paths.Raw, err)
+				}
+
+				// Create the volume directory.
+				if err := os.MkdirAll(paths.Volume, 0644); err != nil {
+					log.Printf("[ERR] watcher: Could not create volume directory %s: %s", paths.Volume, err)
+				}
+
+				// Mount the raw storage brick to the volume directory.
+				if err := gluster.Mount(paths.Raw, paths.Volume); err != nil {
+					log.Printf("[ERR] watcher: Could not mount %s to %s: %s", paths.Raw, paths.Volume, err)
+				}
+
+				// Create the brick directory.
+				if err := os.MkdirAll(paths.Brick, 0644); err != nil {
+					log.Printf("[ERR] watcher: Could not create volume brick directory %s: %s", paths.Brick, err)
+				}
+
+				// Create the data directory.
+				if err := os.MkdirAll(paths.Data, 0644); err != nil {
+					log.Printf("[ERR] watcher: Could not create volume data directory %s: %s", paths.Data, err)
+				}
+
+				// Apply the created marker.
+				cmd := command{
+					Op:     opUpdateVolumeBrick,
+					Volume: Volume{ID: v.ID},
+					Brick: Brick{
+						NodeID:  b.NodeID,
+						Created: true,
+					},
+				}
+
+				if err := cmd.Apply(w.engine.Store); err != nil {
+					log.Printf("[ERR] watcher: Could not set the volume %s brick at %s to have created: true: %s", v.ID, b.NodeID, err)
+				}
 			}
 		}
 	}
