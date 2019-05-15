@@ -54,7 +54,7 @@ export default {
   data() {
     return {
       address: "", // The target address
-      token: "jointoken", // The join token for the target cluster
+      token: "", // The join token for the target cluster
       busy: false, // Whether there is any process taking place
       error: null // If there was an error with processing
     };
@@ -129,7 +129,7 @@ input[name="address"] {
 textarea {
   margin-top: 20px;
   width: 100%;
-  height: 80px;
+  height: 50px;
 }
 
 .error {

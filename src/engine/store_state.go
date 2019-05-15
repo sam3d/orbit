@@ -17,6 +17,7 @@ type StoreState struct {
 	Nodes        Nodes        `json:"nodes"`
 	Routers      Routers      `json:"routers"`
 	Certificates Certificates `json:"certificates"`
+	Volumes      Volumes      `json:"volumes"`
 
 	ManagerJoinToken string `json:"manager_join_token"`
 	WorkerJoinToken  string `json:"worker_join_token"`

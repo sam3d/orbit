@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"orbit.sh/engine/docker"
+	"orbit.sh/engine/gluster"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/raft"
@@ -1093,5 +1094,143 @@ func (s *APIServer) handleNodeUpdate() gin.HandlerFunc {
 		}
 
 		c.String(http.StatusOK, "Successfully updated the node with id %s", id)
+	}
+}
+
+func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name   string   `form:"name" json:"name"`
+		Size   int      `form:"size" json:"size"`
+		Bricks []string `form:"bricks" json:"bricks"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		if err := c.Bind(&body); err != nil {
+			c.String(http.StatusBadRequest, "Invalid body fields.")
+			return
+		}
+
+		// Convert the body bricks into actual bricks.
+		var bricks []Brick
+		for _, b := range body.Bricks {
+			// Find the node that represents this brick name.
+			for _, n := range store.state.Nodes {
+				if n.ID == b || n.Address.String() == b {
+					// The node was found, create the brick.
+					bricks = append(bricks, Brick{
+						NodeID:  n.ID,
+						Created: false,
+					})
+
+					// This brick has found its node, we can break this loop and continue
+					// with the rest of the bricks.
+					break
+				}
+			}
+		}
+
+		// Sanity check that the desired bricks completely match the server outcome.
+		// If there is a disparity between these two values, then it means that
+		// there one of the brick node names provided was invalid.
+		if len(bricks) != len(body.Bricks) {
+			log.Printf("[ERR] api: Invalid brick request. Found %d nodes out of the provided %d bricks.", len(bricks), len(body.Bricks))
+			c.String(http.StatusBadRequest, "One of the bricks you provided doesn't exist.")
+			return
+		}
+
+		// Construct the volume create command.
+		id := store.state.Volumes.GenerateID()
+		cmd := command{
+			Op: opNewVolume,
+			Volume: Volume{
+				ID:     id,
+				Name:   body.Name,
+				Size:   body.Size,
+				Bricks: bricks,
+			},
+		}
+
+		// Apply it to the store.
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the new volume to the store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply the new volume to the store.")
+			return
+		}
+
+		// Wait for all of the nodes to create the volume data for themselves after
+		// propagation.
+		store.WaitForVolume(id)
+
+		// Derive the paths to use for the bricks.
+		paths := cmd.Volume.Paths()
+		var brickPaths []string
+		for _, b := range bricks {
+			// Find the node for that brick.
+			for _, n := range store.state.Nodes {
+				if b.NodeID == n.ID {
+					// Add the path and continue.
+					brickPaths = append(brickPaths, fmt.Sprintf("%s:%s", n.Address, paths.Brick))
+					break
+				}
+			}
+		}
+
+		// Now create and start the volume.
+		gluster.CreateVolume(id, brickPaths, gluster.Replica)
+		gluster.StartVolume(id)
+
+		c.JSON(http.StatusCreated, cmd.Volume)
+	}
+}
+
+func (s *APIServer) handleVolumeRemove() gin.HandlerFunc {
+	store := s.engine.Store
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the volume in question by name and ID.
+		var volume *Volume
+		for _, v := range store.state.Volumes {
+			if id == v.ID || id == v.Name {
+				volume = &v
+				break
+			}
+		}
+
+		// If there was no volume, notify the user.
+		if volume == nil {
+			c.String(http.StatusNotFound, "A volume with the name or ID '%s' does not exist.", id)
+			return
+		}
+
+		// Otherwise, create and apply the remove operation.
+		cmd := command{
+			Op:     opRemoveVolume,
+			Volume: Volume{ID: volume.ID},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the volume remove operation: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply store remove operation.")
+			return
+		}
+
+		// Stop and delete the volume with that ID.
+		gluster.StopVolume(id)
+		gluster.DeleteVolume(id)
+
+		// Return the removed ID along with confirmation.
+		c.String(http.StatusOK, volume.ID)
+	}
+}
+
+func (s *APIServer) handleListVolumes() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, store.state.Volumes)
 	}
 }

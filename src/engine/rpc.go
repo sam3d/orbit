@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
+	"orbit.sh/engine/gluster"
 	"orbit.sh/engine/proto"
 )
 
@@ -86,7 +87,7 @@ func (s *RPCServer) Join(ctx context.Context, in *proto.JoinRequest) (*proto.Joi
 	}
 
 	// Ensure that the join token is valid.
-	if in.JoinToken != "jointoken" {
+	if in.JoinToken != store.state.ManagerJoinToken {
 		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
@@ -122,7 +123,7 @@ func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinReques
 	}
 
 	// Ensure we have a valid join token.
-	if in.JoinToken != "jointoken" {
+	if in.JoinToken != store.state.ManagerJoinToken {
 		res.Status = proto.Status_UNAUTHORIZED
 		return res, nil
 	}
@@ -131,6 +132,15 @@ func (s *RPCServer) ConfirmJoin(ctx context.Context, in *proto.ConfirmJoinReques
 	addr, _ := net.ResolveTCPAddr("tcp", in.RaftAddr)
 	if err := store.Join(in.Id, *addr); err != nil {
 		log.Printf("[ERR] store: Could not join %s to the store", in.RaftAddr)
+		res.Status = proto.Status_ERROR
+		return res, nil
+	}
+
+	// Attach the node to the trusted storage pool. Gluster has to perform this
+	// operation from the node that is joining the other node to it (the same way
+	// that Raft does).
+	if err := gluster.PeerProbe(addr.IP.String()); err != nil {
+		log.Printf("[ERR] gluster: Could not perform peer probe: %s", err)
 		res.Status = proto.Status_ERROR
 		return res, nil
 	}

@@ -30,6 +30,7 @@ func (s *APIServer) handlers() {
 	r.GET("/routers", s.handleListRouters())
 	r.GET("/certificates", s.handleListCertificates())
 	r.GET("/namespaces", s.handleListNamespaces())
+	r.GET("/volumes", s.handleListVolumes())
 
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())
@@ -66,6 +67,12 @@ func (s *APIServer) handlers() {
 		r := r.Group("/node")
 		r.GET("/:id", s.handleGetNode())
 		r.PUT("/:id", s.handleNodeUpdate())
+	}
+
+	{
+		r := r.Group("/volume")
+		r.POST("", s.handleVolumeAdd())
+		r.DELETE("/:id", s.handleVolumeRemove())
 	}
 }
 
