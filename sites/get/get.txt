@@ -61,3 +61,23 @@ echo ""
 echo "--> Cleaning up installation"
 apt-get update
 apt-get autoremove --yes
+
+echo ""
+echo "==> Installing Orbit"
+echo "--> Downloading Orbit from git"
+git clone https://gitlab+deploy-token-67468:KZ8ax5hErYzxBmb2R9t9@gitlab.com/sam3d/orbit.git /opt/orbit
+cd /opt/orbit
+git pull
+
+echo ""
+echo "--> Installing the Orbit command line"
+make -C /opt/orbit/src/cli install
+
+echo ""
+echo "--> Installing Orbit systemd unit file"
+cp /opt/orbit/misc/orbit.service /etc/systemd/system
+systemctl enable orbit
+
+echo ""
+echo "--> Starting Orbit agent"
+systemctl start orbit
