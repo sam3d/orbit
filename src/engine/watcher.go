@@ -35,15 +35,31 @@ func (w *Watcher) Start() {
 
 		// Perform the different checks.
 		w.CreateBricks()
-		w.MountBricks()
+		w.MountRaw()
 		w.MountVolumes()
 	}
 }
 
-// MountBricks will ensure that if we're a node that houses a brick, that we
-// mount that brick correctly.
-func (w *Watcher) MountBricks() {
+// MountRaw will ensure that if we're a node that houses a "raw" data volume,
+// that it gets mounted to the "volume" directory correctly.
+func (w *Watcher) MountRaw() {
+	for _, v := range w.engine.Store.state.Volumes {
+		for _, b := range v.Bricks {
+			if b.NodeID == w.engine.Store.ID {
+				// We host a brick, so now we need to ensure that it's mounted. Retrieve
+				// the paths and ensure that the volume path exists for us to mount the
+				// "raw" into.
+				paths := v.Paths()
+				os.MkdirAll(paths.Volume, 0644)
 
+				// Mount the raw into the volume.
+				gluster.Mount(paths.Raw, paths.Volume)
+
+				// Now that's done, ensure that the brick directory exists.
+				os.MkdirAll(paths.Brick, 0644)
+			}
+		}
+	}
 }
 
 // MountVolumes will go through the state of the system and mount the bricks and

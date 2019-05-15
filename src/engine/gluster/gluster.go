@@ -49,17 +49,6 @@ func MakeFS(filesystem, path string) error {
 	return nil
 }
 
-// Mount will run the mount command on a simple path.
-func Mount(from, to string) error {
-	cmd := exec.Command("mount", from, to)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
 // ExistingMount is a struct for when a mount is already present.
 type ExistingMount struct {
 	From string `json:"from"`
@@ -120,6 +109,22 @@ func AlreadyMounted(from, to string) bool {
 
 	// The mount must not exist.
 	return false
+}
+
+// Mount will run the mount command on a simple path.
+func Mount(from, to string) error {
+	// Ensure that it's not already mounted.
+	if AlreadyMounted(from, to) {
+		return nil
+	}
+
+	cmd := exec.Command("mount", from, to)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // MountGluster will mount a GlusterFS volume from a specified path.
