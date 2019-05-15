@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"orbit.sh/engine/docker"
+	"orbit.sh/engine/gluster"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/raft"
@@ -1162,6 +1163,24 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 		// Wait for all of the nodes to create the volume data for themselves after
 		// propagation.
 		store.WaitForVolume(id)
+
+		// Derive the paths to use for the bricks.
+		paths := cmd.Volume.Paths()
+		var brickPaths []string
+		for _, b := range bricks {
+			// Find the node for that brick.
+			for _, n := range store.state.Nodes {
+				if b.NodeID == n.ID {
+					// Add the path and continue.
+					brickPaths = append(brickPaths, fmt.Sprintf("%s:%s", n.Address, paths.Brick))
+					break
+				}
+			}
+		}
+
+		// Now create and start the volume.
+		gluster.CreateVolume(id, brickPaths, gluster.Replica)
+		gluster.StartVolume(id)
 
 		c.JSON(http.StatusCreated, cmd.Volume)
 	}

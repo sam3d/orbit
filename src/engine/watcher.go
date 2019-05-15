@@ -45,7 +45,7 @@ func (w *Watcher) Start() {
 func (w *Watcher) MountRaw() {
 	for _, v := range w.engine.Store.state.Volumes {
 		for _, b := range v.Bricks {
-			if b.NodeID == w.engine.Store.ID {
+			if b.NodeID == w.engine.Store.ID && b.Created {
 				// We host a brick, so now we need to ensure that it's mounted. Retrieve
 				// the paths and ensure that the volume path exists for us to mount the
 				// "raw" into.

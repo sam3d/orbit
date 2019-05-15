@@ -144,3 +144,51 @@ func MountGluster(ip, volume, to string) error {
 	}
 	return nil
 }
+
+// Mode the replication mode.
+type Mode uint
+
+const (
+	// Replica is a replicated data mode.
+	Replica Mode = iota
+)
+
+// CreateVolume will create a gluster volume.
+func CreateVolume(id string, bricks []string, mode Mode) error {
+	args := []string{"volume", "create", id} // Create the initial args
+
+	// Set the replica mode as long as there is more than one and the mode is nothing or replica.
+	if (mode == Replica) && len(bricks) > 1 {
+		count := len(bricks)
+		args = append(args, "replica", string(count))
+	}
+
+	// Construct the command.
+	args = append(args, bricks...) // Append all of the brick strings to the args
+	cmd := exec.Command("gluster", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Log the command out so we can debug.
+	log.Printf("[INFO] gluster: Running command '%s'", strings.Join(args, " "))
+
+	// Run the command.
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] gluster: Could not run volume create command on volume %s: %s", id, err)
+		return err
+	}
+
+	return nil
+}
+
+// StartVolume will start a glusterfs volume by ID.
+func StartVolume(id string) error {
+	cmd := exec.Command("gluster", "volume", "start", id)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] gluster: Could not run volume start command on volume %s: %s", id, err)
+		return err
+	}
+	return nil
+}
