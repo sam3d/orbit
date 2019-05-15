@@ -34,12 +34,38 @@ func (w *Watcher) Start() {
 		time.Sleep(time.Millisecond * 500)
 
 		// Perform the different checks.
-		w.createBricks()
+		w.CreateBricks()
+		w.MountVolumes()
 	}
 }
 
-// createBricks handles checking of the volume state.
-func (w *Watcher) createBricks() {
+// MountVolumes will go through the state of the system and mount the bricks and
+// volumes that it needs to.
+func (w *Watcher) MountVolumes() {
+	for _, v := range w.engine.Store.state.Volumes {
+		// Ensure that the most basic paths exist for this.
+		paths := v.Paths()
+		os.MkdirAll(paths.Data, 0644)
+
+		// Find the IP address to use for the mount point.
+		var ip string
+	search:
+		for _, b := range v.Bricks {
+			for _, n := range w.engine.Store.state.Nodes {
+				if n.ID == b.NodeID {
+					ip = n.Address.String()
+					break search
+				}
+			}
+		}
+
+		// Perform the mount.
+		gluster.MountGluster(ip, v.ID, paths.Data)
+	}
+}
+
+// CreateBricks handles checking of the volume state.
+func (w *Watcher) CreateBricks() {
 	// Check if we need to create a brick.
 	for _, v := range w.engine.Store.state.Volumes {
 		for _, b := range v.Bricks {
