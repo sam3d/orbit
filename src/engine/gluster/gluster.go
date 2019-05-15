@@ -127,6 +127,17 @@ func Mount(from, to string) error {
 	return nil
 }
 
+// Unmount will run the unmount command on a simple path.
+func Unmount(path string) error {
+	cmd := exec.Command("umount", path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // MountGluster will mount a GlusterFS volume from a specified path.
 func MountGluster(ip, volume, to string) error {
 	from := fmt.Sprintf("%s:/%s", ip, volume)

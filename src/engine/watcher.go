@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -36,6 +37,7 @@ func (w *Watcher) Start() {
 		time.Sleep(time.Millisecond * 500)
 
 		// Perform the different checks.
+		w.CleanUpVolumes()
 		w.CreateBricks()
 		w.MountRaw()
 		w.MountVolumes()
@@ -46,6 +48,41 @@ func (w *Watcher) Start() {
 			firstRun = false
 			gluster.RestartGluster()
 		}
+	}
+}
+
+// CleanUpVolumes will look at the store volumes and ensure that the local files
+// get deleted if they do not exist.
+func (w *Watcher) CleanUpVolumes() {
+	files, err := ioutil.ReadDir(RootVolumeDir)
+	if err != nil {
+		log.Printf("[ERR] watcher: Could not perform clean up errors: %s", err)
+		return
+	}
+
+	// Loop over the files that were in the directory. If the file exists but is
+	// not a volume that Orbit is aware of, then remove it. Otherwise, leave it
+	// be.
+search:
+	for _, f := range files {
+		name := f.Name()
+
+		// Search for the volume and find out if it exists.
+		for _, v := range w.engine.Store.state.Volumes {
+			if v.ID == name {
+				// It does exist, move on to the next file.
+				continue search
+			}
+		}
+
+		// It doesn't exist, get the volume data and its paths.
+		v := Volume{ID: name}
+		paths := v.Paths()
+
+		// Remove the correct files.
+		gluster.Unmount(paths.Data)
+		gluster.Unmount(paths.Volume)
+		os.RemoveAll(paths.Container)
 	}
 }
 

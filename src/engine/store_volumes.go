@@ -28,6 +28,10 @@ type Brick struct {
 // Volumes is a list of volumes in the store.
 type Volumes []Volume
 
+// RootVolumeDir is the root filesystem where the volumes are stored. This
+// will be the same for each volume.
+const RootVolumeDir = "/var/orbit/volumes"
+
 // VolumePaths returns the data about where the absolute (read: not relative)
 // paths for a given volume should be. This makes the handling of volume paths
 // more consistent.
@@ -49,7 +53,7 @@ type VolumePaths struct {
 
 // Paths returns the desired paths for a given volume.
 func (v Volume) Paths() VolumePaths {
-	container := filepath.Join("/var/orbit/volumes", v.ID)
+	container := filepath.Join(RootVolumeDir, v.ID)
 
 	raw := filepath.Join(container, "raw")
 	volume := filepath.Join(container, "volume")
