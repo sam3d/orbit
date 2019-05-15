@@ -7,7 +7,7 @@
         @click="showSidebar = !showSidebar"
       ></div>
 
-      <div class="logo" @click="$router.push('/')"></div>
+      <div class="logo" @click="push('/')"></div>
 
       <transition name="slide" mode="out-in">
         <div class="page" :key="$store.state.title">
