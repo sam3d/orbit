@@ -39,6 +39,9 @@ const (
 
 	opNewCertificate
 	opUpdateCertificate
+
+	opNewVolume
+	opRemoveVolume
 )
 
 type command struct {
@@ -50,6 +53,7 @@ type command struct {
 	Router           Router      `json:"router,omitempty"`
 	Certificate      Certificate `json:"certificate,omitempty"`
 	Namespace        Namespace   `json:"namespace,omitempty"`
+	Volume           Volume      `json:"volume,empty"`
 	ManagerJoinToken string      `json:"manager_join_token,omitempty"`
 	WorkerJoinToken  string      `json:"worker_join_token,omitempty"`
 }
@@ -148,6 +152,13 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewCertificate(c.Certificate)
 	case opUpdateCertificate:
 		return f.applyUpdateCertificate(c.Certificate)
+
+		// Volume operations.
+	case opNewVolume:
+		return f.applyNewVolume(c.Volume)
+	case opRemoveVolume:
+		return f.applyRemoveVolume(c.Volume.ID)
+
 	}
 
 	return nil
@@ -360,6 +371,27 @@ func (f *fsm) applyUpdateRouter(r Router) interface{} {
 
 	// Re-create the router object.
 	f.state.Routers = append(f.state.Routers, *currentRouter)
+	return nil
+}
+
+func (f *fsm) applyNewVolume(v Volume) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Volumes = append(f.state.Volumes, v)
+	return nil
+}
+
+func (f *fsm) applyRemoveVolume(id string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for i, v := range f.state.Volumes {
+		if v.ID == id {
+			f.state.Volumes = append(f.state.Volumes[:i], f.state.Volumes[i+1:]...)
+			break
+		}
+	}
+
 	return nil
 }
 
