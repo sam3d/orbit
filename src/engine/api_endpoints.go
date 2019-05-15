@@ -1141,10 +1141,11 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 		}
 
 		// Construct the volume create command.
+		id := store.state.Volumes.GenerateID()
 		cmd := command{
 			Op: opNewVolume,
 			Volume: Volume{
-				ID:     store.state.Volumes.GenerateID(),
+				ID:     id,
 				Name:   body.Name,
 				Size:   body.Size,
 				Bricks: bricks,
@@ -1158,9 +1159,9 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 			return
 		}
 
-		// TODO: Wait for the creation of the volume from all of the nodes that need
-		// to handle that. Then after that's happened, before the gluster volume
-		// create operation.
+		// Wait for all of the nodes to create the volume data for themselves after
+		// propagation.
+		store.WaitForVolume(id)
 
 		c.JSON(http.StatusCreated, cmd.Volume)
 	}
