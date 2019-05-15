@@ -15,6 +15,7 @@ import (
 type Engine struct {
 	APIServer *APIServer
 	RPCServer *RPCServer
+	Watcher   *Watcher
 	Store     *Store
 
 	Status     Status
@@ -33,6 +34,7 @@ func New() *Engine {
 	e.Store = NewStore(e)
 	e.APIServer = NewAPIServer(e)
 	e.RPCServer = NewRPCServer(e)
+	e.Watcher = NewWatcher(e)
 
 	return e
 }
@@ -163,6 +165,10 @@ func (e *Engine) Start() error {
 
 		log.Println("[INFO] engine: Started")
 	}()
+
+	// Start the engine watcher process to ensure the node updates its state
+	// correctly. This does not need to be monitored.
+	go e.Watcher.Start()
 
 	return <-errCh
 }
