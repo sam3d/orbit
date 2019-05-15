@@ -1218,7 +1218,9 @@ func (s *APIServer) handleVolumeRemove() gin.HandlerFunc {
 			return
 		}
 
-		// TODO: Wait for nodes to propagate the deletion operation.
+		// Stop and delete the volume with that ID.
+		gluster.StopVolume(id)
+		gluster.DeleteVolume(id)
 
 		// Return the removed ID along with confirmation.
 		c.String(http.StatusOK, volume.ID)

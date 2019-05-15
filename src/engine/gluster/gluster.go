@@ -205,3 +205,27 @@ func StartVolume(id string) error {
 	}
 	return nil
 }
+
+// StopVolume will stop a glusterfs volume by ID.
+func StopVolume(id string) error {
+	cmd := exec.Command("gluster", "volume", "stop", id, "--mode=script")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] gluster: Could not run volume stop command on volume %s: %s", id, err)
+		return err
+	}
+	return nil
+}
+
+// DeleteVolume will delete a glusterfs volume by ID.
+func DeleteVolume(id string) error {
+	cmd := exec.Command("gluster", "volume", "delete", id, "--mode=script")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] gluster: Could not run volume delete command on volume %s: %s", id, err)
+		return err
+	}
+	return nil
+}
