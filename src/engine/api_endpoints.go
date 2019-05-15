@@ -1167,8 +1167,41 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleVolumeRemove() gin.HandlerFunc {
+	store := s.engine.Store
 	return func(c *gin.Context) {
+		id := c.Param("id")
 
+		// Find the volume in question by name and ID.
+		var volume *Volume
+		for _, v := range store.state.Volumes {
+			if id == v.ID || id == v.Name {
+				volume = &v
+				break
+			}
+		}
+
+		// If there was no volume, notify the user.
+		if volume == nil {
+			c.String(http.StatusNotFound, "A volume with the name or ID '%s' does not exist.", id)
+			return
+		}
+
+		// Otherwise, create and apply the remove operation.
+		cmd := command{
+			Op:     opRemoveVolume,
+			Volume: Volume{ID: volume.ID},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the volume remove operation: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply store remove operation.")
+			return
+		}
+
+		// TODO: Wait for nodes to propagate the deletion operation.
+
+		// Return the removed ID along with confirmation.
+		c.String(http.StatusOK, volume.ID)
 	}
 }
 
