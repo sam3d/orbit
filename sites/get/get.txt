@@ -89,4 +89,4 @@ docker build -t orbit.sh/console .
 
 echo ""
 echo "--> Starting web user interface"
-docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --name console --rm -d orbit.sh/console
+docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --restart always --name console -d orbit.sh/console
