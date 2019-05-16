@@ -678,7 +678,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 
 	type body struct {
 		Domain      string `form:"domain" json:"domain"`
-		NamespaceID string `form:"namespace_id" json:"namespace_id"`
+		Namespace   string `form:"namespace" json:"namespace"`
 		AppID       string `form:"app_id" json:"app_id"`
 		WWWRedirect bool   `form:"www_redirect" json:"www_redirect"`
 	}
@@ -690,13 +690,20 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		// Generate the ID for the router.
 		id := store.state.Routers.GenerateID()
 
+		// Find the namespace by ID.
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace == nil {
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			return
+		}
+
 		// Create a new router without a certificate.
 		cmd := command{
 			Op: opNewRouter,
 			Router: Router{
 				ID:          id,
 				Domain:      body.Domain,
-				NamespaceID: body.NamespaceID,
+				NamespaceID: namespace.ID,
 				AppID:       body.AppID,
 				WWWRedirect: body.WWWRedirect,
 			},
@@ -719,7 +726,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 
 	type body struct {
 		CertificateID string `form:"certificate_id" json:"certificate_id"`
-		NamespaceID   string `form:"namespace_id" json:"namespace_id"`
+		Namespace     string `form:"namespace" json:"namespace"`
 		AppID         string `form:"app_id" json:"app_id"`
 	}
 
@@ -728,13 +735,20 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 		var body body
 		c.Bind(&body)
 
+		// Find the namespace by ID.
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace == nil {
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			return
+		}
+
 		// Create the update command.
 		cmd := command{
 			Op: opUpdateRouter,
 			Router: Router{
 				ID:            id,
 				CertificateID: body.CertificateID,
-				NamespaceID:   body.NamespaceID,
+				NamespaceID:   namespace.ID,
 				AppID:         body.AppID,
 			},
 		}
@@ -769,9 +783,9 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		AutoRenew   bool     `form:"auto_renew" json:"auto_renew"`
-		NamespaceID string   `form:"namespace_id" json:"namespace_id"`
-		Domains     []string `form:"domains" json:"domains"`
+		AutoRenew bool     `form:"auto_renew" json:"auto_renew"`
+		Namespace string   `form:"namespace" json:"namespace"`
+		Domains   []string `form:"domains" json:"domains"`
 
 		PrivateKey *multipart.FileHeader `form:"private_key" json:"private_key"`
 		FullChain  *multipart.FileHeader `form:"full_chain" json:"full_chain"`
@@ -797,6 +811,13 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 		// Generate the certificate ID.
 		id := store.state.Certificates.GenerateID()
 
+		// Find the namespace by ID.
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace == nil {
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			return
+		}
+
 		// Construct the command.
 		cmd := command{
 			Op: opNewCertificate,
@@ -805,7 +826,7 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 				AutoRenew:   body.AutoRenew,
 				FullChain:   fullChain,
 				PrivateKey:  privateKey,
-				NamespaceID: body.NamespaceID,
+				NamespaceID: namespace.ID,
 				Domains:     body.Domains,
 			},
 		}
@@ -1104,6 +1125,8 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 		Name   string   `form:"name" json:"name"`
 		Size   int      `form:"size" json:"size"`
 		Bricks []string `form:"bricks" json:"bricks"`
+
+		Namespace string `form:"namespace" json:"namespace"`
 	}
 
 	return func(c *gin.Context) {
@@ -1141,6 +1164,13 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 			return
 		}
 
+		// Find the namespace by ID.
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace == nil {
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			return
+		}
+
 		// Construct the volume create command.
 		id := store.state.Volumes.GenerateID()
 		cmd := command{
@@ -1150,6 +1180,8 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 				Name:   body.Name,
 				Size:   body.Size,
 				Bricks: bricks,
+
+				NamespaceID: namespace.ID,
 			},
 		}
 

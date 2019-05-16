@@ -13,6 +13,8 @@ type Volume struct {
 	Name   string  `json:"name"`   // The short (friendly) name for the volume
 	Size   int     `json:"size"`   // Size of volume in MB (used for allocation)
 	Bricks []Brick `json:"bricks"` // The different bricks for this volume
+
+	NamespaceID string `json:"namespace_id"`
 }
 
 // Brick is a server and a location for a given bit of data. It keeps track of

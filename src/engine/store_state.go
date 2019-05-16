@@ -51,3 +51,14 @@ search:
 		return id
 	}
 }
+
+// Find will find a namespace with the given name or identifier and return that
+// namespace. Will return nil if it could not be found.
+func (n *Namespaces) Find(id string) *Namespace {
+	for _, namespace := range *n {
+		if namespace.ID == id || namespace.Name == id {
+			return &namespace
+		}
+	}
+	return nil
+}

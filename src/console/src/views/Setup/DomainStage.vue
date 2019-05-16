@@ -179,20 +179,7 @@ export default {
 
       // Globally scoped variables that we retrieve over the course of the API
       // access.
-      let routerID, certificateID, namespaceID;
-
-      /**
-       * Retrieve the orbit-system namespace ID.
-       */
-      {
-        const res = await this.$api.get("/namespaces", { redirect: false });
-        if (res.status !== 200) {
-          this.busy = false;
-          alert(res.data);
-          return;
-        }
-        namespaceID = res.data.find(ns => ns.name === "orbit-system").id;
-      }
+      let routerID, certificateID;
 
       /**
        * Create the router.
@@ -200,7 +187,7 @@ export default {
       {
         const body = {
           domain: this.domain,
-          namespace_id: namespaceID,
+          namespace: "orbit-system",
           app_id: "console"
         };
         const opts = { redirect: false };
@@ -229,7 +216,7 @@ export default {
         const body = {
           auto_renew: true,
           domains: [this.domain],
-          namespace_id: namespaceID
+          namespace: "orbit-system"
         };
         const res = await this.$api.post("/certificate", body, opts);
         if (res.status !== 201) {
@@ -248,7 +235,7 @@ export default {
 
         // Attach the other body properties to identify this certificate.
         body.append("domains", [this.domain]);
-        body.append("namespace_id", namespaceID);
+        body.append("namespace", "orbit-system");
 
         // Construct and submit the request.
         const headers = { "Content-Type": "multipart/form-data" };
