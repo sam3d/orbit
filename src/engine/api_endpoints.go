@@ -756,7 +756,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		// Find the namespace by ID.
 		namespace := store.state.Namespaces.Find(body.Namespace)
 		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
 			return
 		}
 
@@ -798,11 +798,12 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 		var body body
 		c.Bind(&body)
 
-		// Find the namespace by ID.
+		// Find the namespace by ID. The namespace doesn't need to exist, so if this
+		// doesn't work, just don't set the namespace to be updated.
 		namespace := store.state.Namespaces.Find(body.Namespace)
-		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
-			return
+		namespaceID := ""
+		if namespace != nil {
+			namespaceID = namespace.ID
 		}
 
 		// Create the update command.
@@ -811,7 +812,7 @@ func (s *APIServer) handleRouterUpdate() gin.HandlerFunc {
 			Router: Router{
 				ID:            id,
 				CertificateID: body.CertificateID,
-				NamespaceID:   namespace.ID,
+				NamespaceID:   namespaceID,
 				AppID:         body.AppID,
 			},
 		}
@@ -877,7 +878,7 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 		// Find the namespace by ID.
 		namespace := store.state.Namespaces.Find(body.Namespace)
 		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
 			return
 		}
 
@@ -1230,7 +1231,7 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 		// Find the namespace by ID.
 		namespace := store.state.Namespaces.Find(body.Namespace)
 		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", namespace)
+			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
 			return
 		}
 
