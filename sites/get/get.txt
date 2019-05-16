@@ -18,7 +18,7 @@ cat << EOF
 
 Hello and welcome to the Orbit download script. Orbit must be run on a clean
 installation of Ubuntu 18.04 (this script will likely fail at some point
-otherwise). Installation will take about 5 minutes. If you already have Orbit
+otherwise). Installation will take about 10 minutes. If you already have Orbit
 installed on this node, please cancel this operation now.
 
 --> Starting installation in 10 seconds
