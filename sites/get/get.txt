@@ -11,6 +11,7 @@
 ###
 
 export DEBIAN_FRONTEND=noninteractive
+REGISTRY_URL="127.0.0.1:6510"
 
 cat << EOF
 ==> Orbit
@@ -83,13 +84,18 @@ echo "--> Starting Orbit agent"
 systemctl start orbit
 
 echo ""
+echo "--> Building edge router"
+cd /opt/orbit/src/edge
+docker build -t $REGISTRY_URL/orbit.sh/edge -f ./Dockerfile ..
+
+echo ""
 echo "--> Building console web user interface"
 cd /opt/orbit/src/console
-docker build -t orbit.sh/console .
+docker build -t $REGISTRY_URL/orbit.sh/console .
 
 echo ""
 echo "--> Starting web user interface"
-docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --restart always --name console -d orbit.sh/console
+docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --restart always --name console -d $REGISTRY_URL/orbit.sh/console
 
 cat << EOF
 
