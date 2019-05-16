@@ -1,0 +1,9 @@
+[Unit]
+Description=orbit agent
+
+[Service]
+ExecStart=/usr/bin/orbit agent
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -10,15 +10,95 @@
 # curl https://get.orbit.sh | bash
 ###
 
+export DEBIAN_FRONTEND=noninteractive
+
 cat << EOF
 ==> Orbit
 --> Welcome!
 
-Hello and welcome to the Orbit download script. If you are reading this, you
-were able to download and run the script from the server. Congrats!
+Hello and welcome to the Orbit download script. Orbit must be run on a clean
+installation of Ubuntu 18.04 (this script will likely fail at some point
+otherwise). Installation will take about 5 minutes. If you already have Orbit
+installed on this node, please cancel this operation now.
 
-Please check back soon, and you'll be able to use Orbit before you know it.
+--> Starting installation in 10 seconds
+EOF
 
---> Thank you :)
+# sleep 10
+
+echo ""
+echo "==> Ensuring environment is ready"
+apt-get update
+
+echo ""
+echo "==> Installing dependencies"
+
+echo ""
+echo "--> Installing git"
+apt-get install --yes git
+
+echo ""
+echo "--> Installing docker"
+curl https://get.docker.com | bash
+
+echo ""
+echo "--> Installing glusterfs"
+apt-get install --yes glusterfs-server
+
+echo ""
+echo "--> Installing Node.js and Nodemon"
+curl -sL https://deb.nodesource.com/setup_10.x | bash -
+apt-get install --yes nodejs
+npm install -g nodemon
+
+echo ""
+echo "--> Installing Go"
+add-apt-repository --yes ppa:longsleep/golang-backports
+apt-get update
+apt-get install --yes golang-go
+
+echo ""
+echo "--> Cleaning up installation"
+apt-get update
+apt-get autoremove --yes
+
+echo ""
+echo "==> Installing Orbit"
+echo "--> Downloading Orbit from git"
+git clone https://gitlab+deploy-token-67468:KZ8ax5hErYzxBmb2R9t9@gitlab.com/sam3d/orbit.git /opt/orbit
+cd /opt/orbit
+git pull
+
+echo ""
+echo "--> Installing the Orbit command line"
+make -C /opt/orbit/src/cli install
+
+echo ""
+echo "--> Installing Orbit systemd unit file"
+cp /opt/orbit/misc/orbit.service /etc/systemd/system
+systemctl enable orbit
+
+echo ""
+echo "--> Starting Orbit agent"
+systemctl start orbit
+
+echo ""
+echo "--> Building console web user interface"
+cd /opt/orbit/src/console
+docker build -t orbit.sh/console .
+
+echo ""
+echo "--> Starting web user interface"
+docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --restart always --name console -d orbit.sh/console
+
+cat << EOF
+
+==> Orbit has finished installing!
+
+--> Complete the set up by navigating to :6500 (port 6500) in a browser on the
+    IP address or the domain name that this server is hosted on.
 
 EOF
+
+echo "--> (P.S. This is probably at http://$(dig @resolver1.opendns.com A myip.opendns.com +short -4):6500)"
+echo ""
