@@ -1171,50 +1171,22 @@ func (s *APIServer) handleVolumeAdd() gin.HandlerFunc {
 			return
 		}
 
-		// Construct the volume create command.
-		id := store.state.Volumes.GenerateID()
-		cmd := command{
-			Op: opNewVolume,
-			Volume: Volume{
-				ID:     id,
-				Name:   body.Name,
-				Size:   body.Size,
-				Bricks: bricks,
-
-				NamespaceID: namespace.ID,
-			},
+		// Construct the volume.
+		volume := Volume{
+			Name:        body.Name,
+			Size:        body.Size,
+			Bricks:      bricks,
+			NamespaceID: namespace.ID,
 		}
 
-		// Apply it to the store.
-		if err := cmd.Apply(store); err != nil {
-			log.Printf("[ERR] store: Could not apply the new volume to the store: %s", err)
-			c.String(http.StatusInternalServerError, "Could not apply the new volume to the store.")
-			return
+		// Add the volume to the store.
+		v, err := store.AddVolume(volume)
+		if err != nil {
+			log.Printf("[ERR] api: Could not create the volume: %s", err)
+			c.String(http.StatusBadRequest, "That volume could not be created.")
 		}
 
-		// Wait for all of the nodes to create the volume data for themselves after
-		// propagation.
-		store.WaitForVolume(id)
-
-		// Derive the paths to use for the bricks.
-		paths := cmd.Volume.Paths()
-		var brickPaths []string
-		for _, b := range bricks {
-			// Find the node for that brick.
-			for _, n := range store.state.Nodes {
-				if b.NodeID == n.ID {
-					// Add the path and continue.
-					brickPaths = append(brickPaths, fmt.Sprintf("%s:%s", n.Address, paths.Brick))
-					break
-				}
-			}
-		}
-
-		// Now create and start the volume.
-		gluster.CreateVolume(id, brickPaths, gluster.Replica)
-		gluster.StartVolume(id)
-
-		c.JSON(http.StatusCreated, cmd.Volume)
+		c.JSON(http.StatusCreated, v)
 	}
 }
 

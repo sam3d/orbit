@@ -3,8 +3,12 @@ package engine
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"log"
 	"path/filepath"
 	"time"
+
+	"orbit.sh/engine/gluster"
 )
 
 // Volume is a distributed block storage volume propagated by GlusterFS.
@@ -69,6 +73,53 @@ func (v Volume) Paths() VolumePaths {
 		Brick:     brick,
 		Data:      data,
 	}
+}
+
+// AddVolume is a shorthand method on the store that will go through all of the
+// steps required for making a volume. The ID is auto generated if none is
+// provided when this is used, so only the non-auto-generated properties need to
+// be used.
+func (s *Store) AddVolume(v Volume) (*Volume, error) {
+	// Auto generate a volume ID if none was provided.
+	if v.ID == "" {
+		v.ID = s.state.Volumes.GenerateID()
+	}
+
+	// Create the new volume command.
+	cmd := command{
+		Op:     opNewVolume,
+		Volume: v,
+	}
+
+	// Apply it to the store.
+	if err := cmd.Apply(s); err != nil {
+		log.Printf("[ERR] volume: Could not apply the volume to the store: %s", err)
+		return &v, err
+	}
+
+	// Wait for all of the nodes to create the volume data for themselves after
+	// propagation.
+	s.WaitForVolume(v.ID)
+
+	// Derive the paths to use for the bricks.
+	paths := cmd.Volume.Paths()
+	var bricks []string
+	for _, b := range cmd.Volume.Bricks {
+		// Find the node for that brick.
+		for _, n := range s.state.Nodes {
+			if b.NodeID == n.ID {
+				// Add the path and continue.
+				bricks = append(bricks, fmt.Sprintf("%s:%s", n.Address, paths.Brick))
+				break
+			}
+		}
+	}
+
+	// Now create and start the volume.
+	gluster.CreateVolume(v.ID, bricks, gluster.Replica)
+	gluster.StartVolume(v.ID)
+
+	return &v, nil
 }
 
 // WaitForVolume will wait for the volume and all of its respective bricks to be
