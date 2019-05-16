@@ -25,7 +25,7 @@ installed on this node, please cancel this operation now.
 --> Starting installation in 10 seconds
 EOF
 
-# sleep 10
+sleep 10
 
 echo ""
 echo "==> Ensuring environment is ready"
