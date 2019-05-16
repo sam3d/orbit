@@ -90,3 +90,15 @@ docker build -t orbit.sh/console .
 echo ""
 echo "--> Starting web user interface"
 docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --restart always --name console -d orbit.sh/console
+
+cat << EOF
+
+==> Orbit has finished installing!
+
+--> Complete the set up by navigating to :6500 (port 6500) in a browser on the
+    IP address or the domain name that this server is hosted on.
+
+EOF
+
+echo "--> (P.S. This is probably at http://$(dig @resolver1.opendns.com A myip.opendns.com +short -4):6500)"
+echo ""
