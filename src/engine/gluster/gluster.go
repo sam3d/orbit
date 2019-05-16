@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -166,12 +167,12 @@ const (
 
 // CreateVolume will create a gluster volume.
 func CreateVolume(id string, bricks []string, mode Mode) error {
-	args := []string{"volume", "create", id} // Create the initial args
+	args := []string{"volume", "create", id, "--mode=script"} // Create the initial args
 
 	// Set the replica mode as long as there is more than one and the mode is nothing or replica.
 	if (mode == Replica) && len(bricks) > 1 {
-		count := len(bricks)
-		args = append(args, "replica", string(count))
+		count := strconv.Itoa(len(bricks))
+		args = append(args, "replica", count)
 	}
 
 	// Construct the command.
