@@ -54,6 +54,14 @@ func (w *Watcher) Start() {
 // CleanUpVolumes will look at the store volumes and ensure that the local files
 // get deleted if they do not exist.
 func (w *Watcher) CleanUpVolumes() {
+	// Sanity check. Ensure that there is at least one volume in the store state
+	// before we attempt this. It could be that the store doesn't have all of the
+	// data yet and we need to make sure that this doesn't run, otherwise it'll
+	// wipe it all out.
+	if len(w.engine.Store.state.Volumes) == 0 {
+		return
+	}
+
 	files, err := ioutil.ReadDir(RootVolumeDir)
 	if err != nil {
 		log.Printf("[ERR] watcher: Could not perform clean up errors: %s", err)
@@ -76,6 +84,7 @@ search:
 		}
 
 		// It doesn't exist, get the volume data and its paths.
+		log.Printf("[INFO] watcher: Cleaning up volume %s", name)
 		v := Volume{ID: name}
 		paths := v.Paths()
 
