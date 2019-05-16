@@ -100,5 +100,5 @@ cat << EOF
 
 EOF
 
-echo "--> (P.S. This is probably at http://$(dig @resolver1.opendns.com A myip.opendns.com +short -4):6500)"
+echo "--> P.S. This is probably at http://$(dig @resolver1.opendns.com A myip.opendns.com +short -4):6500"
 echo ""

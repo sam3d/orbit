@@ -29,3 +29,10 @@
 6. **Data included**: Building on top of [GlusterFS](https://docs.gluster.org/en/latest/), out of the box orbit provides highly configurable, distributed, and fault tolerant block storage volumes and databases (such as [Postgres](https://www.postgresql.org/), [Redis](https://redis.io/) & [MySQL](https://www.mysql.com/)).
 
 7. **Omnidirectional scalability**: There is no upper or lower limit to the number of nodes that you can reliably use. For a simple, low-stakes project, one node works fine. For a large, multi-tenant operation, you have the freedom to scale up to thousands of nodes.
+
+## Installation
+
+1. Grab a fresh Ubuntu `18.04` server with a public IP address (ideally a cloud VPS from [Linode](https://www.linode.com/) or [DigitalOcean](https://www.digitalocean.com/)). It can be the smallest offering from either; Orbit is pretty resource light.
+2. Log in to the server via ssh as the `root` user.
+3. Run `curl https://get.orbit.sh | bash` and wait for about 10 minutes for the installation to complete.
+4. Navigate to the IP address of your server at port `6500` (for example, if your server IP address is `121.31.232.56`, you would access the setup page at `http://121.31.232.56:6500`).
