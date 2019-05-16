@@ -81,3 +81,12 @@ systemctl enable orbit
 echo ""
 echo "--> Starting Orbit agent"
 systemctl start orbit
+
+echo ""
+echo "--> Building console web user interface"
+cd /opt/orbit/src/console
+docker build -t orbit.sh/console .
+
+echo ""
+echo "--> Starting web user interface"
+docker run -p 6500:5000 -v /var/run/orbit.sock:/var/run/orbit.sock --name console --rm -d orbit.sh/console
