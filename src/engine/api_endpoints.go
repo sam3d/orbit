@@ -180,10 +180,11 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		}
 
 		// Prepare command to create the orbit system namespace.
+		namespaceID := store.state.Namespaces.GenerateID()
 		cmd = command{
 			Op: opNewNamespace,
 			Namespace: Namespace{
-				ID:   store.state.Namespaces.GenerateID(),
+				ID:   namespaceID,
 				Name: "orbit-system",
 			},
 		}
@@ -222,6 +223,68 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		// Create the overlay network for swarm communications.
 		if err := docker.CreateOverlayNetwork("orbit"); err != nil {
 			c.String(http.StatusInternalServerError, "Could not create orbit overlay network.")
+			return
+		}
+
+		// Create the volume that Orbit will use for all of its operations.
+		vol, err := store.AddVolume(Volume{
+			Name:        "Repositories & Registry",
+			Size:        1024,
+			NamespaceID: namespaceID,
+			Bricks: []Brick{Brick{
+				NodeID: store.ID,
+			}},
+		})
+		if err != nil {
+			log.Printf("[ERR] store: There was an error creating volume %s: %s", vol.ID, err)
+			c.String(http.StatusInternalServerError, "Could not create primary orbit data volume.")
+			return
+		}
+
+		// Publish the registry server with this path in use.
+		if err := docker.DeployRegistry(vol.Paths().Data, 6510); err != nil {
+			log.Printf("[ERR] docker: There was an error deploying the registry: %s", err)
+			c.String(http.StatusInternalServerError, "Could not publish the image registry to Docker Swarm.")
+			return
+		}
+
+		// Push the console and edge router images to the registry.
+		if err := docker.Push("orbit.sh/edge", "orbit.sh/console"); err != nil {
+			log.Printf("[ERR] docker: Could not deploy to the registry: %s", err)
+			c.String(http.StatusInternalServerError, "Could not push orbit system images to the registry.")
+			return
+		}
+
+		// Create service declarations for the console and edge router and start
+		// them running.
+		edgeService := docker.Service{
+			Name: "edge",
+			Tag:  "orbit.sh/edge",
+			Publish: []docker.Publish{
+				docker.Publish{Container: 443, Host: 443},
+				docker.Publish{Container: 80, Host: 80},
+			},
+			Mounts: []docker.ServiceMount{
+				docker.ServiceMount{
+					Source: "/var/run/orbit.sock",
+					Target: "/var/run/orbit.sock",
+				},
+			},
+		}
+		consoleService := docker.Service{
+			Name:    "console",
+			Tag:     "orbit.sh/console",
+			Publish: []docker.Publish{docker.Publish{Container: 5000, Host: 6500}},
+			Mounts: []docker.ServiceMount{
+				docker.ServiceMount{
+					Source: "/var/run/orbit.sock",
+					Target: "/var/run/orbit.sock",
+				},
+			},
+		}
+		if err := docker.CreateService(edgeService, consoleService); err != nil {
+			log.Printf("[ERR] docker: Could not create service: %s", err)
+			c.String(http.StatusInternalServerError, "Could not create the orbit cluster services.")
 			return
 		}
 

@@ -4,10 +4,12 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -82,6 +84,166 @@ func CreateOverlayNetwork(name string) error {
 	if err := cmd.Run(); err != nil {
 		log.Printf("[ERR] docker: Could not create overlay network with name %s: %s", name, err)
 		return err
+	}
+	return nil
+}
+
+// DeployRegistry will create a docker service for the docker registry. It will
+// use a local volume (as given by the data path) and make its available on the
+// swarm nodes with the given port. This registry is where the built images are
+// pushed so that they can be used on all nodes.
+func DeployRegistry(path string, port int) error {
+	cmd := exec.Command("docker", "service", "create",
+		"--name", "registry",
+		"--mount", fmt.Sprintf("type=bind,source=%s,target=/var/lib/registry", path),
+		"--replicas", "1",
+		"--publish", fmt.Sprintf("%d:5000", port),
+		"registry:2",
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Printf("[INFO] docker: Running command '%s'", strings.Join(cmd.Args, " "))
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] docker: Could not deploy registry server: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+// ServiceMount is a mount that a docker service uses.
+type ServiceMount struct {
+	Source string
+	Target string
+	Type   string
+}
+
+func (m ServiceMount) String() string {
+	// Default to using a bind mount.
+	if m.Type == "" {
+		m.Type = "bind"
+	}
+
+	return fmt.Sprintf("type=%s,source=%s,target=%s", m.Type, m.Source, m.Target)
+}
+
+// Publish is a port combination for a docker service.
+type Publish struct {
+	Host      int
+	Container int
+}
+
+func (p Publish) String() string {
+	return fmt.Sprintf("%d:%d", p.Host, p.Container)
+}
+
+// Service is a logical docker service. This is not a complete service
+// description, but includes enough of the configuration for Orbit to function
+// properly.
+type Service struct {
+	Name                 string
+	Tag                  string
+	Replicas             int
+	DisableLocalRegistry bool
+	Publish              []Publish
+	Mode                 ServiceMode
+	Mounts               []ServiceMount
+	Networks             []string
+}
+
+// ServiceMode is a way in which to deploy a service.
+type ServiceMode int
+
+const (
+	// Replicated means that a service gets replicated as specified.
+	Replicated ServiceMode = iota
+	// Global means that a service runs on each node that specifies it.
+	Global
+)
+
+// CreateService will take in a service configuration object and create the
+// docker service based on that.
+func CreateService(services ...Service) error {
+	for _, s := range services {
+		if err := createService(s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// createService performs the create service operation on a single service.
+func createService(s Service) error {
+	// Construct the basic arguments required for the service create command.
+	args := []string{"service", "create"}
+
+	// Add the name.
+	if s.Name != "" {
+		args = append(args, "--name", s.Name)
+	}
+
+	// Ensure there's at least one replica if that's the mode that ends up being
+	// used.
+	if s.Replicas == 0 {
+		s.Replicas = 1
+	}
+
+	// Either set replicas or global mode.
+	switch s.Mode {
+	case Replicated:
+		args = append(args, "--replicas", strconv.Itoa(s.Replicas))
+	case Global:
+		args = append(args, "--mode", "global")
+	}
+
+	// Add the mount declarations.
+	for _, m := range s.Mounts {
+		args = append(args, "--mount", m.String())
+	}
+
+	// Add the networks (and include orbit automatically).
+	args = append(args, "--network", "orbit")
+	for _, n := range s.Networks {
+		args = append(args, "--network", n)
+	}
+
+	// Add the port bindings.
+	for _, p := range s.Publish {
+		args = append(args, "--publish", p.String())
+	}
+
+	// And finally, add the image tag. This can change depending upon whether the
+	// service supplied includes a different registry specification to pull the
+	// image from.
+	if s.DisableLocalRegistry {
+		args = append(args, s.Tag)
+	} else {
+		args = append(args, fmt.Sprintf("127.0.0.1:6510/%s", s.Tag))
+	}
+
+	cmd := exec.Command("docker", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Printf("[INFO] docker: Running command '%s'", strings.Join(args, " "))
+	if err := cmd.Run(); err != nil {
+		log.Printf("[ERR] docker: Could not run docker service create on service %s: %s", s.Tag, err)
+		return err
+	}
+	return nil
+}
+
+// Push will perform a docker push operation on a series of registry tags.
+func Push(tags ...string) error {
+	for _, tag := range tags {
+		name := fmt.Sprintf("127.0.0.1:6510/%s", tag)
+		cmd := exec.Command("docker", "push", name)
+		if err := cmd.Run(); err != nil {
+			log.Printf("[ERR] docker: Could not push image with tag %s: %s", tag, err)
+			return err
+		}
 	}
 	return nil
 }
