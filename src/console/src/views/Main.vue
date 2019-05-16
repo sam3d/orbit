@@ -56,9 +56,9 @@
             @click="fetchNamespaces"
           >
             <option>default</option>
-            <option v-for="namespace in namespaces">{{
-              namespace.name
-            }}</option>
+            <option v-for="namespace in namespaces" :value="namespace.id">
+              {{ namespace.name }}
+            </option>
           </select>
 
           <div class="item" @click="push('/')">Overview</div>
