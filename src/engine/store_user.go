@@ -130,6 +130,16 @@ func (u *Users) FindByID(id string) (int, *User) {
 	return -1, nil
 }
 
+// Find will search a user by username, email address, or ID.
+func (u *Users) Find(id string) *User {
+	for _, user := range *u {
+		if user.ID == id || user.Email == id || user.Username == id {
+			return &user
+		}
+	}
+	return nil
+}
+
 // Remove removes the user with the specified ID from the slice.
 func (u *Users) Remove(id string) error {
 	i, _ := u.FindByID(id)

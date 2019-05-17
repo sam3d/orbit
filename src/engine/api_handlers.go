@@ -36,6 +36,9 @@ func (s *APIServer) handlers() {
 	r.POST("/service/restart/:id", s.handleRestartService())
 	r.POST("/certificates/renew", s.handleRenewCertificates())
 
+	// Handle git repositories at the /code URL.
+	r.Any("/repo/*path", s.handleGit())
+
 	{
 		r := r.Group("/cluster")
 		r.POST("/bootstrap", s.handleClusterBootstrap())

@@ -44,6 +44,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20190306233201-d0f344d83b0c // indirect
 	github.com/rogpeppe/fastuuid v1.0.0 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shurcooL/go v0.0.0-20190121191506-3fef8c783dec // indirect
 	github.com/shurcooL/gofontwoff v0.0.0-20181114050219-180f79e6909d // indirect
 	github.com/shurcooL/highlight_diff v0.0.0-20181222201841-111da2e7d480 // indirect
@@ -59,6 +60,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/shurcooL/webdavfs v0.0.0-20181215192745-5988b2d638f6 // indirect
 	github.com/sirupsen/logrus v1.3.0 // indirect
+	github.com/sosedoff/gitkit v0.2.0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	go.opencensus.io v0.19.1 // indirect
