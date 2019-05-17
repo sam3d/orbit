@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -61,9 +61,63 @@ func (s *APIServer) handleGit() gin.HandlerFunc {
 					return false, nil
 				}
 
-				// Find the repo based on the given URL.
+				// Remove the repo prefix from the URL so that it's not a factor.
 				urlPath := strings.TrimPrefix(req.RepoPath, "repo/")
-				fmt.Println(urlPath)
+
+				// Attempt to split the path into two items. If there's two items, it
+				// means that the repo is referenced by its name and namespace, and if
+				// there's only one item, it means that it's referenced by its name in
+				// the "default" namespace or its unique identifier in any namespace.
+				tokens := strings.Split(urlPath, "/")
+
+				var namespace *Namespace
+				var identifier string
+				switch len(tokens) {
+				case 1:
+					identifier = tokens[0]
+				case 2:
+					namespace = store.state.Namespaces.Find(tokens[0])
+					identifier = tokens[1]
+				default:
+					log.Printf("[ERR] git: Wrong number of URL components")
+					return false, nil
+				}
+
+				// Search through the repositories to find matching ones.
+				var repo *Repository
+				for _, r := range store.state.Repositories {
+					// Check the ID first.
+					if r.ID == identifier {
+						repo = &r
+						break
+					}
+
+					// If there was no namespace provided, just return the first match for
+					// the given repository name. This handles the case of the "default"
+					// repository. If no match is provided, continue on with the loop
+					// anyway, as the following checks require there to be a namespace.
+					if namespace == nil {
+						if r.Name == identifier {
+							repo = &r
+							break
+						}
+						continue
+					}
+
+					// And finally, if the namespace and name match, then we can return
+					// the repo for that result.
+					if r.NamespaceID == namespace.ID && r.Name == identifier {
+						repo = &r
+						break
+					}
+				}
+
+				// If there was no repository found by this point, it means that with
+				// the details provided, there wasn't a single one found.
+				if repo == nil {
+					log.Printf("[ERR] git: That repository does not exist: identifier: '%s', namespace: %+v", identifier, namespace)
+					return false, nil
+				}
 
 				// Check if it exists against the store.state.Repositories
 				// Set the req.RepoPath to be the desired location in the correct volume.

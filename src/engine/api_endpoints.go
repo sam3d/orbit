@@ -228,7 +228,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 		// Create the volume that Orbit will use for all of its operations.
 		vol, err := store.AddVolume(Volume{
-			Name:        "Repositories & Registry",
+			Name:        "repositories-and-registry",
 			Size:        1024,
 			NamespaceID: namespaceID,
 			Bricks: []Brick{Brick{
