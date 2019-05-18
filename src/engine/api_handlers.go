@@ -31,10 +31,14 @@ func (s *APIServer) handlers() {
 	r.GET("/certificates", s.handleListCertificates())
 	r.GET("/namespaces", s.handleListNamespaces())
 	r.GET("/volumes", s.handleListVolumes())
+	r.GET("/repositories", s.handleGetRepositories())
 
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())
 	r.POST("/certificates/renew", s.handleRenewCertificates())
+
+	// Handle git repositories at the /code URL.
+	r.Any("/repo/*path", s.handleGit())
 
 	{
 		r := r.Group("/cluster")
@@ -73,6 +77,11 @@ func (s *APIServer) handlers() {
 		r := r.Group("/volume")
 		r.POST("", s.handleVolumeAdd())
 		r.DELETE("/:id", s.handleVolumeRemove())
+	}
+
+	{
+		r := r.Group("/repository")
+		r.POST("", s.handleRepositoryAdd())
 	}
 }
 

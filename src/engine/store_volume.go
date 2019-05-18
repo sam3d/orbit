@@ -122,6 +122,31 @@ func (s *Store) AddVolume(v Volume) (*Volume, error) {
 	return &v, nil
 }
 
+// OrbitSystemVolume returns the volume for the orbit system. If there isn't a
+// volume (the system isn't ready yet), it returns nil.
+func (s *Store) OrbitSystemVolume() *Volume {
+	// Ensure that the orbit-system is ready.
+	namespace := s.state.Namespaces.Find("orbit-system")
+	if namespace == nil {
+		return nil
+	}
+
+	// Ensure that the volume is ready.
+	var volume *Volume
+	for _, v := range s.state.Volumes {
+		if v.NamespaceID == namespace.ID {
+			volume = &v
+			break
+		}
+	}
+	if volume == nil {
+		return nil
+	}
+
+	// The namespace and the volume is ready, we're good to go!
+	return volume
+}
+
 // WaitForVolume will wait for the volume and all of its respective bricks to be
 // created. This does not perform the "gluster volume create" operation, as that
 // only needs to be run on a single node.

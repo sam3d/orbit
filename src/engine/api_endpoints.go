@@ -9,6 +9,8 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -228,7 +230,7 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 		// Create the volume that Orbit will use for all of its operations.
 		vol, err := store.AddVolume(Volume{
-			Name:        "Repositories & Registry",
+			Name:        "repositories-and-registry",
 			Size:        1024,
 			NamespaceID: namespaceID,
 			Bricks: []Brick{Brick{
@@ -289,6 +291,64 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, engine.marshalConfig())
+	}
+}
+
+func (s *APIServer) handleGetRepositories() gin.HandlerFunc {
+	store := s.engine.Store
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, store.state.Repositories)
+	}
+}
+
+func (s *APIServer) handleRepositoryAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name      string `form:"name" json:"name"`
+		Namespace string `form:"namespace" json:"namespace"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.ShouldBind(&body)
+
+		// Check the orbit system volume exists.
+		volume := store.OrbitSystemVolume()
+		if volume == nil {
+			c.String(http.StatusServiceUnavailable, "The orbit system volume is not ready for use. Please complete the set up process.")
+			return
+		}
+
+		// Search for and check the provided repository namespace.
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		var namespaceID string
+		if namespace != nil {
+			namespaceID = namespace.ID
+		}
+
+		// Create the command for the repository.
+		id := store.state.Repositories.GenerateID()
+		cmd := command{
+			Op: opNewRepository,
+			Repository: Repository{
+				ID:          id,
+				Name:        body.Name,
+				NamespaceID: namespaceID,
+			},
+		}
+
+		// Now apply it to the store.
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not apply the new repository the store.")
+			return
+		}
+
+		// Actually create the directory that is used.
+		path := filepath.Join(volume.Paths().Data, "repositories", id)
+		os.MkdirAll(path, 0644)
+
+		c.JSON(http.StatusCreated, cmd.Repository)
 	}
 }
 

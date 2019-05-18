@@ -34,6 +34,8 @@ const (
 
 	opNewNamespace
 
+	opNewRepository
+
 	opNewRouter
 	opUpdateRouter
 
@@ -55,6 +57,7 @@ type command struct {
 	Router           Router      `json:"router,omitempty"`
 	Certificate      Certificate `json:"certificate,omitempty"`
 	Namespace        Namespace   `json:"namespace,omitempty"`
+	Repository       Repository  `json:"repository,namespace"`
 	Volume           Volume      `json:"volume,empty"`
 	ManagerJoinToken string      `json:"manager_join_token,omitempty"`
 	WorkerJoinToken  string      `json:"worker_join_token,omitempty"`
@@ -144,6 +147,10 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case opNewNamespace:
 		return f.applyNewNamespace(c.Namespace)
 
+	// Repository operations.
+	case opNewRepository:
+		return f.applyNewRepository(c.Repository)
+
 	// Router and certificate operations.
 	case opNewRouter:
 		return f.applyNewRouter(c.Router)
@@ -202,6 +209,13 @@ func (f *fsm) applyNewSession(id string, session Session) interface{} {
 		}
 	}
 
+	return nil
+}
+
+func (f *fsm) applyNewRepository(repo Repository) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Repositories = append(f.state.Repositories, repo)
 	return nil
 }
 
