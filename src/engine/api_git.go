@@ -3,11 +3,25 @@ package engine
 import (
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sosedoff/gitkit"
 )
+
+func gitInitBare(path string) error {
+	// Create and run the command.
+	cmd := exec.Command("git", "init", "--bare", path)
+	cmd.Stderr = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
 
 // handleGit will return a handler for HTTP git requests on the HTTP server.
 func (s *APIServer) handleGit() gin.HandlerFunc {
@@ -18,26 +32,9 @@ func (s *APIServer) handleGit() gin.HandlerFunc {
 	// can properly ensure that the store is set up before we are able to perform
 	// any of the git functions.
 	return func(c *gin.Context) {
-		notReady := func() {
-			c.String(http.StatusServiceUnavailable, "Orbit is not yet ready to handle requests.\nPlease complete the set up process.")
-		}
-
-		// Ensure that the engine is ready to receive git requests (essentially, if
-		// there's a volume that uses the orbit-system namespace).
-		namespace := store.state.Namespaces.Find("orbit-system")
-		if namespace == nil {
-			notReady()
-			return
-		}
-		var volume *Volume
-		for _, v := range store.state.Volumes {
-			if v.NamespaceID == namespace.ID {
-				volume = &v
-				break
-			}
-		}
+		volume := store.OrbitSystemVolume()
 		if volume == nil {
-			notReady()
+			c.String(http.StatusServiceUnavailable, "Orbit is not yet ready to handle requests.\nPlease complete the set up process.")
 			return
 		}
 
@@ -119,9 +116,15 @@ func (s *APIServer) handleGit() gin.HandlerFunc {
 					return false, nil
 				}
 
-				// Check if it exists against the store.state.Repositories
-				// Set the req.RepoPath to be the desired location in the correct volume.
-				req.RepoPath = urlPath
+				// Derive the location that the repo should be.
+				path := filepath.Join(volume.Paths().Data, "repositories", repo.ID)
+				req.RepoPath = path
+
+				// Ensure that the repo is initialised.
+				if err := gitInitBare(path); err != nil {
+					log.Printf("[ERR] git: There was an error initialising the repository: %s", err)
+					return false, nil
+				}
 
 				return true, nil
 			}
