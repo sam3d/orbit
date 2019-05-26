@@ -1421,3 +1421,32 @@ func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 		c.String(http.StatusCreated, id)
 	}
 }
+
+func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID of the deployment provided.
+		var deployment *Deployment
+		for _, d := range store.state.Deployments {
+			if d.ID == id {
+				deployment = &d
+				break
+			}
+		}
+		if deployment == nil {
+			c.String(http.StatusNotFound, "No deployment with that ID exists.")
+			return
+		}
+
+		// Now run the build process.
+		if err := engine.BuildDeployment(*deployment); err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not build deployment.")
+			return
+		}
+	}
+}

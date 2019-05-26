@@ -88,6 +88,7 @@ func (s *APIServer) handlers() {
 	{
 		r := r.Group("/deployment")
 		r.POST("", s.handleDeploymentAdd())
+		r.POST("/:id/build", s.handleBuildDeployment())
 	}
 }
 
