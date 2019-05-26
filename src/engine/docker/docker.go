@@ -5,10 +5,12 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -127,6 +129,26 @@ func (m ServiceMount) String() string {
 	}
 
 	return fmt.Sprintf("type=%s,source=%s,target=%s", m.Type, m.Source, m.Target)
+}
+
+// EnsureDockerfile creates a herokuish dockerfile if one isn't present in the
+// provided directory.
+func EnsureDockerfile(path string) error {
+	dockerfilePath := filepath.Join(path, "Dockerfile")
+	if _, err := os.Stat(dockerfilePath); !os.IsNotExist(err) {
+		// The file exists, so we don't need to do anything.
+		return nil
+	}
+
+	// The file doesn't exist, so write the standard herokuish dockerfile.
+	dockerfile := `FROM gliderlabs/herokuish
+WORKDIR /tmp/build
+COPY . .
+RUN /build
+`
+	ioutil.WriteFile(dockerfilePath, []byte(dockerfile), 0644)
+
+	return nil
 }
 
 // Publish is a port combination for a docker service.

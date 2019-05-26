@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"orbit.sh/engine/docker"
 )
 
 // Deployment is a store instance of a deployment created from an image or
@@ -70,6 +72,12 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("could not run git clone command: %s", err)
+	}
+
+	// Check for a Dockerfile and create one if there isn't one.
+	src := filepath.Join(tmp, d.Path) // The actual directory to check
+	if err := docker.EnsureDockerfile(src); err != nil {
+		return fmt.Errorf("could not ensure dockerfile: %s", err)
 	}
 
 	return nil
