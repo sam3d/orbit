@@ -1362,3 +1362,62 @@ func (s *APIServer) handleListVolumes() gin.HandlerFunc {
 		c.JSON(http.StatusOK, store.state.Volumes)
 	}
 }
+
+func (s *APIServer) handleListDeployments() gin.HandlerFunc {
+	store := s.engine.Store
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, store.state.Deployments)
+	}
+}
+
+func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	type body struct {
+		Name         string `form:"name" json:"name"`
+		RepositoryID string `form:"repository_id" json:"repository_id"`
+		Path         string `form:"path" json:"path"`
+		Namespace    string `form:"namespace" json:"namespace"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.ShouldBind(&body)
+
+		// Ensure that there is a name and a repo.
+		if body.RepositoryID == "" || body.Name == "" {
+			c.String(http.StatusBadRequest, "Need to provide a repository_id and name.")
+			return
+		}
+
+		// Search for the namespace.
+		var namespaceID string
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace != nil {
+			namespaceID = namespace.ID
+		}
+
+		// Construct the create command and apply it.
+		id := store.state.Deployments.GenerateID()
+		cmd := command{
+			Op: opNewDeployment,
+			Deployment: Deployment{
+				ID:          id,
+				Name:        body.Name,
+				Repository:  body.RepositoryID,
+				Path:        body.Path,
+				NamespaceID: namespaceID,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the deployment to the store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply the deployment to the store.")
+			return
+		}
+
+		// Otherwise on success just return the created deployment ID.
+		c.String(http.StatusCreated, id)
+	}
+}
