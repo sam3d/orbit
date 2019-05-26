@@ -1378,6 +1378,7 @@ func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 		Name         string `form:"name" json:"name"`
 		RepositoryID string `form:"repository_id" json:"repository_id"`
 		Path         string `form:"path" json:"path"`
+		Branch       string `form:"branch" json:"branch"`
 		Namespace    string `form:"namespace" json:"namespace"`
 	}
 

@@ -154,19 +154,21 @@ RUN /build
 
 // Build will perform the build process and output a channel containing the
 // streaming build process that is taking place.
-func Build(path, tag string) <-chan string {
+func Build(path, tag string) (<-chan string, <-chan error) {
 	// Construct the output channel.
-	output := make(chan string)
+	outputCh := make(chan string)
+	errorCh := make(chan error)
 
 	go func() {
 		// Ensure that on completion (or return) that the channel is closed.
-		defer close(output)
+		defer close(outputCh)
+		defer close(errorCh)
 
 		// Construct the build command.
 		cmd := exec.Command("docker", "build", "-t", tag, path)
 		rc, err := cmd.StdoutPipe()
 		if err != nil {
-			output <- fmt.Sprintf("could not pipe stdout from the docker build command: %s", err)
+			errorCh <- fmt.Errorf("could not pipe stdout from the docker build command: %s", err)
 			return
 		}
 
@@ -174,25 +176,25 @@ func Build(path, tag string) <-chan string {
 		scanner := bufio.NewScanner(rc)
 		go func() {
 			for scanner.Scan() {
-				output <- scanner.Text()
+				outputCh <- scanner.Text()
 			}
 		}()
 
 		// Now we actually need to start the command.
 		if err := cmd.Start(); err != nil {
-			output <- fmt.Sprintf("could not start the command: %s", err)
+			errorCh <- fmt.Errorf("could not start the command: %s", err)
 			return
 		}
 
 		// Wait for the command to complete.
 		if err := cmd.Wait(); err != nil {
-			output <- fmt.Sprintf("could not wait for command: %s", err)
+			errorCh <- fmt.Errorf("could not wait for command: %s", err)
 			return
 		}
 	}()
 
 	// Provide the output channel to the caller.
-	return output
+	return outputCh, errorCh
 }
 
 // Publish is a port combination for a docker service.

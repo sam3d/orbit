@@ -37,6 +37,7 @@ const (
 	opNewRepository
 
 	opNewDeployment
+	opAppendBuildLog
 
 	opNewRouter
 	opUpdateRouter
@@ -153,6 +154,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	// Deployment operations.
 	case opNewDeployment:
 		return f.applyNewDeployment(c.Deployment)
+	case opAppendBuildLog:
+		return f.applyAppendBuildLog(c.Deployment)
 
 	// Repository operations.
 	case opNewRepository:
@@ -223,6 +226,38 @@ func (f *fsm) applyNewRepository(repo Repository) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.state.Repositories = append(f.state.Repositories, repo)
+	return nil
+}
+
+func (f *fsm) applyAppendBuildLog(deployment Deployment) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Get the key and the build logs from the supplied map.
+	var key string
+	var logs []string
+	for k, v := range deployment.BuildLogs {
+		// Super hacky solution to retrieve the first element from the map after
+		// looping.
+		key = k
+		logs = v
+		break
+	}
+
+	// Find the deployment in the store.
+	for i, d := range f.state.Deployments {
+		if d.ID == deployment.ID {
+			// If build logs is not yet initialised, ensure that it gets created.
+			if d.BuildLogs == nil {
+				f.state.Deployments[i].BuildLogs = make(map[string][]string)
+			}
+
+			// Append the build logs to the current list of build logs.
+			newLogs := append(d.BuildLogs[key], logs...)
+			f.state.Deployments[i].BuildLogs[key] = newLogs
+		}
+	}
+
 	return nil
 }
 
