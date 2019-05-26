@@ -139,7 +139,8 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	// Begin the build process. All of the operations for this take place
 	// asynchronously and so this is a non-blocking operation. Handle all of the
 	// following output with the channels it creates.
-	outputCh, errorCh := docker.Build(src, d.ID)
+	tag := fmt.Sprintf("127.0.0.1:6510/%s", d.ID)
+	outputCh, errorCh := docker.Build(src, tag)
 	ticker := time.NewTicker(time.Second * 2)
 	defer ticker.Stop()
 
