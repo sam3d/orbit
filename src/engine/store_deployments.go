@@ -104,11 +104,42 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	// Generate the map key for the build log.
 	key := filepath.Join(hash, d.Path)
 
+	// flushBuffer takes in the buffer that is provided in the enclosing function
+	// and updates the store deployment build log with the data in the buffer. If
+	// there is no data in the buffer then this will not execute anything.
+	var lineBuf []string
+	flushBuffer := func() error {
+		if len(lineBuf) == 0 {
+			return nil
+		}
+
+		// Create the log map to append the data with.
+		logs := map[string][]string{}
+		logs[key] = lineBuf
+
+		// Construct the command.
+		cmd := command{
+			Op: opAppendBuildLog,
+			Deployment: Deployment{
+				ID:        d.ID,
+				BuildLogs: logs,
+			},
+		}
+
+		// Apply the data to the store.
+		if err := cmd.Apply(e.Store); err != nil {
+			return err
+		}
+
+		// Finally, clear the buffer so that it may be used again.
+		lineBuf = []string{}
+		return nil
+	}
+
 	// Begin the build process. All of the operations for this take place
 	// asynchronously and so this is a non-blocking operation. Handle all of the
 	// following output with the channels it creates.
 	outputCh, errorCh := docker.Build(src, d.ID)
-	var lineBuf []string // Keep a rolling buffer of the output
 	ticker := time.NewTicker(time.Second * 2)
 	defer ticker.Stop()
 
@@ -129,27 +160,15 @@ loop:
 
 		// Every two seconds, actually save the buffer data to the store.
 		case <-ticker.C:
-			// Create the log map to append the data with.
-			logs := map[string][]string{}
-			logs[key] = lineBuf
-
-			// Construct the command.
-			cmd := command{
-				Op: opAppendBuildLog,
-				Deployment: Deployment{
-					ID:        d.ID,
-					BuildLogs: logs,
-				},
-			}
-
-			// Apply the data to the store.
-			if err := cmd.Apply(e.Store); err != nil {
+			if err := flushBuffer(); err != nil {
 				return err
 			}
-
-			// Finally, clear the buffer so that it may be used again.
-			lineBuf = []string{}
 		}
+	}
+
+	// Perform a final flush of the buffer.
+	if err := flushBuffer(); err != nil {
+		return err
 	}
 
 	return nil
