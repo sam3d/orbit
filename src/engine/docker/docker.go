@@ -3,6 +3,7 @@
 package docker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -149,6 +150,49 @@ RUN /build
 	ioutil.WriteFile(dockerfilePath, []byte(dockerfile), 0644)
 
 	return nil
+}
+
+// Build will perform the build process and output a channel containing the
+// streaming build process that is taking place.
+func Build(path, tag string) <-chan string {
+	// Construct the output channel.
+	output := make(chan string)
+
+	go func() {
+		// Ensure that on completion (or return) that the channel is closed.
+		defer close(output)
+
+		// Construct the build command.
+		cmd := exec.Command("docker", "build", "-t", tag, path)
+		rc, err := cmd.StdoutPipe()
+		if err != nil {
+			output <- fmt.Sprintf("could not pipe stdout from the docker build command: %s", err)
+			return
+		}
+
+		// Handle the output from this command by the individual lines.
+		scanner := bufio.NewScanner(rc)
+		go func() {
+			for scanner.Scan() {
+				output <- scanner.Text()
+			}
+		}()
+
+		// Now we actually need to start the command.
+		if err := cmd.Start(); err != nil {
+			output <- fmt.Sprintf("could not start the command: %s", err)
+			return
+		}
+
+		// Wait for the command to complete.
+		if err := cmd.Wait(); err != nil {
+			output <- fmt.Sprintf("could not wait for command: %s", err)
+			return
+		}
+	}()
+
+	// Provide the output channel to the caller.
+	return output
 }
 
 // Publish is a port combination for a docker service.
