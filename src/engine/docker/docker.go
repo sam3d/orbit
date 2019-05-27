@@ -318,6 +318,50 @@ func Push(tags ...string) error {
 	return nil
 }
 
+// Services will return a list of the names of the currently running docker
+// services.
+func Services() []string {
+	cmd := exec.Command("docker", "service", "list", "--format", "{{.Name}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return []string{}
+	}
+	lines := strings.Split(string(output), "\n")
+	var services []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			services = append(services, line)
+		}
+	}
+	return services
+}
+
+// ServiceExists will return whether or not a service exists by name.
+func ServiceExists(service string) bool {
+	for _, s := range Services() {
+		if s == service {
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveService will remove a docker service. Returns true if the service did
+// exist and was removed and returns false if it couldn't be found.
+func RemoveService(service string) bool {
+	if !ServiceExists(service) {
+		return false
+	}
+	cmd := exec.Command("docker", "service", "remove", service)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
+
 // ForceUpdateService will use the docker CLI directly to forcefully update a
 // service with the given ID.
 func ForceUpdateService(id string) error {

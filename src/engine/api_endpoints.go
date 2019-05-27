@@ -1453,17 +1453,39 @@ func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
 
 		// Create a shorthand function log to the build log entries for this
 		// deployment.
-		buildLog := func(lines ...string) {
-			store.AppendBuildLog(deployment.ID, key, lines...)
+		buildLog := func(format string, values ...interface{}) {
+			str := fmt.Sprintf(format, values...)
+			store.AppendBuildLog(deployment.ID, key, str)
 		}
 
 		// Push the image to the docker image registry.
-		buildLog(fmt.Sprintf("Pushing image %s to the local docker registry", deployment.ID))
+		buildLog("Pushing image %s to the local docker registry", deployment.ID)
 		if err := docker.Push(deployment.ID); err != nil {
 			log.Printf("[ERR] deployment: %s", err)
 			c.String(http.StatusInternalServerError, "Could not push to docker image registry.")
 			return
 		}
-		buildLog(fmt.Sprintf("Image %s pushed successfully", deployment.ID))
+		buildLog("Image %s pushed successfully", deployment.ID)
+
+		// Ensure that the service gets removed correctly.
+		buildLog("Removing existing services with name %s", deployment.ID)
+		if existed := docker.RemoveService(deployment.ID); existed {
+			buildLog("Service %s already existed and it got removed", deployment.ID)
+		} else {
+			buildLog("Service %s didn't exist and so it wasn't removed")
+		}
+
+		// Create the service.
+		buildLog("Creating the docker service definition")
+		service := docker.Service{
+			Name: deployment.ID,
+			Tag:  deployment.ID,
+		}
+		if err := docker.CreateService(service); err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not create docker service.")
+			return
+		}
+		buildLog("Docker service created")
 	}
 }
