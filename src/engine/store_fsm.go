@@ -45,6 +45,7 @@ const (
 
 	opNewCertificate
 	opUpdateCertificate
+	opRemoveCertificate
 
 	opNewVolume
 	opUpdateVolumeBrick
@@ -174,6 +175,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewCertificate(c.Certificate)
 	case opUpdateCertificate:
 		return f.applyUpdateCertificate(c.Certificate)
+	case opRemoveCertificate:
+		return f.applyRemoveCertificate(c.Certificate.ID)
 
 		// Volume operations.
 	case opNewVolume:
@@ -428,6 +431,22 @@ func (f *fsm) applyUpdateCertificate(c Certificate) interface{} {
 
 	// Apply the new certificate.
 	f.state.Certificates = append(f.state.Certificates, currentCertificate)
+	return nil
+}
+
+func (f *fsm) applyRemoveCertificate(id string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the index of the certificate to remove.
+	for i, cert := range f.state.Certificates {
+		if cert.ID == id {
+			// Remove the certificate.
+			f.state.Certificates = append(f.state.Certificates[:i], f.state.Certificates[i+1:]...)
+			break
+		}
+	}
+
 	return nil
 }
 
