@@ -39,6 +39,37 @@ type Deployment struct {
 // Deployments is a slice of the deployments in the store.
 type Deployments []Deployment
 
+// AppendBuildLog appends a log item entry to a given build process with a given
+// ID. This takes place in a deployment, and is a short-hand for the longer
+// process of performing a store apply.
+func (s *Store) AppendBuildLog(deploymentID, key string, lines ...string) error {
+	// Don't perform an operation if this command contained no additional lines.
+	if len(lines) == 0 {
+		return nil
+	}
+
+	// Create the log map so that the apply command knows what data we need to
+	// provide it. Set the lines that we provide to it as the log items to use.
+	logs := map[string][]string{}
+	logs[key] = lines
+
+	// Construct the apply command.
+	cmd := command{
+		Op: opAppendBuildLog,
+		Deployment: Deployment{
+			ID:        deploymentID,
+			BuildLogs: logs,
+		},
+	}
+
+	// Apply it to the store.
+	if err := cmd.Apply(s); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BuildDeployment will take in the given deployment object and then run through
 // and actually perform the operations to build that deployment.
 func (e *Engine) BuildDeployment(d Deployment) error {
@@ -109,29 +140,9 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	// there is no data in the buffer then this will not execute anything.
 	var lineBuf []string
 	flushBuffer := func() error {
-		if len(lineBuf) == 0 {
-			return nil
-		}
-
-		// Create the log map to append the data with.
-		logs := map[string][]string{}
-		logs[key] = lineBuf
-
-		// Construct the command.
-		cmd := command{
-			Op: opAppendBuildLog,
-			Deployment: Deployment{
-				ID:        d.ID,
-				BuildLogs: logs,
-			},
-		}
-
-		// Apply the data to the store.
-		if err := cmd.Apply(e.Store); err != nil {
+		if err := e.Store.AppendBuildLog(d.ID, key, lineBuf...); err != nil {
 			return err
 		}
-
-		// Finally, clear the buffer so that it may be used again.
 		lineBuf = []string{}
 		return nil
 	}
