@@ -814,10 +814,10 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		id := store.state.Routers.GenerateID()
 
 		// Find the namespace by ID.
+		var namespaceID string
 		namespace := store.state.Namespaces.Find(body.Namespace)
-		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
-			return
+		if namespace != nil {
+			namespaceID = namespace.ID
 		}
 
 		// Create a new router without a certificate.
@@ -826,7 +826,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 			Router: Router{
 				ID:          id,
 				Domain:      body.Domain,
-				NamespaceID: namespace.ID,
+				NamespaceID: namespaceID,
 				AppID:       body.AppID,
 				WWWRedirect: body.WWWRedirect,
 			},
