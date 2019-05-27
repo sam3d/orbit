@@ -308,6 +308,8 @@ func Push(tags ...string) error {
 	for _, tag := range tags {
 		name := fmt.Sprintf("127.0.0.1:6510/%s", tag)
 		cmd := exec.Command("docker", "push", name)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Printf("[ERR] docker: Could not push image with tag %s: %s", tag, err)
 			return err

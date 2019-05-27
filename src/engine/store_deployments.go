@@ -96,7 +96,7 @@ func (s *Store) ClearBuildLog(deploymentID, key string) error {
 
 // BuildDeployment will take in the given deployment object and then run through
 // and actually perform the operations to build that deployment.
-func (e *Engine) BuildDeployment(d Deployment) error {
+func (e *Engine) BuildDeployment(d Deployment) (string, error) {
 	// Checkout the repo to a temporary directory, navigate to the specified path,
 	// and if there is a Dockerfile, use that for building, and if there isn't,
 	// create a default one that uses the herokuish image.
@@ -110,26 +110,26 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 		}
 	}
 	if repo == nil {
-		return fmt.Errorf("that repository does not exist")
+		return "", fmt.Errorf("that repository does not exist")
 	}
 
 	// Derive the repo path.
 	volume := e.Store.OrbitSystemVolume()
 	if volume == nil {
-		return fmt.Errorf("could not find the orbit system volume")
+		return "", fmt.Errorf("could not find the orbit system volume")
 	}
 	path := filepath.Join(volume.Paths().Data, "repositories", repo.ID)
 
 	// Check it out to a temporary directory.
 	tmp, err := ioutil.TempDir("", "")
 	if err != nil {
-		return fmt.Errorf("could not create temporary directory: %s", err)
+		return "", fmt.Errorf("could not create temporary directory: %s", err)
 	}
 	cmd := exec.Command("git", "clone", path, tmp)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("could not run git clone command: %s", err)
+		return "", fmt.Errorf("could not run git clone command: %s", err)
 	}
 
 	// Ensure that we're in the correct branch (if it's set).
@@ -138,7 +138,7 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -146,14 +146,14 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	cmd = exec.Command("git", "-C", tmp, "rev-parse", "HEAD")
 	output, err := cmd.Output()
 	if err != nil {
-		return err
+		return "", err
 	}
 	hash := strings.TrimSpace(string(output))
 
 	// Check for a Dockerfile and create one if there isn't one.
 	src := filepath.Join(tmp, d.Path) // The actual directory to check
 	if err := docker.EnsureDockerfile(src); err != nil {
-		return fmt.Errorf("could not ensure dockerfile: %s", err)
+		return "", fmt.Errorf("could not ensure dockerfile: %s", err)
 	}
 
 	// Generate the map key for the build log.
@@ -174,7 +174,7 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 	// Before the build process starts, clear any build log with this existing
 	// output. This ensures a clean build log every time.
 	if err := e.Store.ClearBuildLog(d.ID, key); err != nil {
-		return err
+		return key, err
 	}
 
 	// Begin the build process. All of the operations for this take place
@@ -198,22 +198,22 @@ loop:
 
 		// If an error occurs at any point, return it and fail.
 		case err := <-errorCh:
-			return err
+			return key, err
 
 		// Every two seconds, actually save the buffer data to the store.
 		case <-ticker.C:
 			if err := flushBuffer(); err != nil {
-				return err
+				return key, err
 			}
 		}
 	}
 
 	// Perform a final flush of the buffer.
 	if err := flushBuffer(); err != nil {
-		return err
+		return key, err
 	}
 
-	return nil
+	return key, nil
 }
 
 // GenerateID will create a unique identifier for the deployment.

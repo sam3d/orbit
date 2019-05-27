@@ -1444,10 +1444,26 @@ func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
 		}
 
 		// Now run the build process.
-		if err := engine.BuildDeployment(*deployment); err != nil {
+		key, err := engine.BuildDeployment(*deployment)
+		if err != nil {
 			log.Printf("[ERR] deployment: %s", err)
 			c.String(http.StatusInternalServerError, "Could not build deployment.")
 			return
 		}
+
+		// Create a shorthand function log to the build log entries for this
+		// deployment.
+		buildLog := func(lines ...string) {
+			store.AppendBuildLog(deployment.ID, key, lines...)
+		}
+
+		// Push the image to the docker image registry.
+		buildLog(fmt.Sprintf("Pushing image %s to the local docker registry", deployment.ID))
+		if err := docker.Push(deployment.ID); err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not push to docker image registry.")
+			return
+		}
+		buildLog(fmt.Sprintf("Image %s pushed successfully", deployment.ID))
 	}
 }
