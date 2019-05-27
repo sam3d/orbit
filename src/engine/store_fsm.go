@@ -42,6 +42,7 @@ const (
 
 	opNewRouter
 	opUpdateRouter
+	opRemoveRouter
 
 	opNewCertificate
 	opUpdateCertificate
@@ -170,6 +171,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewRouter(c.Router)
 	case opUpdateRouter:
 		return f.applyUpdateRouter(c.Router)
+	case opRemoveRouter:
+		return f.applyRemoveRouter(c.Router.ID)
 
 	case opNewCertificate:
 		return f.applyNewCertificate(c.Certificate)
@@ -443,6 +446,22 @@ func (f *fsm) applyRemoveCertificate(id string) interface{} {
 		if cert.ID == id {
 			// Remove the certificate.
 			f.state.Certificates = append(f.state.Certificates[:i], f.state.Certificates[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyRemoveRouter(id string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the index of the router to remove.
+	for i, r := range f.state.Routers {
+		if r.ID == id {
+			// Remove the router.
+			f.state.Routers = append(f.state.Routers[:i], f.state.Routers[i+1:]...)
 			break
 		}
 	}

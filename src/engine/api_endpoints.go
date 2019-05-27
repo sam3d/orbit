@@ -1494,8 +1494,36 @@ func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
 }
 
 func (s *APIServer) handleRouterRemove() gin.HandlerFunc {
-	return func(c *gin.Context) {
+	store := s.engine.Store
 
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID provided.
+		var router *Router
+		for _, r := range store.state.Routers {
+			if r.ID == id {
+				router = &r
+				break
+			}
+		}
+		if router == nil {
+			c.String(http.StatusNotFound, "Router with the ID of %s could not be found.", id)
+			return
+		}
+
+		// Perform the delete apply operation.
+		cmd := command{
+			Op:     opRemoveRouter,
+			Router: Router{ID: id},
+		}
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply router removal to the store.")
+			return
+		}
+
+		c.String(http.StatusOK, id)
 	}
 }
 
