@@ -1492,3 +1492,33 @@ func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
 		c.String(http.StatusCreated, deployment.ID)
 	}
 }
+
+func (s *APIServer) handleRouterRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleCertificateRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleNodeRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleRepositoryRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleDeploymentRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
