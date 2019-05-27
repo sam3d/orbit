@@ -219,6 +219,7 @@ type Service struct {
 	Mode                 ServiceMode
 	Mounts               []ServiceMount
 	Networks             []string
+	EnvVars              map[string]string
 	Command              string   // The entry point for the image
 	Args                 []string // The args for the entry point
 }
@@ -282,6 +283,18 @@ func createService(s Service) error {
 	// Add the port bindings.
 	for _, p := range s.Publish {
 		args = append(args, "--publish", p.String())
+	}
+
+	// Add the environment variables. If the port environment variable is not set,
+	// make sure that it gets set no matter what.
+	if s.EnvVars == nil {
+		s.EnvVars = make(map[string]string)
+	}
+	if _, ok := s.EnvVars["PORT"]; !ok {
+		s.EnvVars["PORT"] = "5000"
+	}
+	for k, v := range s.EnvVars {
+		args = append(args, "--env", fmt.Sprintf("%s=%s", k, v))
 	}
 
 	// And finally, add the image tag. This can change depending upon whether the
