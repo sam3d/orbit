@@ -814,10 +814,10 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		id := store.state.Routers.GenerateID()
 
 		// Find the namespace by ID.
+		var namespaceID string
 		namespace := store.state.Namespaces.Find(body.Namespace)
-		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
-			return
+		if namespace != nil {
+			namespaceID = namespace.ID
 		}
 
 		// Create a new router without a certificate.
@@ -826,7 +826,7 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 			Router: Router{
 				ID:          id,
 				Domain:      body.Domain,
-				NamespaceID: namespace.ID,
+				NamespaceID: namespaceID,
 				AppID:       body.AppID,
 				WWWRedirect: body.WWWRedirect,
 			},
@@ -1360,5 +1360,221 @@ func (s *APIServer) handleListVolumes() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, store.state.Volumes)
+	}
+}
+
+func (s *APIServer) handleListDeployments() gin.HandlerFunc {
+	store := s.engine.Store
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, store.state.Deployments)
+	}
+}
+
+func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	type body struct {
+		Name         string `form:"name" json:"name"`
+		RepositoryID string `form:"repository_id" json:"repository_id"`
+		Path         string `form:"path" json:"path"`
+		Branch       string `form:"branch" json:"branch"`
+		Namespace    string `form:"namespace" json:"namespace"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.ShouldBind(&body)
+
+		// Ensure that there is a name and a repo.
+		if body.RepositoryID == "" || body.Name == "" {
+			c.String(http.StatusBadRequest, "Need to provide a repository_id and name.")
+			return
+		}
+
+		// Search for the namespace.
+		var namespaceID string
+		namespace := store.state.Namespaces.Find(body.Namespace)
+		if namespace != nil {
+			namespaceID = namespace.ID
+		}
+
+		// Construct the create command and apply it.
+		id := store.state.Deployments.GenerateID()
+		cmd := command{
+			Op: opNewDeployment,
+			Deployment: Deployment{
+				ID:          id,
+				Name:        body.Name,
+				Repository:  body.RepositoryID,
+				Path:        body.Path,
+				NamespaceID: namespaceID,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the deployment to the store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply the deployment to the store.")
+			return
+		}
+
+		// Otherwise on success just return the created deployment ID.
+		c.String(http.StatusCreated, id)
+	}
+}
+
+func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
+	engine := s.engine
+	store := engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID of the deployment provided.
+		var deployment *Deployment
+		for _, d := range store.state.Deployments {
+			if d.ID == id {
+				deployment = &d
+				break
+			}
+		}
+		if deployment == nil {
+			c.String(http.StatusNotFound, "No deployment with that ID exists.")
+			return
+		}
+
+		// Now run the build process.
+		key, err := engine.BuildDeployment(*deployment)
+		if err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not build deployment.")
+			return
+		}
+
+		// Create a shorthand function log to the build log entries for this
+		// deployment.
+		buildLog := func(format string, values ...interface{}) {
+			str := fmt.Sprintf(format, values...)
+			store.AppendBuildLog(deployment.ID, key, str)
+		}
+
+		// Push the image to the docker image registry.
+		buildLog("Pushing image %s to the local docker registry", deployment.ID)
+		if err := docker.Push(deployment.ID); err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not push to docker image registry.")
+			return
+		}
+		buildLog("Image %s pushed successfully", deployment.ID)
+
+		// Ensure that the service gets removed correctly.
+		if existed := docker.RemoveService(deployment.ID); existed {
+			buildLog("Removed existing service %s", deployment.ID)
+		}
+
+		// Create the service.
+		buildLog("Creating the docker service definition for %s", deployment.ID)
+		service := docker.Service{
+			Name:    deployment.ID,
+			Tag:     deployment.ID,
+			Command: "/start",
+			Args:    []string{"web"},
+		}
+		if err := docker.CreateService(service); err != nil {
+			log.Printf("[ERR] deployment: %s", err)
+			c.String(http.StatusInternalServerError, "Could not create docker service.")
+			return
+		}
+		buildLog("Docker service %s created", deployment.ID)
+
+		// The deployment process has finished.
+		buildLog("-----> Deployment succeeded!")
+		c.String(http.StatusCreated, deployment.ID)
+	}
+}
+
+func (s *APIServer) handleRouterRemove() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID provided.
+		var router *Router
+		for _, r := range store.state.Routers {
+			if r.ID == id {
+				router = &r
+				break
+			}
+		}
+		if router == nil {
+			c.String(http.StatusNotFound, "Router with the ID of %s could not be found.", id)
+			return
+		}
+
+		// Perform the delete apply operation.
+		cmd := command{
+			Op:     opRemoveRouter,
+			Router: Router{ID: id},
+		}
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply router removal to the store.")
+			return
+		}
+
+		c.String(http.StatusOK, id)
+	}
+}
+
+func (s *APIServer) handleCertificateRemove() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID provided.
+		var certificate *Certificate
+		for _, c := range store.state.Certificates {
+			if c.ID == id {
+				certificate = &c
+				break
+			}
+		}
+		if certificate == nil {
+			c.String(http.StatusNotFound, "Certificate with the ID of %s could not be found.", id)
+			return
+		}
+
+		// Perform the delete apply operation.
+		cmd := command{
+			Op:          opRemoveCertificate,
+			Certificate: Certificate{ID: id},
+		}
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply certificate removal to the store.")
+			return
+		}
+
+		c.String(http.StatusOK, id)
+	}
+}
+
+func (s *APIServer) handleNodeRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleRepositoryRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (s *APIServer) handleDeploymentRemove() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
 	}
 }

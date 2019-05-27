@@ -36,11 +36,17 @@ const (
 
 	opNewRepository
 
+	opNewDeployment
+	opAppendBuildLog
+	opClearBuildLog
+
 	opNewRouter
 	opUpdateRouter
+	opRemoveRouter
 
 	opNewCertificate
 	opUpdateCertificate
+	opRemoveCertificate
 
 	opNewVolume
 	opUpdateVolumeBrick
@@ -57,8 +63,9 @@ type command struct {
 	Router           Router      `json:"router,omitempty"`
 	Certificate      Certificate `json:"certificate,omitempty"`
 	Namespace        Namespace   `json:"namespace,omitempty"`
-	Repository       Repository  `json:"repository,namespace"`
-	Volume           Volume      `json:"volume,empty"`
+	Repository       Repository  `json:"repository,omitempty"`
+	Volume           Volume      `json:"volume,omitempty"`
+	Deployment       Deployment  `json:"deployment,omitempty"`
 	ManagerJoinToken string      `json:"manager_join_token,omitempty"`
 	WorkerJoinToken  string      `json:"worker_join_token,omitempty"`
 }
@@ -147,6 +154,14 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case opNewNamespace:
 		return f.applyNewNamespace(c.Namespace)
 
+	// Deployment operations.
+	case opNewDeployment:
+		return f.applyNewDeployment(c.Deployment)
+	case opAppendBuildLog:
+		return f.applyAppendBuildLog(c.Deployment)
+	case opClearBuildLog:
+		return f.applyClearBuildLog(c.Deployment)
+
 	// Repository operations.
 	case opNewRepository:
 		return f.applyNewRepository(c.Repository)
@@ -156,11 +171,15 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewRouter(c.Router)
 	case opUpdateRouter:
 		return f.applyUpdateRouter(c.Router)
+	case opRemoveRouter:
+		return f.applyRemoveRouter(c.Router.ID)
 
 	case opNewCertificate:
 		return f.applyNewCertificate(c.Certificate)
 	case opUpdateCertificate:
 		return f.applyUpdateCertificate(c.Certificate)
+	case opRemoveCertificate:
+		return f.applyRemoveCertificate(c.Certificate.ID)
 
 		// Volume operations.
 	case opNewVolume:
@@ -219,6 +238,60 @@ func (f *fsm) applyNewRepository(repo Repository) interface{} {
 	return nil
 }
 
+func (f *fsm) applyAppendBuildLog(deployment Deployment) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Get the key and the build logs from the supplied map.
+	var key string
+	var logs []string
+	for k, v := range deployment.BuildLogs {
+		// Super hacky solution to retrieve the first element from the map after
+		// looping.
+		key = k
+		logs = v
+		break
+	}
+
+	// Find the deployment in the store.
+	for i, d := range f.state.Deployments {
+		if d.ID == deployment.ID {
+			// If build logs is not yet initialised, ensure that it gets created.
+			if d.BuildLogs == nil {
+				f.state.Deployments[i].BuildLogs = make(map[string][]string)
+			}
+
+			// Append the build logs to the current list of build logs.
+			newLogs := append(d.BuildLogs[key], logs...)
+			f.state.Deployments[i].BuildLogs[key] = newLogs
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyClearBuildLog(deployment Deployment) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Get the key from the supplied map.
+	var key string
+	for k := range deployment.BuildLogs {
+		key = k
+		break
+	}
+
+	// Find the deployment in the store.
+	for i, d := range f.state.Deployments {
+		if d.ID == deployment.ID {
+			// Delete that item from the map in the deployment.
+			delete(f.state.Deployments[i].BuildLogs, key)
+		}
+	}
+
+	return nil
+}
+
 func (f *fsm) applyRevokeSession(token string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -236,6 +309,13 @@ search:
 		}
 	}
 
+	return nil
+}
+
+func (f *fsm) applyNewDeployment(deployment Deployment) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.state.Deployments = append(f.state.Deployments, deployment)
 	return nil
 }
 
@@ -354,6 +434,38 @@ func (f *fsm) applyUpdateCertificate(c Certificate) interface{} {
 
 	// Apply the new certificate.
 	f.state.Certificates = append(f.state.Certificates, currentCertificate)
+	return nil
+}
+
+func (f *fsm) applyRemoveCertificate(id string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the index of the certificate to remove.
+	for i, cert := range f.state.Certificates {
+		if cert.ID == id {
+			// Remove the certificate.
+			f.state.Certificates = append(f.state.Certificates[:i], f.state.Certificates[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyRemoveRouter(id string) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Find the index of the router to remove.
+	for i, r := range f.state.Routers {
+		if r.ID == id {
+			// Remove the router.
+			f.state.Routers = append(f.state.Routers[:i], f.state.Routers[i+1:]...)
+			break
+		}
+	}
+
 	return nil
 }
 

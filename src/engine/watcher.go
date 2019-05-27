@@ -137,6 +137,11 @@ func (w *Watcher) MountVolumes() {
 			}
 		}
 
+		// No-op if the IP isn't found.
+		if ip == "" {
+			return
+		}
+
 		// Perform the mount of the gluster volume if it's not already mounted.
 		gluster.MountGluster(ip, v.ID, paths.Data)
 	}

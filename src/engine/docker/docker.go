@@ -3,12 +3,15 @@
 package docker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -129,6 +132,71 @@ func (m ServiceMount) String() string {
 	return fmt.Sprintf("type=%s,source=%s,target=%s", m.Type, m.Source, m.Target)
 }
 
+// EnsureDockerfile creates a herokuish dockerfile if one isn't present in the
+// provided directory.
+func EnsureDockerfile(path string) error {
+	dockerfilePath := filepath.Join(path, "Dockerfile")
+	if _, err := os.Stat(dockerfilePath); !os.IsNotExist(err) {
+		// The file exists, so we don't need to do anything.
+		return nil
+	}
+
+	// The file doesn't exist, so write the standard herokuish dockerfile.
+	dockerfile := `FROM gliderlabs/herokuish
+WORKDIR /tmp/build
+COPY . .
+RUN /build
+`
+	ioutil.WriteFile(dockerfilePath, []byte(dockerfile), 0644)
+
+	return nil
+}
+
+// Build will perform the build process and output a channel containing the
+// streaming build process that is taking place.
+func Build(path, tag string) (<-chan string, <-chan error) {
+	// Construct the output channel.
+	outputCh := make(chan string)
+	errorCh := make(chan error)
+
+	go func() {
+		// Ensure that on completion (or return) that the channel is closed.
+		defer close(outputCh)
+		defer close(errorCh)
+
+		// Construct the build command.
+		cmd := exec.Command("docker", "build", "-t", tag, path)
+		rc, err := cmd.StdoutPipe()
+		if err != nil {
+			errorCh <- fmt.Errorf("could not pipe stdout from the docker build command: %s", err)
+			return
+		}
+
+		// Handle the output from this command by the individual lines.
+		scanner := bufio.NewScanner(rc)
+		go func() {
+			for scanner.Scan() {
+				outputCh <- scanner.Text()
+			}
+		}()
+
+		// Now we actually need to start the command.
+		if err := cmd.Start(); err != nil {
+			errorCh <- fmt.Errorf("could not start the command: %s", err)
+			return
+		}
+
+		// Wait for the command to complete.
+		if err := cmd.Wait(); err != nil {
+			errorCh <- fmt.Errorf("could not wait for command: %s", err)
+			return
+		}
+	}()
+
+	// Provide the output channel to the caller.
+	return outputCh, errorCh
+}
+
 // Publish is a port combination for a docker service.
 type Publish struct {
 	Host      int
@@ -151,6 +219,9 @@ type Service struct {
 	Mode                 ServiceMode
 	Mounts               []ServiceMount
 	Networks             []string
+	EnvVars              map[string]string
+	Command              string   // The entry point for the image
+	Args                 []string // The args for the entry point
 }
 
 // ServiceMode is a way in which to deploy a service.
@@ -214,6 +285,18 @@ func createService(s Service) error {
 		args = append(args, "--publish", p.String())
 	}
 
+	// Add the environment variables. If the port environment variable is not set,
+	// make sure that it gets set no matter what.
+	if s.EnvVars == nil {
+		s.EnvVars = make(map[string]string)
+	}
+	if _, ok := s.EnvVars["PORT"]; !ok {
+		s.EnvVars["PORT"] = "5000"
+	}
+	for k, v := range s.EnvVars {
+		args = append(args, "--env", fmt.Sprintf("%s=%s", k, v))
+	}
+
 	// And finally, add the image tag. This can change depending upon whether the
 	// service supplied includes a different registry specification to pull the
 	// image from.
@@ -221,6 +304,12 @@ func createService(s Service) error {
 		args = append(args, s.Tag)
 	} else {
 		args = append(args, fmt.Sprintf("127.0.0.1:6510/%s", s.Tag))
+	}
+
+	// Add the command to run and args (if they are present).
+	if s.Command != "" {
+		args = append(args, s.Command)
+		args = append(args, s.Args...)
 	}
 
 	cmd := exec.Command("docker", args...)
@@ -240,12 +329,58 @@ func Push(tags ...string) error {
 	for _, tag := range tags {
 		name := fmt.Sprintf("127.0.0.1:6510/%s", tag)
 		cmd := exec.Command("docker", "push", name)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Printf("[ERR] docker: Could not push image with tag %s: %s", tag, err)
 			return err
 		}
 	}
 	return nil
+}
+
+// Services will return a list of the names of the currently running docker
+// services.
+func Services() []string {
+	cmd := exec.Command("docker", "service", "list", "--format", "{{.Name}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return []string{}
+	}
+	lines := strings.Split(string(output), "\n")
+	var services []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			services = append(services, line)
+		}
+	}
+	return services
+}
+
+// ServiceExists will return whether or not a service exists by name.
+func ServiceExists(service string) bool {
+	for _, s := range Services() {
+		if s == service {
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveService will remove a docker service. Returns true if the service did
+// exist and was removed and returns false if it couldn't be found.
+func RemoveService(service string) bool {
+	if !ServiceExists(service) {
+		return false
+	}
+	cmd := exec.Command("docker", "service", "remove", service)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
 }
 
 // ForceUpdateService will use the docker CLI directly to forcefully update a
