@@ -70,6 +70,30 @@ func (s *Store) AppendBuildLog(deploymentID, key string, lines ...string) error 
 	return nil
 }
 
+// ClearBuildLog will clear the build log for a map with a given key. This will
+// essentially remove the key in the map.
+func (s *Store) ClearBuildLog(deploymentID, key string) error {
+	// Create the empty log map to correctly inform the process to take place.
+	logs := map[string][]string{}
+	logs[key] = []string{}
+
+	// Construct the command.
+	cmd := command{
+		Op: opClearBuildLog,
+		Deployment: Deployment{
+			ID:        deploymentID,
+			BuildLogs: logs,
+		},
+	}
+
+	// Apply the command.
+	if err := cmd.Apply(s); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BuildDeployment will take in the given deployment object and then run through
 // and actually perform the operations to build that deployment.
 func (e *Engine) BuildDeployment(d Deployment) error {
@@ -147,11 +171,17 @@ func (e *Engine) BuildDeployment(d Deployment) error {
 		return nil
 	}
 
+	// Before the build process starts, clear any build log with this existing
+	// output. This ensures a clean build log every time.
+	if err := e.Store.ClearBuildLog(d.ID, key); err != nil {
+		return err
+	}
+
 	// Begin the build process. All of the operations for this take place
 	// asynchronously and so this is a non-blocking operation. Handle all of the
 	// following output with the channels it creates.
 	tag := fmt.Sprintf("127.0.0.1:6510/%s", d.ID)
-	outputCh, errorCh := docker.Build(src, tag)
+	outputCh, errorCh := docker.Build(src, tag) // STARTS THE ASYNC OP
 	ticker := time.NewTicker(time.Second * 2)
 	defer ticker.Stop()
 

@@ -38,6 +38,7 @@ const (
 
 	opNewDeployment
 	opAppendBuildLog
+	opClearBuildLog
 
 	opNewRouter
 	opUpdateRouter
@@ -156,6 +157,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		return f.applyNewDeployment(c.Deployment)
 	case opAppendBuildLog:
 		return f.applyAppendBuildLog(c.Deployment)
+	case opClearBuildLog:
+		return f.applyClearBuildLog(c.Deployment)
 
 	// Repository operations.
 	case opNewRepository:
@@ -255,6 +258,28 @@ func (f *fsm) applyAppendBuildLog(deployment Deployment) interface{} {
 			// Append the build logs to the current list of build logs.
 			newLogs := append(d.BuildLogs[key], logs...)
 			f.state.Deployments[i].BuildLogs[key] = newLogs
+		}
+	}
+
+	return nil
+}
+
+func (f *fsm) applyClearBuildLog(deployment Deployment) interface{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// Get the key from the supplied map.
+	var key string
+	for k := range deployment.BuildLogs {
+		key = k
+		break
+	}
+
+	// Find the deployment in the store.
+	for i, d := range f.state.Deployments {
+		if d.ID == deployment.ID {
+			// Delete that item from the map in the deployment.
+			delete(f.state.Deployments[i].BuildLogs, key)
 		}
 	}
 
