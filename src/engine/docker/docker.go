@@ -219,6 +219,8 @@ type Service struct {
 	Mode                 ServiceMode
 	Mounts               []ServiceMount
 	Networks             []string
+	Command              string   // The entry point for the image
+	Args                 []string // The args for the entry point
 }
 
 // ServiceMode is a way in which to deploy a service.
@@ -289,6 +291,12 @@ func createService(s Service) error {
 		args = append(args, s.Tag)
 	} else {
 		args = append(args, fmt.Sprintf("127.0.0.1:6510/%s", s.Tag))
+	}
+
+	// Add the command to run and args (if they are present).
+	if s.Command != "" {
+		args = append(args, s.Command)
+		args = append(args, s.Args...)
 	}
 
 	cmd := exec.Command("docker", args...)

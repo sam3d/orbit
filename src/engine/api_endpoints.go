@@ -1468,24 +1468,27 @@ func (s *APIServer) handleBuildDeployment() gin.HandlerFunc {
 		buildLog("Image %s pushed successfully", deployment.ID)
 
 		// Ensure that the service gets removed correctly.
-		buildLog("Removing existing services with name %s", deployment.ID)
 		if existed := docker.RemoveService(deployment.ID); existed {
-			buildLog("Service %s already existed and it got removed", deployment.ID)
-		} else {
-			buildLog("Service %s didn't exist and so it wasn't removed")
+			buildLog("Removed existing service %s", deployment.ID)
 		}
 
 		// Create the service.
-		buildLog("Creating the docker service definition")
+		buildLog("Creating the docker service definition for %s", deployment.ID)
 		service := docker.Service{
-			Name: deployment.ID,
-			Tag:  deployment.ID,
+			Name:    deployment.ID,
+			Tag:     deployment.ID,
+			Command: "/start",
+			Args:    []string{"web"},
 		}
 		if err := docker.CreateService(service); err != nil {
 			log.Printf("[ERR] deployment: %s", err)
 			c.String(http.StatusInternalServerError, "Could not create docker service.")
 			return
 		}
-		buildLog("Docker service created")
+		buildLog("Docker service %s created", deployment.ID)
+
+		// The deployment process has finished.
+		buildLog("-----> Deployment succeeded!")
+		c.String(http.StatusCreated, deployment.ID)
 	}
 }
