@@ -176,6 +176,87 @@ export default {
 };
 </script>
 
+<style lang="scss">
+@keyframes placeholder {
+  from {
+    background-position: 200%;
+  }
+  to {
+    background-position: 0%;
+  }
+}
+
+@keyframes wobble {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.root .content {
+  h1 {
+    font-size: 30px;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 14px;
+    letter-spacing: 0.05rem;
+    font-weight: bold;
+    opacity: 0.6;
+    text-transform: uppercase;
+
+    margin-bottom: 10px;
+
+    &.placeholder {
+      animation: wobble 1s linear infinite;
+    }
+  }
+
+  .list {
+    margin: 30px 0;
+
+    .item {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 4px;
+      cursor: pointer;
+
+      transition: box-shadow 0.2s;
+      box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.025);
+      &:not(.placeholder):hover {
+        box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.05);
+      }
+      &:not(.placeholder):active {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      &:not(:last-of-type) {
+        margin-bottom: 10px;
+      }
+
+      &.placeholder {
+        cursor: default;
+        box-shadow: none;
+        background: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.05),
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.05)
+        );
+        background-size: 200%;
+        animation: placeholder 1s linear infinite;
+      }
+    }
+  }
+}
+</style>
+
 <style lang="scss" scoped>
 $backgroundColor: #f5f6fa;
 $borderColor: darken($backgroundColor, 5%);

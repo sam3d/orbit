@@ -3,12 +3,16 @@ import App from "./App";
 import router from "./router";
 import store from "./store";
 import api from "./api";
+import LoadingList from "./components/LoadingList";
 
 import "reset-css";
 import "@/styles/main.scss";
 
 // Bind the API to the vue instance.
 Vue.use(Vue => (Vue.prototype.$api = api));
+
+// Set the loading list view to be a global component.
+Vue.component("LoadingList", LoadingList);
 
 const vue = new Vue({
   store,
