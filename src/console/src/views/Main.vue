@@ -33,36 +33,36 @@
           <div class="menu-background" v-if="showDeployMenu"></div>
           <transition name="slide-down">
             <div class="menu" v-if="showDeployMenu">
-              <div class="item">
+              <div class="item" @click="push('/security')">
                 <h4>Node</h4>
                 <p>Add a new node to the cluster</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/namespaces/new')">
                 <h4>Namespace</h4>
                 <p>Create a new namespace</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/users/new')">
                 <h4>User</h4>
                 <p>Sign up a new user</p>
               </div>
               <div class="separator"></div>
-              <div class="item">
+              <div class="item" @click="push('/repositories/new')">
                 <h4>Repository</h4>
                 <p>Create a new git repository</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/deployments/new')">
                 <h4>Deployment</h4>
                 <p>Deploy a new service</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/routers/new')">
                 <h4>Router</h4>
                 <p>Create a new ingress router</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/certificates/new')">
                 <h4>Certificate</h4>
                 <p>Provision a new SSL certificate</p>
               </div>
-              <div class="item">
+              <div class="item" @click="push('/volumes/new')">
                 <h4>Volume</h4>
                 <p>Create a new block storage volume</p>
               </div>
