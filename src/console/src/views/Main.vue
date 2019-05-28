@@ -146,8 +146,11 @@
 
     <transition name="slow-slide">
       <div class="slider" v-if="showSlider">
-        <div class="content">
-          <router-view name="slider"></router-view>
+        <div class="content-container">
+          <div class="content">
+            <router-view name="slider"></router-view>
+          </div>
+          <div class="close" @click="down"></div>
         </div>
         <div class="background" @click="down"></div>
       </div>
@@ -646,10 +649,39 @@ $borderColor: darken($backgroundColor, 5%);
       z-index: 999;
     }
 
-    .content {
+    .content-container {
       background-color: #fff;
       z-index: 1000;
-      padding: 50px;
+      display: flex;
+
+      .close {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        right: 20px;
+        top: 20px;
+        background-image: url("~@/assets/icon/exit.svg");
+        background-size: 15px;
+        background-repeat: no-repeat;
+        background-position: center;
+        cursor: pointer;
+        flex-shrink: 0;
+
+        transition: all 0.2s;
+        opacity: 0.6;
+        &:hover {
+          transform: scale(1.1);
+          opacity: 0.7;
+        }
+        &:active {
+          transform: scale(0.9);
+        }
+      }
+
+      .content {
+        overflow: scroll;
+        padding: 70px;
+      }
     }
   }
 
@@ -790,14 +822,14 @@ $borderColor: darken($backgroundColor, 5%);
 .slow-slide-enter-active,
 .slow-slide-leave-active {
   transition: opacity 0.5s;
-  .content {
+  .content-container {
     transition: transform 0.5s;
   }
 }
 .slow-slide-enter,
 .slow-slide-leave-active {
   opacity: 0;
-  .content {
+  .content-container {
     transform: translateX(400px);
   }
 }
