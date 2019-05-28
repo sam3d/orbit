@@ -14,8 +14,10 @@
       <div class="list">
         <h2>Users ({{ users.length }})</h2>
         <div class="item" v-for="user in users">
-          <span>{{ user.name }}</span>
-          <span>{{ user.email }}</span>
+          <div class="profile" :style="user.profileStyle"></div>
+          <span class="name">{{ user.name }}</span>
+          <span class="username">@{{ user.username }}</span>
+          <span class="email">{{ user.email }}</span>
         </div>
       </div>
     </template>
@@ -23,6 +25,8 @@
 </template>
 
 <script>
+import defaultProfile from "@/assets/icon/blank-profile.svg";
+
 export default {
   meta: { title: "Users" },
 
@@ -40,10 +44,48 @@ export default {
   methods: {
     async load() {
       const { data } = await this.$api.get("/users");
-      this.loading = false;
-      if (!Array.isArray(data)) return;
+      if (!Array.isArray(data)) return (this.loading = false);
+
+      for (let user of data) {
+        let url = `/api/user/${user.id}/profile`;
+        const { status } = await this.$api.get(url);
+        url = status === 200 ? url : defaultProfile;
+        user.profileStyle = { backgroundImage: `url("${url}")` };
+      }
+
       this.users = data;
+      this.loading = false;
     }
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.list {
+  .item {
+    padding: 10px !important;
+    padding-right: 20px;
+  }
+}
+
+.profile {
+  width: 38px;
+  height: 38px;
+  border-radius: 1000px;
+  margin-right: 10px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #ddd;
+}
+
+.name {
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.email {
+  font-size: 14px;
+  margin-left: 20px;
+}
+</style>
