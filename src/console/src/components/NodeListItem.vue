@@ -1,5 +1,5 @@
 <template>
-  <div class="item">
+  <div class="item" @click="$push(`/nodes/${node.id}`)">
     <div class="status green"></div>
     <div class="address">{{ node.address }}</div>
 

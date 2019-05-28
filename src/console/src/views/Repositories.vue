@@ -8,12 +8,17 @@
       subject="repositories"
       description="Repositories are your locations to store your code so that you can create deployments."
       action="Add Repository"
+      target="/repositories/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Repositories ({{ repos.length }})</h2>
-        <div class="item" v-for="repo in repos">
+        <div
+          class="item"
+          v-for="repo in repos"
+          @click="$push(`/repositories/${repo.id}`)"
+        >
           <span>{{ repo.name }}</span>
         </div>
       </div>

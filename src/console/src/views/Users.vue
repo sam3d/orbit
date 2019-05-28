@@ -8,12 +8,17 @@
       subject="users"
       description="Users are different individuals that have access to the Orbit system and console."
       action="Add User"
+      target="/users/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Users ({{ users.length }})</h2>
-        <div class="item" v-for="user in users">
+        <div
+          class="item"
+          v-for="user in users"
+          @click="$push(`/users/${user.id}`)"
+        >
           <div class="profile" :style="user.profileStyle"></div>
           <span class="name">{{ user.name }}</span>
           <span class="username">@{{ user.username }}</span>

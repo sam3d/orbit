@@ -8,12 +8,17 @@
       subject="deployments"
       description="Deployments are where you build and deploy the code from your repositories."
       action="Add Deployment"
+      target="/deployments/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Deployments ({{ deployments.length }})</h2>
-        <div class="item" v-for="deployment in deployments">
+        <div
+          class="item"
+          v-for="deployment in deployments"
+          @click="$push(`/deployments/${deployment.id}`)"
+        >
           <span>{{ deployment.name }}</span>
         </div>
       </div>

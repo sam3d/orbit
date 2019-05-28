@@ -8,12 +8,17 @@
       subject="volumes"
       description="Highly available and distributed block storage volumes for your deployments"
       action="Add Volume"
+      target="/volumes/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Volumes ({{ volumes.length }})</h2>
-        <div class="item" v-for="volume in volumes">
+        <div
+          class="item"
+          v-for="volume in volumes"
+          @click="$push(`/volumes/${volume.id}`)"
+        >
           <span>{{ volume.name }}</span>
         </div>
       </div>

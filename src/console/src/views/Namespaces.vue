@@ -8,12 +8,17 @@
       subject="namespaces"
       description="Namespaces can keep your different projects organised and secure so that you don't forget what is what."
       action="Add Namespace"
+      target="/namespaces/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Namespaces ({{ namespaces.length }})</h2>
-        <div class="item" v-for="namespace in namespaces">
+        <div
+          class="item"
+          v-for="namespace in namespaces"
+          @click="$push(`/namespaces/${namespace.id}`)"
+        >
           <span>{{ namespace.name }}</span>
         </div>
       </div>

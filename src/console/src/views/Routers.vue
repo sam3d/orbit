@@ -8,12 +8,17 @@
       subject="routers"
       description="Routers combine with certificates and route external web traffic to your deployments"
       action="Add Router"
+      target="/routers/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Routers ({{ routers.length }})</h2>
-        <div class="item" v-for="router in routers">
+        <div
+          class="item"
+          v-for="router in routers"
+          @click="$push(`/routers/${router.id}`)"
+        >
           <span>{{ router.domain }} &rarr; {{ router.app_id }}</span>
         </div>
       </div>

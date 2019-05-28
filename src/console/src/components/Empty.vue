@@ -2,7 +2,7 @@
   <div class="empty">
     <h3>You don't currently have any {{ subject }}</h3>
     <p class="description">{{ description }}</p>
-    <Button :text="action" class="purple" />
+    <Button :text="action" class="purple" @click="$push(target)" />
   </div>
 </template>
 
@@ -11,7 +11,8 @@ export default {
   props: {
     subject: { type: String },
     description: { type: String },
-    action: { type: String }
+    action: { type: String },
+    target: { type: String }
   }
 };
 </script>

@@ -8,12 +8,17 @@
       subject="certificates"
       description="These are SSL certificates that attach to routers to secure traffic coming into your application"
       action="Add Certificate"
+      target="/certificates/new"
     />
 
     <template v-else>
       <div class="list">
         <h2>Certificates ({{ certificates.length }})</h2>
-        <div class="item" v-for="certificate in certificates">
+        <div
+          class="item"
+          v-for="certificate in certificates"
+          @click="$push(`/certificates/${certificate.id}`)"
+        >
           <span>{{ certificate.domains }}</span>
         </div>
       </div>
