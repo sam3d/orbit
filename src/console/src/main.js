@@ -23,6 +23,13 @@ Vue.use(Vue => {
   };
 });
 
+// Helper to navigate maintaining query parameters.
+Vue.use(
+  Vue =>
+    (Vue.prototype.$push = path =>
+      router.push({ path, query: router.currentRoute.query }))
+);
+
 // Global components.
 Vue.component("LoadingList", LoadingList);
 Vue.component("Empty", Empty);

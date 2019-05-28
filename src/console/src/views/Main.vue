@@ -7,7 +7,7 @@
         @click="showSidebar = !showSidebar"
       ></div>
 
-      <div class="logo" @click="push('/')"></div>
+      <div class="logo" @click="$push('/')"></div>
 
       <transition name="slide" mode="out-in">
         <div class="page" :key="$store.state.title">
@@ -33,36 +33,36 @@
           <div class="menu-background" v-if="showCreateMenu"></div>
           <transition name="slide-down">
             <div class="menu" v-if="showCreateMenu">
-              <div class="item" @click="push('/security')">
+              <div class="item" @click="$push('/security')">
                 <h4>Node</h4>
                 <p>Add a new node to the cluster</p>
               </div>
-              <div class="item" @click="push('/namespaces/new')">
+              <div class="item" @click="$push('/namespaces/new')">
                 <h4>Namespace</h4>
                 <p>Create a new namespace</p>
               </div>
-              <div class="item" @click="push('/users/new')">
+              <div class="item" @click="$push('/users/new')">
                 <h4>User</h4>
                 <p>Sign up a new user</p>
               </div>
               <div class="separator"></div>
-              <div class="item" @click="push('/repositories/new')">
+              <div class="item" @click="$push('/repositories/new')">
                 <h4>Repository</h4>
                 <p>Create a new git repository</p>
               </div>
-              <div class="item" @click="push('/deployments/new')">
+              <div class="item" @click="$push('/deployments/new')">
                 <h4>Deployment</h4>
                 <p>Deploy a new service</p>
               </div>
-              <div class="item" @click="push('/routers/new')">
+              <div class="item" @click="$push('/routers/new')">
                 <h4>Router</h4>
                 <p>Create a new ingress router</p>
               </div>
-              <div class="item" @click="push('/certificates/new')">
+              <div class="item" @click="$push('/certificates/new')">
                 <h4>Certificate</h4>
                 <p>Provision a new SSL certificate</p>
               </div>
-              <div class="item" @click="push('/volumes/new')">
+              <div class="item" @click="$push('/volumes/new')">
                 <h4>Volume</h4>
                 <p>Create a new block storage volume</p>
               </div>
@@ -98,10 +98,10 @@
         <div class="sidebar" v-if="showSidebar">
           <div class="category">Cluster</div>
 
-          <div class="item" @click="push('/nodes')">Nodes</div>
-          <div class="item" @click="push('/namespaces')">Namespaces</div>
-          <div class="item" @click="push('/users')">Users</div>
-          <div class="item" @click="push('/security')">Security</div>
+          <div class="item" @click="$push('/nodes')">Nodes</div>
+          <div class="item" @click="$push('/namespaces')">Namespaces</div>
+          <div class="item" @click="$push('/users')">Users</div>
+          <div class="item" @click="$push('/security')">Security</div>
 
           <div class="category">Namespace</div>
 
@@ -116,12 +116,12 @@
             </option>
           </select>
 
-          <div class="item" @click="push('/')">Overview</div>
-          <div class="item" @click="push('/repositories')">Repositories</div>
-          <div class="item" @click="push('/deployments')">Deployments</div>
-          <div class="item" @click="push('/routers')">Routers</div>
-          <div class="item" @click="push('/certificates')">Certificates</div>
-          <div class="item" @click="push('/volumes')">Volumes</div>
+          <div class="item" @click="$push('/')">Overview</div>
+          <div class="item" @click="$push('/repositories')">Repositories</div>
+          <div class="item" @click="$push('/deployments')">Deployments</div>
+          <div class="item" @click="$push('/routers')">Routers</div>
+          <div class="item" @click="$push('/certificates')">Certificates</div>
+          <div class="item" @click="$push('/volumes')">Volumes</div>
         </div>
       </transition>
 
@@ -150,9 +150,9 @@
           <div class="content">
             <router-view name="slider"></router-view>
           </div>
-          <div class="close" @click="down"></div>
+          <div class="close" @click="up"></div>
         </div>
-        <div class="background" @click="down"></div>
+        <div class="background" @click="up"></div>
       </div>
     </transition>
   </div>
@@ -199,16 +199,11 @@ export default {
       this.namespaces = res.data;
     },
 
-    // Navigate to the correct path while keeping the namespace in the URL.
-    push(path) {
-      this.$router.push({ path, query: this.$route.query });
-    },
-
-    // Navigate down a path element in the URL.
-    down() {
+    // Navigate up a path element in the URL.
+    up() {
       const url = this.$route.path;
       const elements = url.split("/");
-      this.push(
+      this.$push(
         this.$route.path
           .split("/")
           .slice(0, -1)

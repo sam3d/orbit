@@ -12,8 +12,11 @@ import LoginView from "@/views/Login";
 import MainView from "@/views/Main";
 
 import NodesView from "@/views/Nodes";
+
+import NamespaceView from "@/views/Namespace";
 import NamespacesView from "@/views/Namespaces";
 import NewNamespaceView from "@/views/NewNamespace";
+
 import UsersView from "@/views/Users";
 import SecurityView from "@/views/Security";
 
@@ -54,7 +57,7 @@ const routes = [
       },
       {
         path: "/namespaces/:id",
-        components: { default: NamespacesView }
+        components: { default: NamespacesView, slider: NamespaceView }
       },
 
       { path: "/users", component: UsersView },
