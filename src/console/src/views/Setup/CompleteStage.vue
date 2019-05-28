@@ -32,11 +32,9 @@
 </template>
 
 <script>
-import Button from "@/components/Button";
-
 export default {
   props: ["mode"],
-  components: { Button },
+
   data() {
     return {
       busy: false

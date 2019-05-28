@@ -53,11 +53,8 @@
 
 <script>
 import validator from "validator";
-import Button from "@/components/Button";
 
 export default {
-  components: { Button },
-
   data() {
     return {
       address: "",

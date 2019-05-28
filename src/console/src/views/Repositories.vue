@@ -3,6 +3,12 @@
     <h1>Repositories</h1>
 
     <LoadingList v-if="loading" header />
+    <Empty
+      v-else-if="!repos.length"
+      subject="repositories"
+      description="Repositories are your locations to store your code so that you can create deployments."
+      action="Add Repository"
+    />
 
     <template v-else>
       <div class="list">

@@ -41,12 +41,9 @@
 </template>
 
 <script>
-import Button from "@/components/Button";
 import defaultProfile from "@/assets/icon/blank-profile.svg";
 
 export default {
-  components: { Button },
-
   data() {
     return {
       profile: defaultProfile, // The profile image URL

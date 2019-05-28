@@ -3,7 +3,10 @@ import App from "./App";
 import router from "./router";
 import store from "./store";
 import api from "./api";
+
 import LoadingList from "./components/LoadingList";
+import Empty from "./components/Empty";
+import Button from "./components/Button";
 
 import "reset-css";
 import "@/styles/main.scss";
@@ -20,8 +23,10 @@ Vue.use(Vue => {
   };
 });
 
-// Set the loading list view to be a global component.
+// Global components.
 Vue.component("LoadingList", LoadingList);
+Vue.component("Empty", Empty);
+Vue.component("Button", Button);
 
 const vue = new Vue({
   store,

@@ -92,12 +92,9 @@
 </template>
 
 <script>
-import Button from "@/components/Button";
 import defaultProfileImage from "@/assets/icon/blank-profile.svg";
 
 export default {
-  components: { Button },
-
   data() {
     return {
       user: {

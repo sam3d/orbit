@@ -121,15 +121,10 @@
 
 <script>
 import validator from "validator";
-
-import Button from "@/components/Button";
 import Spinner from "@/components/Spinner";
 
 export default {
-  components: {
-    Button,
-    Spinner
-  },
+  components: { Spinner },
 
   data() {
     return {
