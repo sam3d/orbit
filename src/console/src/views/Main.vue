@@ -266,7 +266,7 @@ export default {
     font-weight: bold;
     opacity: 0.6;
     text-transform: uppercase;
-
+    margin-top: 30px;
     margin-bottom: 10px;
 
     &.placeholder {
@@ -282,10 +282,14 @@ export default {
       padding: 20px;
       border-radius: 4px;
       cursor: pointer;
+      overflow: scroll;
+
+      & > * {
+        flex-shrink: 0;
+      }
 
       display: flex;
       align-items: center;
-      justify-content: space-between;
 
       transition: box-shadow 0.2s;
       box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.025);

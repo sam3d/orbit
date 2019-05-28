@@ -6,20 +6,22 @@
 
     <template v-else>
       <div class="list">
-        <h2>Nodes ({{ nodes.length }})</h2>
-        <div class="item" v-for="node in nodes">
-          <span>{{ node.address }}</span>
-          <span>{{ node.node_roles }}</span>
-          <span>{{ node.state }}</span>
-        </div>
+        <h2>Managers ({{ managerNodes.length }})</h2>
+        <NodeListItem v-for="node in managerNodes" :node="node" />
+
+        <h2>Workers ({{ workerNodes.length }})</h2>
+        <NodeListItem v-for="node in workerNodes" :node="node" />
       </div>
     </template>
   </div>
 </template>
 
 <script>
+import NodeListItem from "@/components/NodeListItem";
+
 export default {
   meta: { title: "Nodes" },
+  components: { NodeListItem },
 
   data() {
     return {
@@ -38,6 +40,16 @@ export default {
       this.loading = false;
       if (!Array.isArray(data)) return;
       this.nodes = data;
+    }
+  },
+
+  computed: {
+    managerNodes() {
+      return this.nodes.filter(n => n.node_roles.includes("MANAGER"));
+    },
+
+    workerNodes() {
+      return this.nodes.filter(n => n.node_roles.includes("WORKER"));
     }
   }
 };
