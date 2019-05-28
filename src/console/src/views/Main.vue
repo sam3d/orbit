@@ -23,16 +23,16 @@
 
       <div class="actions">
         <div
-          class="deploy"
-          :class="{ open: showDeployMenu }"
-          @click="showDeployMenu = !showDeployMenu"
+          class="create"
+          :class="{ open: showCreateMenu }"
+          @click="showCreateMenu = !showCreateMenu"
         >
-          <span>Deploy</span>
+          <span>Create</span>
           <img src="@/assets/icon/dropdown-white.svg" />
 
-          <div class="menu-background" v-if="showDeployMenu"></div>
+          <div class="menu-background" v-if="showCreateMenu"></div>
           <transition name="slide-down">
-            <div class="menu" v-if="showDeployMenu">
+            <div class="menu" v-if="showCreateMenu">
               <div class="item" @click="push('/security')">
                 <h4>Node</h4>
                 <p>Add a new node to the cluster</p>
@@ -156,7 +156,7 @@ export default {
     return {
       showSidebar: true,
       showUserMenu: false,
-      showDeployMenu: false,
+      showCreateMenu: false,
       hasProfile: false,
       namespace: "default", // Keep track of the selected namespace
 
@@ -414,7 +414,7 @@ $borderColor: darken($backgroundColor, 5%);
       justify-content: flex-end;
       align-items: center;
 
-      .deploy {
+      .create {
         background-color: #8959ea;
         color: #fff;
         padding: 10px;
