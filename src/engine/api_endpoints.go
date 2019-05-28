@@ -63,6 +63,17 @@ func (s *APIServer) handleIP() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleGetTokens() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"manager": store.state.ManagerJoinToken,
+			"worker":  store.state.WorkerJoinToken,
+		})
+	}
+}
+
 func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store

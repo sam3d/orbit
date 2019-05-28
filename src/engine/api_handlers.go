@@ -33,6 +33,7 @@ func (s *APIServer) handlers() {
 	r.GET("/volumes", s.handleListVolumes())
 	r.GET("/repositories", s.handleGetRepositories())
 	r.GET("/deployments", s.handleListDeployments())
+	r.GET("/tokens", s.handleGetTokens())
 
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())

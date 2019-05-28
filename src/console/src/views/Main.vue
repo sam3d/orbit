@@ -156,7 +156,7 @@ export default {
     return {
       showSidebar: true,
       showUserMenu: false,
-      showDeployMenu: true,
+      showDeployMenu: false,
       hasProfile: false,
       namespace: "default", // Keep track of the selected namespace
 
