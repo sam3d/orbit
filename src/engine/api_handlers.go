@@ -35,6 +35,7 @@ func (s *APIServer) handlers() {
 	r.GET("/deployments", s.handleListDeployments())
 	r.GET("/tokens", s.handleGetTokens())
 
+	r.POST("/tokens/refresh", s.handleRefreshTokens())
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())
 	r.POST("/certificates/renew", s.handleRenewCertificates())

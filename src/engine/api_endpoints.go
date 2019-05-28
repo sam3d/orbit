@@ -74,6 +74,33 @@ func (s *APIServer) handleGetTokens() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleRefreshTokens() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// Perform the token rotation.
+		newManagerToken := docker.RotateSwarmToken(true)
+		newWorkerToken := docker.RotateSwarmToken(false)
+
+		// Update the store.
+		cmd := command{
+			Op:               opSetJoinTokens,
+			ManagerJoinToken: newManagerToken,
+			WorkerJoinToken:  newWorkerToken,
+		}
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not refresh the join tokens.")
+			return
+		}
+
+		// Provide the new tokens back to the user.
+		c.JSON(http.StatusOK, gin.H{
+			"manager": newManagerToken,
+			"worker":  newWorkerToken,
+		})
+	}
+}
+
 func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store

@@ -32,6 +32,12 @@
       simply like peace of mind, you can reset it. This will invalidate the
       current join token.
     </p>
+    <Button
+      text="Refresh join token"
+      class="blue"
+      :busy="busy"
+      @click="refresh"
+    />
   </div>
 </template>
 
@@ -41,6 +47,7 @@ export default {
 
   data() {
     return {
+      busy: false,
       loading: true,
       address: "", // The cluster IP address
       token: "" // The join token
@@ -64,6 +71,13 @@ export default {
       ).address;
 
       this.loading = false;
+    },
+
+    async refresh() {
+      this.busy = true;
+      let res = await this.$api.post("/tokens/refresh");
+      this.token = res.data.manager;
+      this.busy = false;
     }
   }
 };
@@ -113,5 +127,9 @@ ol {
     background-color: #fff;
     flex-grow: 1;
   }
+}
+
+.button {
+  margin-top: 10px;
 }
 </style>
