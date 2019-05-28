@@ -21,7 +21,23 @@
         placeholder="Search for apps, namespaces, volumes, and domains"
       />
 
-      <div class="actions"></div>
+      <div class="actions">
+        <div
+          class="deploy"
+          :class="{ open: showDeployMenu }"
+          @click="showDeployMenu = !showDeployMenu"
+        >
+          <span>Deploy</span>
+          <img src="@/assets/icon/dropdown-white.svg" />
+
+          <div class="menu-background" v-if="showDeployMenu"></div>
+          <transition name="slide-down">
+            <div class="menu" v-if="showDeployMenu">
+              Deploy menu
+            </div>
+          </transition>
+        </div>
+      </div>
 
       <div
         class="user"
@@ -34,7 +50,14 @@
         </div>
 
         <div class="profile" :style="profileStyle"></div>
-        <div class="arrow" :class="{ rotate: showUserMenu }"></div>
+        <div class="arrow"></div>
+
+        <div class="menu-background" v-if="showUserMenu"></div>
+        <transition name="slide-down">
+          <div class="menu" v-if="showUserMenu">
+            User menu
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -101,6 +124,7 @@ export default {
     return {
       showSidebar: true,
       showUserMenu: false,
+      showDeployMenu: true,
       hasProfile: false,
       namespace: "default", // Keep track of the selected namespace
 
@@ -357,6 +381,36 @@ $borderColor: darken($backgroundColor, 5%);
       display: flex;
       justify-content: flex-end;
       align-items: center;
+
+      .deploy {
+        background-color: #1dd1a1;
+        color: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+          background-color: transparentize(#1dd1a1, 0.1);
+        }
+        &:active {
+          background-color: transparentize(#1dd1a1, 0.2);
+        }
+
+        &.open {
+          img {
+            transform: rotate(180deg);
+          }
+        }
+
+        img {
+          width: 8px;
+          margin-left: 8px;
+          transition: transform 0.3s;
+        }
+      }
     }
 
     .user {
@@ -370,7 +424,9 @@ $borderColor: darken($backgroundColor, 5%);
         opacity: 0.8;
       }
       &.open {
-        opacity: 0.6;
+        .arrow {
+          transform: rotate(180deg);
+        }
       }
 
       .arrow {
@@ -383,9 +439,6 @@ $borderColor: darken($backgroundColor, 5%);
         margin-left: 10px;
 
         transition: transform 0.3s;
-        &.rotate {
-          transform: rotate(180deg);
-        }
       }
 
       .profile {
@@ -549,11 +602,33 @@ $borderColor: darken($backgroundColor, 5%);
   }
 }
 
+// Styles for a menu that opens from the navbar.
+.menu-background {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 999;
+  cursor: default;
+}
+
+.menu {
+  z-index: 1500;
+  position: absolute;
+  background-color: #fff;
+  color: #151515;
+  padding: 20px;
+  border-radius: 4px;
+  margin-top: 60px;
+  border: solid 1px $borderColor;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05);
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s, transform 0.2s;
 }
-
 .fade-enter,
 .fade-leave-active {
   opacity: 0;
@@ -564,10 +639,19 @@ $borderColor: darken($backgroundColor, 5%);
 .slide-leave-active {
   transition: opacity 0.2s, transform 0.2s;
 }
-
 .slide-enter,
 .slide-leave-active {
   opacity: 0;
   transform: translateX(-5px);
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+.slide-down-enter,
+.slide-down-leave-active {
+  opacity: 0;
+  transform: translateY(-5px);
 }
 </style>

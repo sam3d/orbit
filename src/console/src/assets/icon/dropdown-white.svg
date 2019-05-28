@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="82px" height="60px" viewBox="0 0 82 60" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/dropdown-white</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-319.000000, -48.000000)" fill="#FFFFFF" id="icon/dropdown-white">
+            <path d="M366.655815,53.4570548 L398.794135,95.1906611 C401.826848,99.1288267 401.092833,104.77984 397.154667,107.812553 C395.580731,109.024613 393.650002,109.681873 391.663456,109.681873 L328.023218,109.681873 C323.052655,109.681873 319.023218,105.652436 319.023218,100.681873 C319.023218,98.7250373 319.660991,96.8215155 320.839918,95.2596781 L352.341835,53.5260719 C355.336431,49.5588446 360.980103,48.7703707 364.94733,51.7649662 C365.589949,52.250036 366.164571,52.8191438 366.655815,53.4570548 Z" transform="translate(359.880227, 78.840936) scale(1, -1) translate(-359.880227, -78.840936) "></path>
+        </g>
+    </g>
+</svg>
