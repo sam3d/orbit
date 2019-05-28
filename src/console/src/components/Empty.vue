@@ -2,7 +2,7 @@
   <div class="empty">
     <h3>You don't currently have any {{ subject }}</h3>
     <p class="description">{{ description }}</p>
-    <div class="button">Hello</div>
+    <Button :text="action" class="blue" />
   </div>
 </template>
 
@@ -27,16 +27,20 @@ export default {
   flex-direction: column;
 
   h3 {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
   }
 
   p.description {
     font-size: 18px;
-    margin-top: 20px;
+    margin-top: 30px;
     line-height: 1.6rem;
     max-width: 600px;
     color: rgba(0, 0, 0, 0.7);
+  }
+
+  .button {
+    margin-top: 30px;
   }
 }
 </style>
