@@ -16,11 +16,13 @@
         <h2>Users ({{ users.length }})</h2>
         <div
           class="item"
+          :class="{ you: $store.state.user.id === user.id }"
           v-for="user in users"
           @click="$push(`/users/${user.id}`)"
         >
           <div class="profile" :style="user.profileStyle"></div>
           <span class="name">{{ user.name }}</span>
+          <span class="you-badge">YOU</span>
           <span class="username">@{{ user.username }}</span>
           <span class="email">{{ user.email }}</span>
         </div>
@@ -85,7 +87,31 @@ export default {
 
 .name {
   font-weight: bold;
-  margin-right: 20px;
+}
+
+.username {
+  margin-left: 20px;
+}
+
+.you-badge {
+  display: none;
+}
+
+.you {
+  .name {
+    color: darken(#feca57, 40%);
+  }
+
+  .you-badge {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 6px;
+    border-radius: 4px;
+    color: darken(#feca57, 40%);
+    background-color: #feca57;
+    display: block;
+  }
 }
 
 .email {
