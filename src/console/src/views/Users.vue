@@ -64,7 +64,6 @@ export default {
 .list {
   .item {
     padding: 10px !important;
-    padding-right: 20px;
   }
 }
 
