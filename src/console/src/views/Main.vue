@@ -390,16 +390,14 @@ $borderColor: darken($backgroundColor, 5%);
         display: flex;
         align-items: center;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: opacity 0.2s;
 
         &:hover {
-          background-color: transparentize(#1dd1a1, 0.1);
-        }
-        &:active {
-          background-color: transparentize(#1dd1a1, 0.2);
+          opacity: 0.9;
         }
 
         &.open {
+          opacity: 1;
           img {
             transform: rotate(180deg);
           }
@@ -424,6 +422,7 @@ $borderColor: darken($backgroundColor, 5%);
         opacity: 0.8;
       }
       &.open {
+        opacity: 1;
         .arrow {
           transform: rotate(180deg);
         }
@@ -620,7 +619,7 @@ $borderColor: darken($backgroundColor, 5%);
   color: #151515;
   padding: 20px;
   border-radius: 4px;
-  margin-top: 60px;
+  margin-top: 58px;
   border: solid 1px $borderColor;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05);
 }
