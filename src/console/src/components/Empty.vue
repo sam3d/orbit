@@ -2,7 +2,7 @@
   <div class="empty">
     <h3>You don't currently have any {{ subject }}</h3>
     <p class="description">{{ description }}</p>
-    <Button :text="action" class="blue" />
+    <Button :text="action" class="purple" />
   </div>
 </template>
 

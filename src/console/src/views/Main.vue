@@ -415,7 +415,7 @@ $borderColor: darken($backgroundColor, 5%);
       align-items: center;
 
       .deploy {
-        background-color: #1dd1a1;
+        background-color: #8959ea;
         color: #fff;
         padding: 10px;
         border-radius: 4px;
