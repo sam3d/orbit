@@ -1,5 +1,7 @@
 <template>
-  <div>The security view.</div>
+  <div>
+    <h1>Security</h1>
+  </div>
 </template>
 
 <script>
