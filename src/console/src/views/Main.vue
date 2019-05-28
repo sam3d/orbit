@@ -188,20 +188,20 @@ export default {
 
 @keyframes wobble {
   0% {
-    opacity: 0.2;
+    opacity: 0.1;
   }
   50% {
     opacity: 0.4;
   }
   100% {
-    opacity: 0.2;
+    opacity: 0.1;
   }
 }
 
 .root .content {
   h1 {
     font-size: 30px;
-    margin-bottom: 20px;
+    margin: 20px 0;
   }
 
   h2 {
@@ -227,6 +227,10 @@ export default {
       border-radius: 4px;
       cursor: pointer;
 
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
       transition: box-shadow 0.2s;
       box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.025);
       &:not(.placeholder):hover {
@@ -245,9 +249,9 @@ export default {
         box-shadow: none;
         background: linear-gradient(
           90deg,
-          rgba(0, 0, 0, 0.05),
-          rgba(0, 0, 0, 0.15),
-          rgba(0, 0, 0, 0.05)
+          rgba(0, 0, 0, 0),
+          rgba(0, 0, 0, 0.1),
+          rgba(0, 0, 0, 0)
         );
         background-size: 200%;
         animation: placeholder 1s linear infinite;

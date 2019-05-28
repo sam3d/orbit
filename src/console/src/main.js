@@ -11,6 +11,15 @@ import "@/styles/main.scss";
 // Bind the API to the vue instance.
 Vue.use(Vue => (Vue.prototype.$api = api));
 
+// Helper to retrieve the current namespace ID.
+Vue.use(Vue => {
+  Vue.prototype.$namespace = () => {
+    const id = store.state.namespace;
+    if (!id || id === "default") return "";
+    else return id;
+  };
+});
+
 // Set the loading list view to be a global component.
 Vue.component("LoadingList", LoadingList);
 
