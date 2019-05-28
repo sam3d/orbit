@@ -33,7 +33,39 @@
           <div class="menu-background" v-if="showDeployMenu"></div>
           <transition name="slide-down">
             <div class="menu" v-if="showDeployMenu">
-              Deploy menu
+              <div class="item">
+                <h4>Node</h4>
+                <p>Add a new node to the cluster</p>
+              </div>
+              <div class="item">
+                <h4>Namespace</h4>
+                <p>Create a new namespace</p>
+              </div>
+              <div class="item">
+                <h4>User</h4>
+                <p>Sign up a new user</p>
+              </div>
+              <div class="separator"></div>
+              <div class="item">
+                <h4>Repository</h4>
+                <p>Create a new git repository</p>
+              </div>
+              <div class="item">
+                <h4>Deployment</h4>
+                <p>Deploy a new service</p>
+              </div>
+              <div class="item">
+                <h4>Router</h4>
+                <p>Create a new ingress router</p>
+              </div>
+              <div class="item">
+                <h4>Certificate</h4>
+                <p>Provision a new SSL certificate</p>
+              </div>
+              <div class="item">
+                <h4>Volume</h4>
+                <p>Create a new block storage volume</p>
+              </div>
             </div>
           </transition>
         </div>
@@ -617,11 +649,51 @@ $borderColor: darken($backgroundColor, 5%);
   position: absolute;
   background-color: #fff;
   color: #151515;
-  padding: 20px;
+  padding: 5px;
   border-radius: 4px;
-  margin-top: 58px;
+  top: 65px;
+  right: 20px;
   border: solid 1px $borderColor;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05);
+
+  .separator {
+    height: 1px;
+    margin: 10px 0;
+    width: 100%;
+    background-color: $borderColor;
+    border-radius: 2px;
+  }
+
+  .item {
+    padding: 10px;
+    border-radius: 4px;
+    border: solid 1px transparent;
+    transition: all 0.2s;
+
+    h4 {
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    p {
+      margin-top: 4px;
+      font-size: 13px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      background-color: #fff;
+      transform: scale(1.08);
+      border: solid 1px $borderColor;
+      box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
+    }
+    &:active {
+      transform: scale(0.98);
+      border: solid 1px transparent;
+      box-shadow: none;
+    }
+  }
 }
 
 .fade-enter-active,
