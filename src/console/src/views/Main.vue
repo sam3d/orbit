@@ -143,6 +143,15 @@
         <div class="dot green"></div>
       </div>
     </div>
+
+    <transition name="slow-slide">
+      <div class="slider" v-if="showSlider">
+        <div class="content">
+          <router-view name="slider"></router-view>
+        </div>
+        <div class="background" @click="down"></div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -192,6 +201,18 @@ export default {
       this.$router.push({ path, query: this.$route.query });
     },
 
+    // Navigate down a path element in the URL.
+    down() {
+      const url = this.$route.path;
+      const elements = url.split("/");
+      this.push(
+        this.$route.path
+          .split("/")
+          .slice(0, -1)
+          .join("/")
+      );
+    },
+
     async logout() {
       const { user, token } = this.$store.state;
       await this.$api.delete(`/user/${user.id}/session/${token}`);
@@ -209,6 +230,12 @@ export default {
       const id = this.$store.state.user.id;
       const url = this.hasProfile ? `/api/user/${id}/profile` : defaultProfile;
       return { backgroundImage: `url("${url}")` };
+    },
+
+    showSlider() {
+      return this.$route.matched.some(route =>
+        route.components.hasOwnProperty("slider")
+      );
     }
   },
 
@@ -513,6 +540,15 @@ $borderColor: darken($backgroundColor, 5%);
   .container {
     display: flex;
     flex-grow: 1;
+
+    .content {
+      flex-grow: 2;
+      padding: 20px;
+      overflow: scroll;
+      max-height: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
   }
 
   .sidebar {
@@ -589,13 +625,32 @@ $borderColor: darken($backgroundColor, 5%);
     }
   }
 
-  .content {
-    flex-grow: 2;
-    padding: 20px;
-    overflow: scroll;
-    max-height: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
+  .slider {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: flex-end;
+    box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.5);
+    z-index: 999;
+
+    .background {
+      background-color: rgba(0, 0, 0, 0.2);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+    }
+
+    .content {
+      background-color: #fff;
+      z-index: 1000;
+      padding: 50px;
+    }
   }
 
   .footer {
@@ -730,5 +785,20 @@ $borderColor: darken($backgroundColor, 5%);
 .slide-down-leave-active {
   opacity: 0;
   transform: translateY(-5px);
+}
+
+.slow-slide-enter-active,
+.slow-slide-leave-active {
+  transition: opacity 0.5s;
+  .content {
+    transition: transform 0.5s;
+  }
+}
+.slow-slide-enter,
+.slow-slide-leave-active {
+  opacity: 0;
+  .content {
+    transform: translateX(400px);
+  }
 }
 </style>
