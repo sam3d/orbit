@@ -44,8 +44,9 @@ export default {
   methods: {
     async load() {
       const { data } = await this.$api.get("/repositories");
-      this.repos = data.filter(r => r.namespace_id === this.$namespace());
       this.loading = false;
+      if (!Array.isArray(data)) return;
+      this.repos = data.filter(r => r.namespace_id === this.$namespace());
     }
   }
 };
