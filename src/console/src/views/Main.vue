@@ -19,6 +19,7 @@
         type="text"
         class="search"
         placeholder="Search for apps, namespaces, volumes, and domains"
+        ref="search"
       />
 
       <div class="actions">
@@ -180,6 +181,13 @@ export default {
     this.checkProfile();
     this.fetchNamespaces();
     this.namespace = this.$route.query.namespace || "default";
+
+    // Handle global keydown listener.
+    window.addEventListener("keydown", this.keydownHandler);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener("keydown", this.keydownHandler);
   },
 
   methods: {
@@ -191,6 +199,34 @@ export default {
       const id = this.$store.state.user.id;
       const res = await this.$api.get(`/user/${id}/profile`);
       this.hasProfile = res.status === 200;
+    },
+
+    // Listener function for keydown events.
+    keydownHandler(e) {
+      const { search } = this.$refs;
+
+      // Escape key.
+      if (e.keyCode == 27) {
+        // Hide the slider.
+        if (this.showSlider) {
+          e.preventDefault();
+          this.up();
+          return;
+        }
+
+        // Exit the search bar.
+        if (search && document.activeElement === search) {
+          e.preventDefault();
+          search.blur();
+        }
+      }
+
+      // Forward slash.
+      if (e.keyCode == 191) {
+        if (!search || document.activeElement === search) return;
+        e.preventDefault();
+        search.focus();
+      }
     },
 
     // Get a list of the namespaces.
