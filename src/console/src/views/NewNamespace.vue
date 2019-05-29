@@ -14,6 +14,7 @@
       placeholder="Name"
       :disabled="busy"
       v-model="name"
+      ref="nameField"
       @keypress.enter="create"
     />
 
@@ -34,6 +35,10 @@ export default {
       busy: false,
       name: ""
     };
+  },
+
+  mounted() {
+    this.$refs.nameField.focus();
   },
 
   methods: {

@@ -11,6 +11,7 @@
       type="text"
       class="defined"
       size="30"
+      ref="nameField"
       placeholder="Name"
       v-model="name"
       @keypress.enter="newRepo"
@@ -46,6 +47,10 @@ export default {
       busy: false,
       name: ""
     };
+  },
+
+  mounted() {
+    this.$refs.nameField.focus();
   },
 
   methods: {
