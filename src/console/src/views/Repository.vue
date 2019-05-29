@@ -3,6 +3,8 @@
     <div class="type">Repository</div>
     <h1>{{ repo.name }}</h1>
 
+    <Browser :files="repo.files" class="browser" />
+
     <RepoInstructions :name="repo.name" />
 
     <Button
@@ -17,9 +19,10 @@
 
 <script>
 import RepoInstructions from "@/components/RepoInstructions";
+import Browser from "@/components/Browser";
 
 export default {
-  components: { RepoInstructions },
+  components: { RepoInstructions, Browser },
 
   data() {
     return {
@@ -39,6 +42,7 @@ export default {
 
   methods: {
     async load() {
+      // Load the data.
       const id = this.$route.params.id;
       const res = await this.$api.get(`/repository/${id}`);
       this.loading = false;
@@ -52,3 +56,9 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.browser {
+  margin-top: 10px;
+}
+</style>
