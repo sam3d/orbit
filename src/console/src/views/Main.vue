@@ -127,7 +127,7 @@
 
       <div class="content">
         <transition mode="out-in" name="fade">
-          <router-view :key="namespace"></router-view>
+          <router-view :key="namespace + $reloadKey.current"></router-view>
         </transition>
       </div>
     </div>

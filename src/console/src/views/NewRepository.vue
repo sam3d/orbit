@@ -50,6 +50,7 @@ export default {
       const res = await this.$api.post("/repository", body);
       if (res.status !== 201) return alert(res.data);
       this.busy = false;
+      this.$reload();
       this.$push(`/repositories/${res.data.id}`);
     }
   },

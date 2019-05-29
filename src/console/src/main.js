@@ -30,6 +30,13 @@ Vue.use(
       router.push({ path, query: router.currentRoute.query }))
 );
 
+// Handle reload event.
+Vue.use(Vue => {
+  const reloadKey = new Vue({ data: { current: true } });
+  Vue.prototype.$reloadKey = reloadKey;
+  Vue.prototype.$reload = () => (reloadKey.current = !reloadKey.current);
+});
+
 // Global components.
 Vue.component("LoadingList", LoadingList);
 Vue.component("Empty", Empty);
