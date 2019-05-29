@@ -128,7 +128,7 @@ export default {
 
   computed: {
     valid() {
-      return this.selectedRepo && this.branch && this.path;
+      return this.selectedRepo && this.branch && this.path && this.name;
     },
 
     branches() {
