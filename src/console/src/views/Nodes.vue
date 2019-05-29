@@ -7,10 +7,14 @@
     <template v-else>
       <div class="list">
         <h2>Managers ({{ managerNodes.length }})</h2>
-        <NodeListItem v-for="node in managerNodes" :node="node" />
+        <NodeListItem
+          v-for="node in managerNodes"
+          :key="node.id"
+          :node="node"
+        />
 
         <h2>Workers ({{ workerNodes.length }})</h2>
-        <NodeListItem v-for="node in workerNodes" :node="node" />
+        <NodeListItem v-for="node in workerNodes" :key="node.id" :node="node" />
       </div>
     </template>
   </div>
