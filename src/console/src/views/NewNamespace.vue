@@ -1,5 +1,5 @@
 <template>
-  <div class="create-new">
+  <div class="sidebar-screen">
     <h1>Add a new namespace</h1>
     <p class="description">
       Namespaces are logical groups where you can keep isolated dependencies and
@@ -64,12 +64,7 @@ export default {
 
   watch: {
     name(value) {
-      this.name = value
-        .toLowerCase()
-        .split(" ")
-        .join("-")
-        .trim()
-        .replace(/[^ a-zA-Z\-]/g, "");
+      this.name = this.$sanitize(value);
     }
   }
 };

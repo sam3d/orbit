@@ -123,12 +123,19 @@ textarea {
   }
 }
 
-// The create new screens that pop up.
-.create-new {
+// The default sidebar screen.
+.sidebar-screen {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  .type {
+    text-transform: uppercase;
+    font-weight: bold;
+    opacity: 0.5;
+    letter-spacing: 0.1rem;
+  }
 
   p.description {
     max-width: 450px;

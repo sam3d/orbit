@@ -37,6 +37,18 @@ Vue.use(Vue => {
   Vue.prototype.$reload = () => (reloadKey.current = !reloadKey.current);
 });
 
+// Sanitize names.
+Vue.use(
+  Vue =>
+    (Vue.prototype.$sanitize = name =>
+      name
+        .toLowerCase()
+        .split(" ")
+        .join("-")
+        .trim()
+        .replace(/[^ a-zA-Z\-]/g, ""))
+);
+
 // Global components.
 Vue.component("LoadingList", LoadingList);
 Vue.component("Empty", Empty);
