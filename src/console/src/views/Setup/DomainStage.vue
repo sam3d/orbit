@@ -261,7 +261,7 @@ export default {
         }
       }
 
-      await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
+      if (this.certMethod === "letsencrypt") await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
       this.redirect(); // Redirect to the new page
     },
 
