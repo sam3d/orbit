@@ -549,6 +549,35 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleRepositoryGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// Lookup the provided ID to find the repository.
+		id := c.Param("id")
+		var repo *Repository
+		for _, r := range store.state.Repositories {
+			if r.ID == id {
+				repo = &r
+				break
+			}
+		}
+		if repo == nil {
+			c.String(http.StatusNotFound, "A repo with the ID of %s does not exist", id)
+			return
+		}
+
+		files := store.RepoFiles(repo.ID)
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":           repo.ID,
+			"name":         repo.Name,
+			"namespace_id": repo.NamespaceID,
+			"files":        files,
+		})
+	}
+}
+
 func (s *APIServer) handleUserSignup() gin.HandlerFunc {
 	store := s.engine.Store
 

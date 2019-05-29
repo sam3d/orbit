@@ -88,6 +88,7 @@ func (s *APIServer) handlers() {
 	{
 		r := r.Group("/repository")
 		r.POST("", s.handleRepositoryAdd())
+		r.GET("/:id", s.handleRepositoryGet())
 		r.DELETE("/:id", s.handleRepositoryRemove())
 	}
 
