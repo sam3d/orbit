@@ -9,7 +9,7 @@
     </div>
 
     <span :class="{ hidden: busy }">
-      {{ pendingConfirmation ? `Are you sure? (${countdown})` : text }}
+      {{ pendingConfirmation ? `Are you sure? (${liveCount})` : text }}
     </span>
     <span class="cancel" v-if="pendingConfirmation">Press to cancel</span>
   </div>
@@ -29,7 +29,8 @@ export default {
 
   data() {
     return {
-      pendingConfirmation: false
+      pendingConfirmation: false,
+      liveCount: null
     };
   },
 
@@ -56,17 +57,17 @@ export default {
     },
 
     startTimer() {
-      this.countdown = 5;
+      this.liveCount = 5;
       this.interval = setInterval(this.tick, 1000);
     },
 
     stopTimer() {
-      this.countdown = null;
+      this.liveCount = null;
       clearInterval(this.interval);
     },
 
     tick() {
-      if (--this.countdown == 0) {
+      if (--this.liveCount == 0) {
         this.stopTimer();
         this.pendingConfirmation = false;
         this.$emit("click");
@@ -79,6 +80,10 @@ export default {
       // If the disabled property changes, ensure we can't go ahead with this.
       this.stopTimer();
       this.pendingConfirmation = false;
+    },
+
+    countdown(value) {
+      this.liveCount = value;
     }
   }
 };

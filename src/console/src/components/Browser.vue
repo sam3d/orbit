@@ -1,5 +1,10 @@
 <template>
-  <div class="browser">
+  <div class="browser empty" v-if="branches.length == 0 || nodes.length == 0">
+    This repository contains no files or branches! Please upload some by using
+    the instructions below.
+  </div>
+
+  <div class="browser" v-else>
     <select v-model="currentBranch">
       <option v-for="branch in branches">{{ branch }}</option>
     </select>
@@ -87,7 +92,12 @@ function toTreeData(tree) {
 </script>
 
 <style lang="scss">
-.browser {
+.browser.empty {
+  max-width: 500px;
+  line-height: 1.6rem;
+}
+
+.browser:not(.empty) {
   text-align: left;
   border: solid 1px #ddd;
   border-radius: 4px;
