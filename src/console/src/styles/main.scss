@@ -14,6 +14,9 @@ a {
   }
 }
 
+$backgroundColor: #f5f6fa;
+$borderColor: darken($backgroundColor, 5%);
+
 .button {
   cursor: not-allowed;
   display: inline-block; // Prevent width from expanding
@@ -89,6 +92,14 @@ input:not([type="file"]) {
     font-size: 20px;
     font-family: "Source Code Pro", sans-serif;
   }
+
+  &.defined {
+    border: solid 1px $borderColor;
+    box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.05);
+    &:focus {
+      box-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.1);
+    }
+  }
 }
 
 textarea {
@@ -108,6 +119,40 @@ textarea {
   }
 
   &:disabled {
+    opacity: 0.7;
+  }
+}
+
+// The create new screens that pop up.
+.create-new {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  p.description {
+    max-width: 450px;
+    font-size: 18px;
+    line-height: 1.6rem;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  label {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+}
+
+code {
+  background-color: #333;
+  padding: 10px;
+  color: #fff;
+  border-radius: 4px;
+  line-height: 1.3rem;
+  font-family: "Source Code Pro", sans-serif;
+  text-align: left;
+
+  .comment {
     opacity: 0.7;
   }
 }

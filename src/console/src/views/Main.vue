@@ -648,6 +648,8 @@ $borderColor: darken($backgroundColor, 5%);
       background-color: #fff;
       z-index: 1000;
       display: flex;
+      max-width: 100vw;
+      overflow-y: scroll;
 
       .close {
         position: absolute;
