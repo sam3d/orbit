@@ -151,9 +151,16 @@ code {
   line-height: 1.3rem;
   font-family: "Source Code Pro", sans-serif;
   text-align: left;
+  white-space: nowrap;
+  overflow: scroll;
 
   .comment {
     opacity: 0.7;
+  }
+
+  &.light {
+    background-color: $backgroundColor;
+    color: #333;
   }
 }
 

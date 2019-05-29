@@ -685,7 +685,6 @@ $borderColor: darken($backgroundColor, 5%);
       z-index: 1000;
       display: flex;
       max-width: 100vw;
-      overflow-y: scroll;
 
       .close {
         position: absolute;
@@ -712,8 +711,8 @@ $borderColor: darken($backgroundColor, 5%);
       }
 
       .content {
-        overflow: scroll;
         padding: 70px;
+        overflow: scroll;
       }
     }
   }

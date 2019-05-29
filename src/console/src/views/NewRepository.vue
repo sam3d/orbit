@@ -5,23 +5,30 @@
       A repository is a highly available location in your cluster for you to
       store your git code.
     </p>
+
+    <label>Repository name</label>
+    <input
+      type="text"
+      class="defined"
+      size="30"
+      placeholder="Name"
+      v-model="name"
+      @keypress.enter="newRepo"
+      :disabled="busy"
+    />
+
+    <label>Deploying code</label>
+    <code class="light">{{ path }}</code>
+
     <code>
-      <p class="comment"># Create and deploy your code to this repository.</p>
+      <p class="comment"># Run this script in your code directory.</p>
       git init<br />
       echo "# {{ name || "{name}" }}" > README.md<br />
       git commit -m "Initial commit"<br />
       git remote add deploy {{ path }}<br />
       git push -u deploy master
     </code>
-    <label>Repository name</label>
-    <input
-      type="text"
-      class="defined"
-      placeholder="name"
-      v-model="name"
-      @keypress.enter="newRepo"
-      :disabled="busy"
-    />
+
     <Button
       text="Create repository"
       class="purple"
@@ -48,10 +55,11 @@ export default {
 
       const body = { name: this.safeName, namespace: this.$namespace() };
       const res = await this.$api.post("/repository", body);
-      if (res.status !== 201) return alert(res.data);
       this.busy = false;
+      if (res.status !== 201) return alert(res.data);
+
       this.$reload();
-      this.$push(`/repositories/${res.data.id}`);
+      this.$push(`/repositories`);
     }
   },
 
@@ -59,7 +67,7 @@ export default {
     path() {
       const { protocol, host } = window.location;
       const main = `${protocol}//${host}/api/repo`;
-      const name = this.safeName || "{name}";
+      const name = this.paddedName;
       const namespace = this.$namespace();
 
       if (namespace) return `${main}/${namespace}/${name}`;
@@ -77,6 +85,11 @@ export default {
         .split(" ")
         .join("-")
         .replace(/[^ a-zA-Z\-]/g, "");
+    },
+
+    paddedName() {
+      const name = this.safeName || "{name}";
+      return name.padEnd(13, "\u00A0");
     }
   }
 };
@@ -84,12 +97,18 @@ export default {
 
 <style lang="scss" scoped>
 code {
-  margin-top: 30px;
-  margin-bottom: 30px;
+  width: 100%;
+  max-width: 480px;
+}
+
+code:not(.light) {
   font-size: 14px;
-  max-width: 500px;
-  flex-shrink: 2;
-  overflow: scroll;
+  margin-top: 10px;
+  max-width: 530px;
+}
+
+label {
+  margin-top: 30px;
 }
 
 .button {
