@@ -339,6 +339,36 @@ func (s *APIServer) handleGetRepositories() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleNamespaceAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name string `form:"name" json:"name"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		id := store.state.Namespaces.GenerateID()
+		cmd := command{
+			Op: opNewNamespace,
+			Namespace: Namespace{
+				ID:   id,
+				Name: body.Name,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the namespace to the store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply the namespace to the store.")
+			return
+		}
+
+		c.JSON(http.StatusCreated, cmd.Namespace)
+	}
+}
+
 func (s *APIServer) handleRepositoryAdd() gin.HandlerFunc {
 	store := s.engine.Store
 

@@ -50,6 +50,11 @@ func (s *APIServer) handlers() {
 	}
 
 	{
+		r := r.Group("/namespace")
+		r.POST("", s.handleNamespaceAdd())
+	}
+
+	{
 		r := r.Group("/user")
 		r.POST("", s.handleUserSignup())
 		r.POST("/login", s.handleUserLogin())

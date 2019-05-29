@@ -23,6 +23,7 @@ const store = new Vuex.Store({
     ip: null,
 
     namespace: null, // The currently selected namespace
+    namespaceName: "", // The name of the currently selected namespace
     title: null // The current page title
   },
 
@@ -43,8 +44,9 @@ const store = new Vuex.Store({
       state.token = token;
     },
 
-    namespace(state, namespace) {
-      state.namespace = namespace;
+    namespace(state, { id, name }) {
+      state.namespace = id;
+      state.namespaceName = name;
     },
 
     title(state, title) {

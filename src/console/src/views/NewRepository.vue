@@ -68,7 +68,7 @@ export default {
       const { protocol, host } = window.location;
       const main = `${protocol}//${host}/api/repo`;
       const name = this.paddedName;
-      const namespace = this.$namespace();
+      const namespace = this.$store.state.namespaceName;
 
       if (namespace) return `${main}/${namespace}/${name}`;
       else return `${main}/${name}`;

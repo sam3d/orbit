@@ -277,7 +277,9 @@ export default {
     // Watch the namespace property and update the URL if it changes.
     namespace(namespace) {
       // Update the store with the selected namespace.
-      this.$store.commit("namespace", namespace);
+      const found = this.namespaces.find(ns => ns.id === this.namespace);
+      const name = found ? found.name : "";
+      this.$store.commit("namespace", { id: namespace, name });
 
       // Remove the query parameter completely if it is default.
       if (namespace === "default") namespace = undefined;
@@ -287,6 +289,16 @@ export default {
           ...this.$route.query,
           namespace
         }
+      });
+    },
+
+    // Keep the namespace name updated.
+    namespaces(namespaces) {
+      const namespace = this.namespaces.find(ns => ns.id === this.namespace);
+      if (!namespace) return;
+      this.$store.commit("namespace", {
+        id: this.$namespace(),
+        name: namespace.name
       });
     }
   }
