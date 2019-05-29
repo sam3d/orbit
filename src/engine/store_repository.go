@@ -3,7 +3,6 @@ package engine
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,7 +61,6 @@ func gitFiles(path, branch string) (files []string) {
 
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
-		fmt.Println(line)
 		file := strings.TrimSpace(line)
 		if file == "" {
 			continue

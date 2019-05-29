@@ -334,8 +334,22 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 func (s *APIServer) handleGetRepositories() gin.HandlerFunc {
 	store := s.engine.Store
+
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, store.state.Repositories)
+		var repos []gin.H
+
+		for _, repo := range store.state.Repositories {
+			files := store.RepoFiles(repo.ID)
+
+			repos = append(repos, gin.H{
+				"id":           repo.ID,
+				"name":         repo.Name,
+				"namespace_id": repo.NamespaceID,
+				"files":        files,
+			})
+		}
+
+		c.JSON(http.StatusOK, repos)
 	}
 }
 
@@ -1506,6 +1520,7 @@ func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 				Repository:  body.RepositoryID,
 				Path:        body.Path,
 				NamespaceID: namespaceID,
+				Branch:      body.Branch,
 			},
 		}
 

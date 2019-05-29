@@ -223,6 +223,7 @@ export default {
 
       // Forward slash.
       if (e.keyCode == 191) {
+        return; // TODO: Re-implement this correctly.
         if (!search || document.activeElement === search) return;
         e.preventDefault();
         search.focus();
@@ -618,40 +619,7 @@ $borderColor: darken($backgroundColor, 5%);
     }
 
     select.namespace {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      -ms-appearance: none;
-      -o-appearance: none;
-      appearance: none;
-
-      background: none;
-
-      background-image: url("~@/assets/icon/dropdown.svg");
-      background-size: 10px;
-      background-position: center right 10px;
-      background-repeat: no-repeat;
-
-      font-family: "Montserrat", sans-serif;
-      font-size: 14px;
-      font-weight: bold;
-
-      padding: 10px 20px;
-      border: solid 1px $borderColor;
-      width: 100%;
-
       margin-bottom: 10px;
-
-      transition: box-shadow 0.2s;
-      box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-
-      &:hover {
-        box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.2);
-      }
-
-      &:focus {
-        outline: none;
-      }
     }
 
     .item {

@@ -106,32 +106,10 @@ function toTreeData(tree) {
   width: 100%;
 
   select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    -ms-appearance: none;
-    -o-appearance: none;
-    appearance: none;
-
     width: 100%;
-    background: none;
-    cursor: pointer;
-
-    background-image: url("~@/assets/icon/dropdown.svg");
-    background-size: 10px;
-    background-position: center right 10px;
-    background-repeat: no-repeat;
-
-    font-family: "Montserrat", sans-serif;
-    font-size: 14px;
-    padding: 10px 20px;
     border: none;
-    font-weight: bold;
     border-bottom: solid 1px #ddd;
     border-radius: 0;
-
-    &:focus {
-      outline: none;
-    }
   }
 
   .sl-vue-tree-nodes-list {
