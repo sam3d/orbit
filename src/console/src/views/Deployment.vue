@@ -5,22 +5,42 @@
 
     <label>Building from</label>
 
-    <table class="build-from">
-      <tr>
-        <th>Repository</th>
-        <td>{{ deployment.repository.name }}</td>
-      </tr>
-      <tr>
-        <th>Branch</th>
-        <td>{{ deployment.branch }}</td>
-      </tr>
-      <tr>
-        <th>Path</th>
-        <td>{{ deployment.path }}</td>
-      </tr>
-    </table>
+    <div class="flags">
+      <div class="flag">
+        <div class="key">Repository</div>
+        <div
+          class="value link"
+          @click="$push(`/repositories/${deployment.repository.id}`)"
+        >
+          {{ deployment.repository.name }}
+        </div>
+      </div>
 
-    <code v-if="currentBuild" ref="currentBuild">{{ currentBuild }}</code>
+      <div class="flag">
+        <div class="key">Branch</div>
+        <div class="value">{{ deployment.branch }}</div>
+      </div>
+
+      <div class="flag">
+        <div class="key">Path</div>
+        <div class="value">{{ deployment.path }}</div>
+      </div>
+    </div>
+
+    <label style="margin-top: 20px;">Build Log</label>
+    <select v-model="selectedBuild">
+      <option value="" v-if="!busyBuilding">Start a new build</option>
+      <option value="" v-else>Current build</option>
+
+      <option v-for="log in logs" :value="log.id">
+        {{ log.render }}
+      </option>
+    </select>
+
+    <code v-if="selectedBuild">{{
+      parseBuildLog(deployment.build_logs[selectedBuild])
+    }}</code>
+    <code v-else-if="currentBuild" ref="currentBuild">{{ currentBuild }}</code>
     <code v-else-if="busyBuilding">
       <span class="comment"># Preparing build...</span>
     </code>
@@ -59,6 +79,7 @@ export default {
       busyDeleting: false,
       busyBuilding: false,
       currentBuild: null,
+      selectedBuild: "",
       deployment: {
         id: "",
         name: "",
@@ -92,15 +113,18 @@ export default {
     },
 
     async build() {
+      this.selectedBuild = ""; // Show the build log for the current build
       this.busyBuilding = true;
 
-      // Start the build process in the background.
+      // Start the build process in the background
       const request = this.$api.post(`/deployment/${this.deployment.id}/build`);
       const ticker = setInterval(this.loadCurrentBuild, 2000);
-      const res = await request; // Wait for the response to resolve.
-      clearInterval(ticker); // Clear the interval.
+      const res = await request; // Wait for the response to resolve
+      clearInterval(ticker); // Clear the interval
       await this.loadCurrentBuild(); // Load the final build lines
-      this.busyBuilding = false; // We're no longer building.
+      await this.load(); // Load in the final new build data
+      this.selectedBuild = this.logs[0].key; // Show the new build data
+      this.busyBuilding = false; // We're no longer building
     },
 
     async loadCurrentBuild() {
@@ -117,9 +141,7 @@ export default {
       if (!current) return;
 
       // Set the current build data.
-      this.currentBuild = deployment.build_logs[current]
-        .reduce((str, line) => (str += `${line}\n`), "")
-        .replace(/\[1G/g, "");
+      this.currentBuild = this.parseBuildLog(deployment.build_logs[current]);
 
       // Scroll to the bottom of the build view.
       await this.$nextTick();
@@ -127,8 +149,45 @@ export default {
       ref.scrollTop = ref.scrollHeight;
     },
 
+    parseBuildLog(log) {
+      return log
+        .reduce((str, line) => (str += `${line}\n`), "")
+        .replace(/\[1G/g, "");
+    },
+
     async deleteDeployment() {
       this.busyDeleting = true;
+    }
+  },
+
+  computed: {
+    logs() {
+      return Object.keys(this.deployment.build_logs)
+        .map(key => {
+          const tokens = key.split("/");
+
+          // Derive the properties from the tokens.
+          const o = {
+            id: key,
+            hash: "",
+            time: new Date(),
+            path: "",
+            render: ""
+          };
+
+          if (tokens.length >= 1) o.hash = tokens[0];
+          if (tokens.length >= 2) o.time = new Date(tokens[1] / 1000000);
+          if (tokens.length >= 3) o.path = tokens[2];
+
+          // Create the display string.
+          o.render = "#" + o.hash.padStart(7, "0").substring(0, 7);
+          o.render += ` (${o.path || " / "})`;
+          o.render += " @ " + o.time.toLocaleString();
+
+          // Return the output;
+          return o;
+        })
+        .sort((a, b) => new Date(b.time) - new Date(a.time));
     }
   }
 };
@@ -152,20 +211,50 @@ code {
   font-size: 14px;
 }
 
-.build-from {
-  text-align: left;
-  width: 100%;
-  max-width: 300px;
+select {
+  max-width: 400px;
+}
 
-  &,
-  & td,
-  & th {
-    border: 1px solid #ddd;
-    padding: 10px;
-  }
+.flags {
+  display: flex;
 
-  th {
-    font-weight: bold;
+  .flag {
+    display: flex;
+    border: solid 1px #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    text-align: left;
+
+    &:not(:last-of-type) {
+      margin-right: 10px;
+    }
+
+    .key,
+    .value {
+      padding: 10px;
+    }
+
+    .key {
+      background-color: #eee;
+      border-right: solid 1px #ddd;
+    }
+
+    .value {
+      min-width: 50px;
+
+      &.link {
+        color: #54a0ff;
+        cursor: pointer;
+
+        transition: background-color 0.2s;
+        &:hover {
+          background-color: transparentize(#54a0ff, 0.9);
+        }
+        &:active {
+          background-color: transparentize(#54a0ff, 0.8);
+        }
+      }
+    }
   }
 }
 
