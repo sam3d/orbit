@@ -1,5 +1,6 @@
 <template>
-  <div class="sidebar-screen" v-if="!loading">
+  <LoadingSlider v-if="loading" />
+  <div class="sidebar-screen" v-else>
     <h1>Add a new deployment</h1>
     <p class="description">
       A deployment will take the code from an existing repository, build it, and

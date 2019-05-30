@@ -1,5 +1,6 @@
 <template>
-  <div class="sidebar-screen" v-if="!loading">
+  <LoadingSlider v-if="loading" />
+  <div class="sidebar-screen" v-else>
     <div class="type">Repository</div>
     <h1>{{ repo.name }}</h1>
 

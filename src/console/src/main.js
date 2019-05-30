@@ -5,6 +5,7 @@ import store from "./store";
 import api from "./api";
 
 import LoadingList from "./components/LoadingList";
+import LoadingSlider from "./components/LoadingSlider";
 import Empty from "./components/Empty";
 import Button from "./components/Button";
 
@@ -51,6 +52,7 @@ Vue.use(
 
 // Global components.
 Vue.component("LoadingList", LoadingList);
+Vue.component("LoadingSlider", LoadingSlider);
 Vue.component("Empty", Empty);
 Vue.component("Button", Button);
 
