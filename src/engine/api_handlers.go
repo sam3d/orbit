@@ -99,6 +99,7 @@ func (s *APIServer) handlers() {
 
 	{
 		r := r.Group("/deployment")
+		r.GET("/:id", s.handleDeploymentGet())
 		r.POST("", s.handleDeploymentAdd())
 		r.POST("/:id/build", s.handleBuildDeployment())
 		r.DELETE("/:id", s.handleDeploymentRemove())

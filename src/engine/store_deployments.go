@@ -31,7 +31,7 @@ type Deployment struct {
 	// this particular deployment path was taken from. The value is a string list
 	// of the individual lines outputted from the build process. These all need to
 	// be kept in raft consensus so that they can be referenced later on.
-	BuildLogs map[string][]string
+	BuildLogs map[string][]string `json:"build_logs"`
 
 	NamespaceID string `json:"namespace_id"`
 }
@@ -157,7 +157,8 @@ func (e *Engine) BuildDeployment(d Deployment) (string, error) {
 	}
 
 	// Generate the map key for the build log.
-	key := filepath.Join(hash, d.Path)
+	now := fmt.Sprintf("%d", time.Now().UnixNano())
+	key := filepath.Join(hash, now, d.Path)
 
 	// flushBuffer takes in the buffer that is provided in the enclosing function
 	// and updates the store deployment build log with the data in the buffer. If
@@ -169,12 +170,6 @@ func (e *Engine) BuildDeployment(d Deployment) (string, error) {
 		}
 		lineBuf = []string{}
 		return nil
-	}
-
-	// Before the build process starts, clear any build log with this existing
-	// output. This ensures a clean build log every time.
-	if err := e.Store.ClearBuildLog(d.ID, key); err != nil {
-		return key, err
 	}
 
 	// Begin the build process. All of the operations for this take place

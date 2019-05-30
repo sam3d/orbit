@@ -1481,6 +1481,30 @@ func (s *APIServer) handleListDeployments() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleDeploymentGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID of that deployment.
+		var deployment *Deployment
+		for _, d := range store.state.Deployments {
+			if d.ID == id {
+				deployment = &d
+				break
+			}
+		}
+		if deployment == nil {
+			c.String(http.StatusNotFound, "No deployment with that ID exists.")
+			return
+		}
+
+		// Send the deployment back to the client.
+		c.JSON(http.StatusOK, deployment)
+	}
+}
+
 func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
