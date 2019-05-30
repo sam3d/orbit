@@ -102,6 +102,7 @@ export default {
       let res = await this.$api.get(`/deployment/${id}`);
       if (res.status !== 200) return alert(res.data);
       this.deployment = res.data;
+      if (!this.deployment.build_logs) this.deployment.build_logs = {};
       await this.$nextTick();
 
       // Retrieve the repository information for this deployment.
@@ -138,6 +139,7 @@ export default {
       const res = await this.$api.get(`/deployment/${this.deployment.id}`);
       if (res.status !== 200) return;
       const deployment = res.data;
+      if (!deployment.build_logs) deployment.build_logs = {};
 
       // Find the build log that wasn't there before.
       const current = Object.keys(deployment.build_logs).find(
