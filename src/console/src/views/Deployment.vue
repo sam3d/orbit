@@ -268,7 +268,9 @@ select {
 .buttons {
   margin-top: 20px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  height: 60px;
+  flex-shrink: 0;
 
   .button:not(:last-of-type) {
     margin-right: 20px;
