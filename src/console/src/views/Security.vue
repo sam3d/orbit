@@ -131,5 +131,6 @@ ol {
 
 .button {
   margin-top: 10px;
+  display: inline-block !important;
 }
 </style>

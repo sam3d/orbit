@@ -19,7 +19,8 @@
           v-for="deployment in deployments"
           @click="$push(`/deployments/${deployment.id}`)"
         >
-          <span>{{ deployment.name }}</span>
+          <div class="status" :class="{ green: deployment.build_logs }"></div>
+          <span class="name">{{ deployment.name }}</span>
         </div>
       </div>
     </template>
@@ -51,3 +52,17 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.status {
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  margin-right: 8px;
+  background-color: #feca57;
+
+  &.green {
+    background-color: #1dd1a1;
+  }
+}
+</style>

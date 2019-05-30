@@ -133,6 +133,7 @@ export default {
       const ref = this.$refs.selectedBuild;
       ref.scrollTop = ref.scrollHeight;
       this.busyBuilding = false; // We're no longer building
+      this.$reload(); // Update the list.
     },
 
     async loadCurrentBuild() {
