@@ -1047,10 +1047,10 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 		id := store.state.Certificates.GenerateID()
 
 		// Find the namespace by ID.
+		var namespaceID string
 		namespace := store.state.Namespaces.Find(body.Namespace)
-		if namespace == nil {
-			c.String(http.StatusNotFound, "No namespace with the name or ID %s could be found.", body.Namespace)
-			return
+		if namespace != nil {
+			namespaceID = namespace.ID
 		}
 
 		// Construct the command.
@@ -1061,7 +1061,7 @@ func (s *APIServer) handleCertificateAdd() gin.HandlerFunc {
 				AutoRenew:   body.AutoRenew,
 				FullChain:   fullChain,
 				PrivateKey:  privateKey,
-				NamespaceID: namespace.ID,
+				NamespaceID: namespaceID,
 				Domains:     body.Domains,
 			},
 		}

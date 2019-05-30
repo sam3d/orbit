@@ -153,13 +153,15 @@ export default {
     },
 
     async getAcmeCert() {
+      this.busy = true;
+
       const body = {
         auto_renew: true,
         domains: this.domains,
         namespace: this.$namespace()
       };
 
-      const res = await this.$api.post("/certificate", body, opts);
+      const res = await this.$api.post("/certificate", body);
       if (res.status !== 201) {
         this.busy = false;
         alert(res.data);
@@ -177,11 +179,6 @@ export default {
     // LetsEncrypt provides us with the correct certificate for that domain.
     async renewCerts() {
       const { status } = await this.$api.post("/certificates/renew");
-      if (status !== 200) {
-        this.busy = false;
-        alert("Could not renew certificates.");
-        return;
-      }
     }
   },
 
