@@ -261,7 +261,10 @@ export default {
         }
       }
 
-      if (this.certMethod === "letsencrypt") await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
+      // Perform the appropriate course of action.
+      if (this.certMethod === "letsencrypt") await this.renewCerts();
+      else if (this.certMethod === "upload") await this.restartEdge();
+
       this.redirect(); // Redirect to the new page
     },
 
