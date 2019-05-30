@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="55px" height="54px" viewBox="0 0 55 54" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/upload-cert</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icons-copy" transform="translate(-207.000000, -284.000000)">
+            <g id="icon/upload-cert" transform="translate(207.000000, 284.000000)">
+                <rect id="Rectangle" stroke="#0ABDE3" stroke-width="7" x="3.5" y="3.5" width="48" height="34" rx="8"></rect>
+                <path d="M29.9113543,38.9493841 L37.7878555,46.8258853 C39.9357391,48.9737689 39.9357391,52.4561763 37.7878555,54.6040599 L36.6040599,55.7878555 C34.4561763,57.9357391 30.9737689,57.9357391 28.8258853,55.7878555 L16.1109127,43.0728829 C15.0072327,41.9692029 14.4400131,40.4728265 14.5049677,38.9493841 C14.4400131,37.4259417 15.0072327,35.9295653 16.1109127,34.8258853 L28.8258853,22.1109127 C30.9737689,19.9630291 34.4561763,19.9630291 36.6040599,22.1109127 L37.7878555,23.2947083 C39.9357391,25.4425919 39.9357391,28.9249993 37.7878555,31.0728829 L29.9113543,38.9493841 Z" id="Combined-Shape" stroke="#FFFFFF" stroke-width="5" fill="#0ABDE3" transform="translate(26.949384, 38.949384) rotate(90.000000) translate(-26.949384, -38.949384) "></path>
+                <circle id="Oval" fill="#0ABDE3" opacity="0.200000003" cx="37" cy="21" r="18"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

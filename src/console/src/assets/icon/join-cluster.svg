@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="61px" height="62px" viewBox="0 0 61 62" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/join-cluster</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icons-copy" transform="translate(-295.000000, -184.000000)" fill="#0ABDE3">
+            <g id="icon/join-cluster" transform="translate(328.000000, 215.000000) rotate(180.000000) translate(-328.000000, -215.000000) translate(300.000000, 189.000000)">
+                <rect id="Rectangle-Copy-6" opacity="0.800000012" x="0" y="0.604997733" width="15" height="50" rx="3"></rect>
+                <rect id="Rectangle-Copy-8" opacity="0.5" x="20" y="0.604997733" width="15" height="50" rx="3"></rect>
+                <path d="M41.9465101,25.6049977 L56.494085,40.1525727 C58.6419686,42.3004563 58.6419686,45.7828636 56.494085,47.9307472 L52.3257495,52.0990828 C50.1778659,54.2469664 46.6954585,54.2469664 44.5475749,52.0990828 L22.505915,30.0574228 C21.3174365,28.8689444 20.7564932,27.230551 20.9237552,25.6049977 C20.7564932,23.9794445 21.3174365,22.3410511 22.505915,21.1525727 L44.5475749,-0.889087297 C46.6954585,-3.0369709 50.1778659,-3.0369709 52.3257495,-0.889087297 L56.494085,3.27924822 C58.6419686,5.42713182 58.6419686,8.90953921 56.494085,11.0574228 L41.9465101,25.6049977 Z" id="Combined-Shape" stroke="#FFFFFF" stroke-width="5"></path>
+            </g>
+        </g>
+    </g>
+</svg>

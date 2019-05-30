@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="55px" height="51px" viewBox="0 0 55 51" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/letsencrypt</title>
+    <desc>Created with Sketch.</desc>
+    <g id="icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icons-copy" transform="translate(-285.000000, -286.000000)">
+            <g id="icon/letsencrypt" transform="translate(285.000000, 286.000000)">
+                <rect id="Rectangle" stroke="#1DD1A1" stroke-width="7" x="3.5" y="3.5" width="48" height="31" rx="8"></rect>
+                <circle id="Oval" stroke="#1DD1A1" stroke-width="6" fill="#FFFFFF" cx="27.5" cy="34.5" r="13.5"></circle>
+                <circle id="Oval-Copy" fill="#1DD1A1" opacity="0.200000003" cx="35" cy="21" r="18"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

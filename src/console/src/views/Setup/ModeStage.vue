@@ -8,7 +8,7 @@
         :class="{ selected: mode === 'bootstrap' }"
         @click="mode = 'bootstrap'"
       >
-        <img />
+        <img src="~@/assets/icon/new-cluster.svg" />
         <h3>Create a new cluster</h3>
         <p>
           Don't already have a cluster? Not a problem, click here to create a
@@ -22,7 +22,7 @@
         :class="{ selected: mode === 'join' }"
         @click="mode = 'join'"
       >
-        <img />
+        <img src="~@/assets/icon/join-cluster.svg" />
         <h3>Join an existing cluster</h3>
         <p>
           If you already have a cluster in operation, great! Click here and
