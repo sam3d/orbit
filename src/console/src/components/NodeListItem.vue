@@ -3,20 +3,15 @@
     <div class="status green"></div>
     <div class="address">{{ node.address }}</div>
 
-    <div class="role yellow" v-if="node.node_roles.includes('LOAD_BALANCER')">
-      Load Balancer
-    </div>
-    <div class="role blue" v-if="node.node_roles.includes('STORAGE')">
-      Storage
-    </div>
-    <div class="role pink" v-if="node.node_roles.includes('BUILDER')">
-      Builder
-    </div>
+    <NodeRoles :roles="node.node_roles" />
   </div>
 </template>
 
 <script>
+import NodeRoles from "@/components/NodeRoles";
+
 export default {
+  components: { NodeRoles },
   props: ["node"]
 };
 </script>
@@ -31,30 +26,6 @@ export default {
 
   &.green {
     background-color: #1dd1a1;
-  }
-}
-
-.role {
-  margin-left: 5px;
-  font-size: 14px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-  white-space: nowrap;
-
-  &.yellow {
-    background-color: transparentize(#ff9f43, 0.9);
-    color: #ff9f43;
-  }
-
-  &.pink {
-    background-color: transparentize(#f368e0, 0.9);
-    color: #f368e0;
-  }
-
-  &.blue {
-    background-color: transparentize(#54a0ff, 0.9);
-    color: #54a0ff;
   }
 }
 
