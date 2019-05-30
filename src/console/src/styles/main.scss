@@ -158,6 +158,24 @@ textarea {
   }
 }
 
+.input-and-button {
+  display: flex;
+
+  input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    border-bottom-left-radius: 500px;
+    border-top-left-radius: 500px;
+    padding-left: 20px;
+  }
+
+  .button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
 // The default sidebar screen.
 .sidebar-screen {
   text-align: center;
@@ -188,6 +206,8 @@ textarea {
     margin-bottom: 10px;
     opacity: 0.7;
     font-size: 13px;
+    max-width: 330px;
+    line-height: 1.3rem;
   }
 }
 
