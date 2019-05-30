@@ -267,6 +267,10 @@ export default {
   }
 }
 
+.button {
+  display: inline-block !important;
+}
+
 .error {
   display: inline-block;
   margin-bottom: 30px;

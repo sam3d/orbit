@@ -275,6 +275,10 @@ h3 {
   cursor: default;
 }
 
+.button {
+  display: inline-block !important;
+}
+
 .options {
   display: grid;
   grid-gap: 30px;

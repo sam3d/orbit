@@ -95,4 +95,8 @@ export default {
 .button {
   margin-top: 30px;
 }
+
+.button {
+  display: inline-block !important;
+}
 </style>

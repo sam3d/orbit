@@ -485,6 +485,10 @@ a {
   display: block;
 }
 
+.button {
+  display: inline-block !important;
+}
+
 .button-group {
   margin-top: 30px;
 }
