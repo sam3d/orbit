@@ -14,11 +14,7 @@
     <template v-else>
       <div class="list">
         <h2>Namespaces ({{ namespaces.length }})</h2>
-        <div
-          class="item"
-          v-for="namespace in namespaces"
-          @click="$push(`/namespaces/${namespace.id}`)"
-        >
+        <div class="item inactive" v-for="namespace in namespaces">
           <span>{{ namespace.name }}</span>
         </div>
       </div>

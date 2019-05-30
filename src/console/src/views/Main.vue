@@ -392,6 +392,18 @@ export default {
         background-size: 200%;
         animation: placeholder 1s linear infinite;
       }
+
+      &.inactive {
+        cursor: default;
+        &:hover {
+          box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.025);
+          transform: none;
+        }
+        &:active {
+          box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.025);
+          transform: none;
+        }
+      }
     }
   }
 }
