@@ -911,10 +911,11 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 	store := s.engine.Store
 
 	type body struct {
-		Domain      string `form:"domain" json:"domain"`
-		Namespace   string `form:"namespace" json:"namespace"`
-		AppID       string `form:"app_id" json:"app_id"`
-		WWWRedirect bool   `form:"www_redirect" json:"www_redirect"`
+		Domain        string `form:"domain" json:"domain"`
+		Namespace     string `form:"namespace" json:"namespace"`
+		AppID         string `form:"app_id" json:"app_id"`
+		WWWRedirect   bool   `form:"www_redirect" json:"www_redirect"`
+		CertificateID string `form:"certificate_id" json:"certificate_id"`
 	}
 
 	return func(c *gin.Context) {
@@ -935,11 +936,12 @@ func (s *APIServer) handleRouterAdd() gin.HandlerFunc {
 		cmd := command{
 			Op: opNewRouter,
 			Router: Router{
-				ID:          id,
-				Domain:      body.Domain,
-				NamespaceID: namespaceID,
-				AppID:       body.AppID,
-				WWWRedirect: body.WWWRedirect,
+				ID:            id,
+				Domain:        body.Domain,
+				NamespaceID:   namespaceID,
+				AppID:         body.AppID,
+				WWWRedirect:   body.WWWRedirect,
+				CertificateID: body.CertificateID,
 			},
 		}
 
