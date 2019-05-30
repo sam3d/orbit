@@ -37,7 +37,7 @@
       </option>
     </select>
 
-    <code v-if="selectedBuild">{{
+    <code v-if="selectedBuild" ref="selectedBuild">{{
       parseBuildLog(deployment.build_logs[selectedBuild])
     }}</code>
     <code v-else-if="currentBuild" ref="currentBuild">{{ currentBuild }}</code>
@@ -121,9 +121,16 @@ export default {
       const ticker = setInterval(this.loadCurrentBuild, 2000);
       const res = await request; // Wait for the response to resolve
       clearInterval(ticker); // Clear the interval
+
       await this.loadCurrentBuild(); // Load the final build lines
       await this.load(); // Load in the final new build data
-      this.selectedBuild = this.logs[0].key; // Show the new build data
+      this.currentBuild = ""; // Clear the current build data
+      this.selectedBuild = this.logs[0].id; // Show the new build data
+
+      // Scroll to the bottom of the new build view.
+      await this.$nextTick();
+      const ref = this.$refs.selectedBuild;
+      ref.scrollTop = ref.scrollHeight;
       this.busyBuilding = false; // We're no longer building
     },
 
@@ -170,7 +177,7 @@ export default {
           const o = {
             id: key,
             hash: "",
-            time: new Date(),
+            time: null,
             path: "",
             render: ""
           };
@@ -182,7 +189,7 @@ export default {
           // Create the display string.
           o.render = "#" + o.hash.padStart(7, "0").substring(0, 7);
           o.render += ` (${o.path || " / "})`;
-          o.render += " @ " + o.time.toLocaleString();
+          if (o.time) o.render += " @ " + o.time.toLocaleString();
 
           // Return the output;
           return o;
@@ -212,7 +219,7 @@ code {
 }
 
 select {
-  max-width: 400px;
+  max-width: 320px;
 }
 
 .flags {
@@ -261,6 +268,7 @@ select {
 .buttons {
   margin-top: 20px;
   display: flex;
+  align-items: flex-start;
 
   .button:not(:last-of-type) {
     margin-right: 20px;
