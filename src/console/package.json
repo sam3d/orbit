@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "sl-vue-tree": "^1.8.4",
     "validator": "^10.11.0",
     "vue": "^2.6.10",
     "vue-meta": "^1.5.8",

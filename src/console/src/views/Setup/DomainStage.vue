@@ -43,7 +43,7 @@
           :class="{ selected: certMethod === 'upload' }"
           @click="!busy && (certMethod = 'upload')"
         >
-          <img />
+          <img src="~@/assets/icon/upload-cert.svg" />
 
           <h5>Upload</h5>
           <p>Upload a certificate from your computer</p>
@@ -54,7 +54,7 @@
           :class="{ selected: certMethod === 'letsencrypt' }"
           @click="!busy && (certMethod = 'letsencrypt')"
         >
-          <img />
+          <img src="~@/assets/icon/letsencrypt.svg" />
 
           <h5>LetsEncrypt</h5>
           <p>Obtain a free certificate from LetsEncrypt</p>
@@ -65,7 +65,7 @@
           :class="{ selected: certMethod === 'none' }"
           @click="!busy && (certMethod = 'none')"
         >
-          <img />
+          <img src="~@/assets/icon/no-cert.svg" />
 
           <h5>None</h5>
           <p>Don't use an SSL certificate</p>
@@ -121,15 +121,10 @@
 
 <script>
 import validator from "validator";
-
-import Button from "@/components/Button";
 import Spinner from "@/components/Spinner";
 
 export default {
-  components: {
-    Button,
-    Spinner
-  },
+  components: { Spinner },
 
   data() {
     return {
@@ -266,7 +261,7 @@ export default {
         }
       }
 
-      await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
+      if (this.certMethod === "letsencrypt") await this.renewCerts(); // If LetsEncrypt, we can retrieve the certs
       this.redirect(); // Redirect to the new page
     },
 

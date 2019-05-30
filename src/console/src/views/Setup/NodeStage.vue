@@ -162,10 +162,9 @@
 <script>
 import "vue-slider-component/theme/default.css";
 import Slider from "vue-slider-component";
-import Button from "@/components/Button";
 
 export default {
-  components: { Slider, Button },
+  components: { Slider },
 
   props: [
     "mode" // bootstrap / join. If bootstrap, all options are mandatory.

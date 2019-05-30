@@ -1,5 +1,7 @@
 <template>
-  <div>The overview view.</div>
+  <div>
+    <h1>Overview</h1>
+  </div>
 </template>
 
 <script>

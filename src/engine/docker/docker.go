@@ -67,6 +67,26 @@ func SwarmToken(manager bool) string {
 	return strings.TrimSpace(string(output))
 }
 
+// RotateSwarmToken will rotate the provided swarm token parameter and return
+// the new one.
+func RotateSwarmToken(manager bool) string {
+	var tokenType string
+	if manager {
+		tokenType = "manager"
+	} else {
+		tokenType = "worker"
+	}
+
+	cmd := exec.Command("docker", "swarm", "join-token", tokenType, "--rotate", "-q")
+	output, err := cmd.Output()
+	if err != nil {
+		log.Printf("Could not rotate the swarm tokens for the %s nodes: %s", tokenType, err)
+		return ""
+	}
+
+	return strings.TrimSpace(string(output))
+}
+
 // JoinSwarm will attempt to join the swarm with the given IP address and token.
 func JoinSwarm(ip, token string) error {
 	cmd := exec.Command("docker", "swarm", "join", "--token", token, ip)

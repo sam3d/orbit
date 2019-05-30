@@ -63,6 +63,44 @@ func (s *APIServer) handleIP() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleGetTokens() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"manager": store.state.ManagerJoinToken,
+			"worker":  store.state.WorkerJoinToken,
+		})
+	}
+}
+
+func (s *APIServer) handleRefreshTokens() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// Perform the token rotation.
+		newManagerToken := docker.RotateSwarmToken(true)
+		newWorkerToken := docker.RotateSwarmToken(false)
+
+		// Update the store.
+		cmd := command{
+			Op:               opSetJoinTokens,
+			ManagerJoinToken: newManagerToken,
+			WorkerJoinToken:  newWorkerToken,
+		}
+		if err := cmd.Apply(store); err != nil {
+			c.String(http.StatusInternalServerError, "Could not refresh the join tokens.")
+			return
+		}
+
+		// Provide the new tokens back to the user.
+		c.JSON(http.StatusOK, gin.H{
+			"manager": newManagerToken,
+			"worker":  newWorkerToken,
+		})
+	}
+}
+
 func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
@@ -296,8 +334,52 @@ func (s *APIServer) handleClusterBootstrap() gin.HandlerFunc {
 
 func (s *APIServer) handleGetRepositories() gin.HandlerFunc {
 	store := s.engine.Store
+
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, store.state.Repositories)
+		var repos []gin.H
+
+		for _, repo := range store.state.Repositories {
+			files := store.RepoFiles(repo.ID)
+
+			repos = append(repos, gin.H{
+				"id":           repo.ID,
+				"name":         repo.Name,
+				"namespace_id": repo.NamespaceID,
+				"files":        files,
+			})
+		}
+
+		c.JSON(http.StatusOK, repos)
+	}
+}
+
+func (s *APIServer) handleNamespaceAdd() gin.HandlerFunc {
+	store := s.engine.Store
+
+	type body struct {
+		Name string `form:"name" json:"name"`
+	}
+
+	return func(c *gin.Context) {
+		var body body
+		c.Bind(&body)
+
+		id := store.state.Namespaces.GenerateID()
+		cmd := command{
+			Op: opNewNamespace,
+			Namespace: Namespace{
+				ID:   id,
+				Name: body.Name,
+			},
+		}
+
+		if err := cmd.Apply(store); err != nil {
+			log.Printf("[ERR] store: Could not apply the namespace to the store: %s", err)
+			c.String(http.StatusInternalServerError, "Could not apply the namespace to the store.")
+			return
+		}
+
+		c.JSON(http.StatusCreated, cmd.Namespace)
 	}
 }
 
@@ -508,6 +590,35 @@ func (s *APIServer) handleClusterJoin() gin.HandlerFunc {
 		engine.writeConfig()
 
 		c.String(http.StatusOK, "Successfully joined node %s in the cluster.", targetAddr)
+	}
+}
+
+func (s *APIServer) handleRepositoryGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		// Lookup the provided ID to find the repository.
+		id := c.Param("id")
+		var repo *Repository
+		for _, r := range store.state.Repositories {
+			if r.ID == id {
+				repo = &r
+				break
+			}
+		}
+		if repo == nil {
+			c.String(http.StatusNotFound, "A repo with the ID of %s does not exist", id)
+			return
+		}
+
+		files := store.RepoFiles(repo.ID)
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":           repo.ID,
+			"name":         repo.Name,
+			"namespace_id": repo.NamespaceID,
+			"files":        files,
+		})
 	}
 }
 
@@ -1370,6 +1481,30 @@ func (s *APIServer) handleListDeployments() gin.HandlerFunc {
 	}
 }
 
+func (s *APIServer) handleDeploymentGet() gin.HandlerFunc {
+	store := s.engine.Store
+
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Find the ID of that deployment.
+		var deployment *Deployment
+		for _, d := range store.state.Deployments {
+			if d.ID == id {
+				deployment = &d
+				break
+			}
+		}
+		if deployment == nil {
+			c.String(http.StatusNotFound, "No deployment with that ID exists.")
+			return
+		}
+
+		// Send the deployment back to the client.
+		c.JSON(http.StatusOK, deployment)
+	}
+}
+
 func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 	engine := s.engine
 	store := engine.Store
@@ -1409,6 +1544,7 @@ func (s *APIServer) handleDeploymentAdd() gin.HandlerFunc {
 				Repository:  body.RepositoryID,
 				Path:        body.Path,
 				NamespaceID: namespaceID,
+				Branch:      body.Branch,
 			},
 		}
 

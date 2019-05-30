@@ -33,7 +33,9 @@ func (s *APIServer) handlers() {
 	r.GET("/volumes", s.handleListVolumes())
 	r.GET("/repositories", s.handleGetRepositories())
 	r.GET("/deployments", s.handleListDeployments())
+	r.GET("/tokens", s.handleGetTokens())
 
+	r.POST("/tokens/refresh", s.handleRefreshTokens())
 	r.POST("/snapshot/:op", s.handleSnapshot())
 	r.POST("/service/restart/:id", s.handleRestartService())
 	r.POST("/certificates/renew", s.handleRenewCertificates())
@@ -45,6 +47,11 @@ func (s *APIServer) handlers() {
 		r := r.Group("/cluster")
 		r.POST("/bootstrap", s.handleClusterBootstrap())
 		r.POST("/join", s.handleClusterJoin())
+	}
+
+	{
+		r := r.Group("/namespace")
+		r.POST("", s.handleNamespaceAdd())
 	}
 
 	{
@@ -86,11 +93,13 @@ func (s *APIServer) handlers() {
 	{
 		r := r.Group("/repository")
 		r.POST("", s.handleRepositoryAdd())
+		r.GET("/:id", s.handleRepositoryGet())
 		r.DELETE("/:id", s.handleRepositoryRemove())
 	}
 
 	{
 		r := r.Group("/deployment")
+		r.GET("/:id", s.handleDeploymentGet())
 		r.POST("", s.handleDeploymentAdd())
 		r.POST("/:id/build", s.handleBuildDeployment())
 		r.DELETE("/:id", s.handleDeploymentRemove())

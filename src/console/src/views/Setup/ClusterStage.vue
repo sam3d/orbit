@@ -3,7 +3,8 @@
     <h2>Join an existing cluster</h2>
     <p class="subheader">
       Please enter the network address and the joining token for this node. You
-      can find both of these under the cluster settings of the existing cluster.
+      can find both of these under the cluster security settings of the existing
+      cluster.
     </p>
 
     <input
@@ -46,11 +47,8 @@
 
 <script>
 import validator from "validator";
-import Button from "@/components/Button";
 
 export default {
-  components: { Button },
-
   data() {
     return {
       address: "", // The target address
