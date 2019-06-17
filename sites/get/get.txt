@@ -43,6 +43,10 @@ echo "--> Installing docker"
 curl https://get.docker.com | bash
 
 echo ""
+echo "--> Importing Herokuish into docker"
+docker pull gliderlabs/herokuish:latest
+
+echo ""
 echo "--> Installing glusterfs"
 apt-get install --yes glusterfs-server
 
