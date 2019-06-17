@@ -50,7 +50,7 @@ export default {
       try {
         const url = await this.getConsoleURL();
         const id = await this.getNodeID();
-        const target = `${url}/node/${id}`;
+        const target = `${url}/nodes/${id}`;
 
         window.location.href = target;
       } catch (err) {
