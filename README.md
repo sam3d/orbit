@@ -36,3 +36,11 @@
 2. Log in to the server via ssh as the `root` user.
 3. Run `curl https://get.orbit.sh | bash` and wait for about 10 minutes for the installation to complete.
 4. Navigate to the IP address of your server at port `6500` (for example, if your server IP address is `121.31.232.56`, you would access the setup page at `http://121.31.232.56:6500`).
+
+## A note from the author
+
+Orbit is my first large-scale Go project and is very _very_ alpha. Many things will need refactoring and will not work the way you expect them to. As time passes I'll hopefully be able to work on this more, but unfortunately for right now I'm so busy I won't have time to work on this very much :\(
+
+I really hope to come back to it soon though.
+
+Until then, I'll still be actively accepting and reviewing pull requests.
